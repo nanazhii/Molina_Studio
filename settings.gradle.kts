@@ -6,4 +6,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "Molina_Studio"
-include(":terminal", ":cinema", ":core-ui", ":mpv-native")
+include(":terminal", ":terminal-core", ":cinema", ":core-ui", ":mpv-native")

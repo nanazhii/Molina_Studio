@@ -21,5 +21,6 @@ android {
 }
 dependencies {
     implementation(project(":core-ui"))
+    implementation(project(":terminal-core"))
     implementation(libs.kotlinx.coroutines.android)
 }
