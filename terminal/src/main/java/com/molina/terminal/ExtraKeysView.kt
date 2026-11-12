@@ -37,7 +37,9 @@ internal class ExtraKeysView(
     private val container = color(UiR.color.molina_terminal_container)
     private val outline = color(UiR.color.molina_outline)
     private val plain = color(UiR.color.molina_on_surface)
-    private val danger = color(UiR.color.molina_error)
+    private val danger = color(UiR.color.molina_key_red)
+    private val green = color(UiR.color.molina_key_green)
+    private val blue = color(UiR.color.molina_key_blue)
 
     private val ctrlKey: TextView
     private val altKey: TextView
@@ -45,7 +47,7 @@ internal class ExtraKeysView(
 
     init {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(9), dp(5), dp(9), dp(5))
+        setPadding(dp(8), dp(3), dp(8), dp(3))
         background = panelBackground(lit = false)
 
         ctrlKey = key("CTRL", "Ctrl", plain, onLong = { mods.toggleCtrlLock() }) { mods.tapCtrl() }
@@ -59,12 +61,17 @@ internal class ExtraKeysView(
                         menuKey.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                         onMenu(menuKey)
                     }
+                    menuKey.setOnLongClickListener {
+                        menuKey.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        onMenu(menuKey)
+                        true
+                    }
                 },
-                key("HOME", "Home", plain) { actions.sendKey(KeyEvent.KEYCODE_MOVE_HOME) },
+                key("HOME", "Home", blue) { actions.sendKey(KeyEvent.KEYCODE_MOVE_HOME) },
                 key("CLEAR", "Bersihkan layar", danger) { actions.clear() },
-                key("\u2191", "Panah atas", plain, repeat = true) { actions.sendKey(KeyEvent.KEYCODE_DPAD_UP) },
-                key("PASTE", "Tempel", accent) { actions.paste() },
-                key("COPY", "Salin semua", accent) {
+                key("\u2191", "Panah atas", blue, repeat = true) { actions.sendKey(KeyEvent.KEYCODE_DPAD_UP) },
+                key("PASTE", "Tempel", green) { actions.paste() },
+                key("COPY", "Salin semua", green) {
                     val ok = actions.copyAll()
                     Toast.makeText(
                         context,
@@ -79,9 +86,9 @@ internal class ExtraKeysView(
                 key("\u21C6", "Tab", accent) { actions.send("\t") },
                 ctrlKey,
                 altKey,
-                key("\u2190", "Panah kiri", plain, repeat = true) { actions.sendKey(KeyEvent.KEYCODE_DPAD_LEFT) },
-                key("\u2193", "Panah bawah", plain, repeat = true) { actions.sendKey(KeyEvent.KEYCODE_DPAD_DOWN) },
-                key("\u2192", "Panah kanan", plain, repeat = true) { actions.sendKey(KeyEvent.KEYCODE_DPAD_RIGHT) },
+                key("\u2190", "Panah kiri", blue, repeat = true) { actions.sendKey(KeyEvent.KEYCODE_DPAD_LEFT) },
+                key("\u2193", "Panah bawah", blue, repeat = true) { actions.sendKey(KeyEvent.KEYCODE_DPAD_DOWN) },
+                key("\u2192", "Panah kanan", blue, repeat = true) { actions.sendKey(KeyEvent.KEYCODE_DPAD_RIGHT) },
                 key("ENTER", "Enter", accent) { actions.sendKey(KeyEvent.KEYCODE_ENTER) },
             ),
         )
@@ -104,7 +111,7 @@ internal class ExtraKeysView(
         orientation = LinearLayout.HORIZONTAL
         keys.forEach { k ->
             val lp = LinearLayout.LayoutParams(0, dp(KEY_HEIGHT_DP), 1f)
-            lp.setMargins(dp(1), dp(1), dp(1), dp(1))
+            lp.setMargins(dp(1), 0, dp(1), 0)
             addView(k, lp)
         }
     }
@@ -121,7 +128,7 @@ internal class ExtraKeysView(
         tv.text = label
         tv.contentDescription = description
         tv.gravity = Gravity.CENTER
-        tv.textSize = 14f
+        tv.textSize = 13f
         tv.typeface = Typeface.DEFAULT_BOLD
         tv.maxLines = 1
         tv.isFocusable = false
@@ -203,7 +210,7 @@ internal class ExtraKeysView(
         shape.setColor(container)
         shape.cornerRadius = dp(12).toFloat()
         shape.setStroke(dp(2), if (lit) accent else outline)
-        return InsetDrawable(shape, dp(6), dp(2), dp(6), dp(2))
+        return InsetDrawable(shape, dp(5), dp(1), dp(5), dp(1))
     }
 
     private fun color(id: Int): Int = ContextCompat.getColor(context, id)
@@ -211,7 +218,7 @@ internal class ExtraKeysView(
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
 
     private companion object {
-        const val KEY_HEIGHT_DP = 38
+        const val KEY_HEIGHT_DP = 30
         const val REPEAT_DELAY_MS = 400L
         const val REPEAT_MS = 60L
     }

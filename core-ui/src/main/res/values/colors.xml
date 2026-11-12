@@ -15,4 +15,7 @@
     <color name="molina_on_cinema_accent">#261A00</color>
     <color name="molina_cinema_container">#3A2A00</color>
     <color name="molina_cinema_secondary">#E53935</color>
+    <color name="molina_key_red">#FF5252</color>
+    <color name="molina_key_green">#00E676</color>
+    <color name="molina_key_blue">#448AFF</color>
 </resources>
