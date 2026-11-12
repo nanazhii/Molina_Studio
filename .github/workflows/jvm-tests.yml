@@ -23,4 +23,4 @@ jobs:
         if: hashFiles('scripts/module_gate.py') != ''
         run: python3 scripts/module_gate.py
       - name: Uji unit modul
-        run: gradle :core-common:testDebugUnitTest :core-storage:testDebugUnitTest :core-log:testDebugUnitTest :terminal-core:testDebugUnitTest :terminal-emulator:testDebugUnitTest :terminal-view:compileDebugJavaWithJavac :mpv-native:testDebugUnitTest :files:testDebugUnitTest --stacktrace
+        run: gradle :core-common:testDebugUnitTest :core-storage:testDebugUnitTest :core-log:testDebugUnitTest :terminal-core:testDebugUnitTest :terminal-emulator:testDebugUnitTest :terminal-view:compileDebugJavaWithJavac :terminal-pty:assembleDebug :mpv-native:testDebugUnitTest :files:testDebugUnitTest --stacktrace

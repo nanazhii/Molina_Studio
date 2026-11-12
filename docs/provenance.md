@@ -56,3 +56,8 @@ TerminalSessionClient: tipe TerminalSession diganti TerminalOutput.
 Sumber: terminal-view/src/main @ 8629e632fcb9 -> modul `terminal-view` (package com.molina.terminal.view).
 Berkas Java: GestureAndScaleRecognizer.java, TerminalRenderer.java, TerminalView.java, TerminalViewClient.java, PopupWindowCompatGingerbread.java, CursorController.java, TextSelectionCursorController.java, TextSelectionHandleView.java; drawable handle seleksi (warna diganti teal); strings.
 Perubahan: TerminalSession -> MolinaTerminalSession (interface baru di terminal-emulator).
+
+## Berkas adaptasi: termux-app (terminal-pty)
+
+Sumber: terminal-emulator/src/main/jni/termux.c dan JNI.java @ 8629e632fcb9 -> modul `terminal-pty` (molina_pty.c, PtyNative.java).
+Perubahan: nama simbol JNI dan makro; logika PTY tidak diubah. PtyProcess.kt dan CMake adalah kode baru Molina.
