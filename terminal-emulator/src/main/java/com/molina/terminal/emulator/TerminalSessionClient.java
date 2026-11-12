@@ -14,7 +14,7 @@ import androidx.annotation.Nullable;
  * send callbacks to the client when {@link TerminalOutput} changes or for sending other
  * back data to the client like logs.
  */
-public interface TerminalOutputClient {
+public interface TerminalSessionClient {
 
     void onTextChanged(@NonNull TerminalOutput changedSession);
 
