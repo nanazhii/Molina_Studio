@@ -14,4 +14,8 @@
         <item name="colorPrimary">@color/molina_cinema_accent</item>
         <item name="colorSecondary">@color/molina_cinema_secondary</item>
     </style>
+    <style name="Theme.Molina.App" parent="Theme.Molina">
+        <item name="colorPrimary">@color/molina_terminal_accent</item>
+        <item name="colorSecondary">@color/molina_cinema_accent</item>
+    </style>
 </resources>

@@ -70,15 +70,15 @@ jobs:
       - name: Pastikan NDK sesuai pin
         if: hashFiles('scripts/ensure_ndk.sh') != ''
         run: bash scripts/ensure_ndk.sh
-      - name: Build APK Terminal dan Cinema
+      - name: Build APK Molina
         env:
           MOLINA_KEYSTORE_PASSWORD: ${{ inputs.variant == 'release' && secrets.MOLINA_KEYSTORE_PASSWORD || '' }}
-        run: gradle :terminal:assemble${VARIANT^} :cinema:assemble${VARIANT^} --stacktrace
+        run: gradle :app:assemble${VARIANT^} --stacktrace
       - name: Pastikan bukan debuggable
         if: inputs.variant == 'release'
         run: |
           A=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
-          for f in terminal/build/outputs/apk/release/*.apk cinema/build/outputs/apk/release/*.apk; do
+          for f in app/build/outputs/apk/release/*.apk; do
             if "$A" dump badging "$f" | grep -q "application-debuggable"; then
               echo "::error::$f masih debuggable"; exit 1
             fi
@@ -88,7 +88,7 @@ jobs:
         if: inputs.variant == 'release'
         run: |
           A=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
-          for f in terminal/build/outputs/apk/release/*.apk cinema/build/outputs/apk/release/*.apk; do
+          for f in app/build/outputs/apk/release/*.apk; do
             if ! "$A" verify --print-certs "$f" > "$RUNNER_TEMP/cert.txt" 2>&1; then
               echo "::error::$f tidak bertanda tangan"; exit 1
             fi
@@ -101,10 +101,8 @@ jobs:
         with:
           name: molina-${{ inputs.variant }}
           path: |
-            terminal/build/outputs/apk/${{ inputs.variant }}/*.apk
-            cinema/build/outputs/apk/${{ inputs.variant }}/*.apk
-            terminal/build/outputs/mapping/release/
-            cinema/build/outputs/mapping/release/
+            app/build/outputs/apk/${{ inputs.variant }}/*.apk
+            app/build/outputs/mapping/release/
       - name: Hapus kunci sementara
         if: always()
         run: rm -f "$RUNNER_TEMP/molina.p12"

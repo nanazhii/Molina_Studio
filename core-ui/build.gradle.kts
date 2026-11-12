@@ -16,4 +16,7 @@ dependencies {
     api(libs.material)
     api(libs.androidx.appcompat)
     api(libs.androidx.core.ktx)
+    api(libs.androidx.fragment.ktx)
+    api(libs.androidx.lifecycle.runtime.ktx)
+    api(libs.androidx.recyclerview)
 }

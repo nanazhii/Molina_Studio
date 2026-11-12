@@ -1,4 +1,4 @@
-package com.molina.terminal
+package com.molina.studio
 
 import android.app.Application
 import com.molina.log.MolinaLogSetup
