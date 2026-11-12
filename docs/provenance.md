@@ -61,3 +61,4 @@ Perubahan: TerminalSession -> MolinaTerminalSession (interface baru di terminal-
 
 Sumber: terminal-emulator/src/main/jni/termux.c dan JNI.java @ 8629e632fcb9 -> modul `terminal-pty` (molina_pty.c, PtyNative.java).
 Perubahan: nama simbol JNI dan makro; logika PTY tidak diubah. PtyProcess.kt dan CMake adalah kode baru Molina.
+- `PtyTerminalSession.kt` (terminal-core): kode baru Molina; pola thread baca/tulis dan antrean mengikuti TerminalSession.java upstream, tanpa menyalin kode.

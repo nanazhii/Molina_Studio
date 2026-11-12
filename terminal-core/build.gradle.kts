@@ -11,10 +11,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    testOptions { unitTests.isReturnDefaultValues = true }
 }
 dependencies {
     api(libs.kotlinx.coroutines.android)
     api(project(":core-log"))
     api(project(":terminal-api"))
+    api(project(":terminal-emulator"))
+    implementation(project(":terminal-pty"))
+    implementation(libs.androidx.core.ktx)
     testImplementation(libs.junit)
 }
