@@ -31,6 +31,6 @@ setiap kali kode diadaptasi.
 
 ## Lisensi aplikasi Molina
 
-GPL-3.0-only (usulan, konfirmasi pemilik sebelum rilis). Alasan: sebagian upstream
+GPL-3.0-only (ditetapkan pemilik, 2026-11-12). Alasan: sebagian upstream
 berlisensi GPLv3-only sehingga hasil gabungannya tidak dapat memakai "or later".
 Lisensi libmpv dan FFmpeg bergantung pada opsi build; periksa sebelum rilis.
