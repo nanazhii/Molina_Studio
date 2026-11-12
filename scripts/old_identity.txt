@@ -1,0 +1,3 @@
+# Satu regex per baris (titik di-escape). Contoh:
+# com\.contoh\.devlama
+# devlama\.example\.org

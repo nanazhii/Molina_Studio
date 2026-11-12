@@ -70,7 +70,7 @@ jobs:
           gh release create "$TAG" molina-native-arm64.tgz SHA256SUMS BUILD-INFO.txt \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
             --title "Pustaka native mpv (arm64) $TAG" \
-            --notes "libmpv/libplayer arm64 dari mpv-android commit dipin (lihat BUILD-INFO.txt). SHA-256 tgz: $SUM"
+            --notes "libmpv arm64 hasil build pipeline Molina (sumber dan commit tercatat di BUILD-INFO.txt). SHA-256 tgz: $SUM"
           {
             echo '### Release native'
             echo "- tag: \`$TAG\`"
