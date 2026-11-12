@@ -1,0 +1,9 @@
+.gradle/
+build/
+local.properties
+*.jks
+*.keystore
+.idea/
+.DS_Store
+*.so
+!**/src/main/jniLibs/**/*.so

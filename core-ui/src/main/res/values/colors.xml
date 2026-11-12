@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="molina_bg">#0E1114</color>
+    <color name="molina_surface">#171B20</color>
+    <color name="molina_on_surface">#E6EAEE</color>
+    <color name="molina_terminal_accent">#00BFA5</color>
+    <color name="molina_cinema_accent">#FFB300</color>
+    <color name="molina_cinema_secondary">#E53935</color>
+</resources>
