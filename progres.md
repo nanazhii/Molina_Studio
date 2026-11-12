@@ -32,3 +32,4 @@
 - [ ] terminal-view, terminal-pty (JNI), terminal-core wiring, terminal-proot
 - [x] Fix nama interface TerminalSessionClient (bug replace substring)
 - [ ] Verifikasi CI jvm-tests setelah fix
+- [ ] Verifikasi CI hijau: module_gate, telemetry_gate, jvm-tests (emulator + view)

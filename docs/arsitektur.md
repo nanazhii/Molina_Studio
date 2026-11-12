@@ -26,3 +26,9 @@ Satu peran per modul. Dilarang menjadi "god module".
 ## Modul yang direncanakan (belum dibuat)
 - `player-mpv`: implementasi `MolinaPlayerSession` di atas `MPVLib`.
 - `terminal-proot`: lingkungan Debian PRoot dan manajemen proses.
+
+## Dependensi antar-engine
+
+- `terminal-view` dan `terminal-core` boleh bergantung ke `terminal-emulator` (tipe emulator dan kontrak `MolinaTerminalSession`).
+- `terminal-view` dan `terminal-emulator` tidak boleh bergantung ke `terminal-core`; arah: view -> emulator <- core.
+- `terminal` (feature) boleh bergantung ke `terminal-core` dan `terminal-view`.

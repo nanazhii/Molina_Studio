@@ -4,7 +4,7 @@
 Lapisan: app > feature > (api, engine) > core. Aturan:
 - core   : hanya core lain.
 - api    : hanya core (kontrak murni, tanpa implementasi).
-- engine : core + api miliknya.
+- engine : core + api miliknya + engine miliknya (terminal-core dan terminal-view -> terminal-emulator).
 - feature: core + api miliknya + engine miliknya (sementara, sampai wiring lewat app).
 - app    : bebas.
 """
@@ -15,7 +15,10 @@ API = {"player-api", "terminal-api"}
 ENGINE = {"mpv-native", "terminal-core", "terminal-emulator", "terminal-view"}
 OWN_API = {"cinema": {"player-api"}, "terminal": {"terminal-api"},
            "mpv-native": {"player-api"}, "terminal-core": {"terminal-api"}}
-OWN_ENGINE = {"cinema": {"mpv-native"}, "terminal": {"terminal-core"}}
+OWN_ENGINE = {"cinema": {"mpv-native"},
+              "terminal": {"terminal-core", "terminal-view"},
+              "terminal-core": {"terminal-emulator"},
+              "terminal-view": {"terminal-emulator"}}
 PAT = re.compile(r'(?:api|implementation|compileOnly|runtimeOnly)\(project\(":([\w-]+)"\)\)')
 
 def kind(n):
