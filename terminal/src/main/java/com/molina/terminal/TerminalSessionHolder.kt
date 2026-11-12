@@ -20,10 +20,20 @@ internal class TerminalSessionHolder : ViewModel() {
     /** Ukuran font dalam piksel; 0 berarti belum diatur. Bertahan antar-fragment. */
     var textSizePx: Int = 0
 
+    /** Modifier Ctrl/Alt virtual; bertahan antar-fragment. */
+    val modifiers = TerminalModifiers()
+
     fun ensureSession(factory: TerminalSessionFactory): PtyTerminalSession {
         val current = session
         if (current != null && !finished) return current
         current?.close()
+        finished = false
+        return factory.create(client).also { session = it }
+    }
+
+    /** Matikan sesi sekarang dan buat sesi baru (dipakai tombol Mulai ulang sesi). */
+    fun restart(factory: TerminalSessionFactory): PtyTerminalSession {
+        session?.close()
         finished = false
         return factory.create(client).also { session = it }
     }

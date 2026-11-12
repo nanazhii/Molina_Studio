@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-patch9 -->
+<resources>
+    <string name="terminal_copy_done">Seluruh teks terminal disalin</string>
+    <string name="terminal_copy_empty">Tidak ada teks untuk disalin</string>
+    <string name="terminal_restart_session">Mulai ulang sesi</string>
+</resources>

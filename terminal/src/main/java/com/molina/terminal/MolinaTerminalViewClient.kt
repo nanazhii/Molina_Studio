@@ -3,6 +3,7 @@ package com.molina.terminal
 
 import android.content.Context
 import android.util.TypedValue
+import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.inputmethod.InputMethodManager
@@ -40,12 +41,16 @@ internal class MolinaTerminalViewClient(
     override fun onKeyUp(keyCode: Int, e: KeyEvent?): Boolean = false
     override fun onLongPress(event: MotionEvent?): Boolean = false
 
-    override fun readControlKey(): Boolean = false
-    override fun readAltKey(): Boolean = false
+    override fun readControlKey(): Boolean = holder.modifiers.ctrl
+    override fun readAltKey(): Boolean = holder.modifiers.alt
     override fun readShiftKey(): Boolean = false
     override fun readFnKey(): Boolean = false
 
-    override fun onCodePoint(codePoint: Int, ctrlDown: Boolean, session: ViewSession?): Boolean = false
+    override fun onCodePoint(codePoint: Int, ctrlDown: Boolean, session: ViewSession?): Boolean {
+        if (ctrlDown || holder.modifiers.ctrl) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        holder.modifiers.consumeOneShot()
+        return false
+    }
     override fun onEmulatorSet() {
         view.invalidate()
     }
