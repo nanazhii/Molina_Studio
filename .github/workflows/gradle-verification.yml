@@ -1,4 +1,4 @@
-name: Gradle verification (generate)
+name: Verifikasi Gradle (buat metadata)
 
 # Manual: membuat gradle/verification-metadata.xml (hash SHA-256 tiap dependensi dan plugin).
 # Unduh artefaknya, taruh di gradle/verification-metadata.xml, commit. Setelah itu Gradle
@@ -22,10 +22,12 @@ jobs:
         with:
           gradle-version: 8.10.2
       - name: Pustaka native mpv (terverifikasi SHA-256)
+        if: hashFiles('scripts/fetch_native.sh') != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/fetch_native.sh
       - name: Pastikan NDK sesuai pin
+        if: hashFiles('scripts/ensure_ndk.sh') != ''
         run: bash scripts/ensure_ndk.sh
       - name: Tulis metadata verifikasi
         run: gradle --write-verification-metadata sha256 :app:assembleRelease --stacktrace

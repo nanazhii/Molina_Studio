@@ -1,4 +1,4 @@
-name: Native mpv (Molina Cinema 5a)
+name: Native mpv (arm64)
 
 on:
   workflow_dispatch:
@@ -14,6 +14,12 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
+      - name: Prasyarat skrip native
+        run: |
+          if [ ! -f scripts/native_mpv.sh ]; then
+            echo "::error::scripts/native_mpv.sh belum ada di Molina_Studio; pipeline native mpv belum dibangun."
+            exit 1
+          fi
       - name: Paket build
         run: |
           sudo apt-get update
