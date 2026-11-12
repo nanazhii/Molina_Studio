@@ -6,3 +6,4 @@
 - Package: `com.molina.*`.
 - Log tidak mencatat isi input/output terminal maupun path/query penuh media.
 - Package pemutar (mpv-native): `com.molina.cinema`; namespace Gradle-nya `com.molina.cinema.mpv` agar tidak bentrok dengan modul `:cinema`. Tag log tetap `Molina/mpv/<id>`.
+- Application ID: `com.molina` (namespace Gradle modul `:app` tetap `com.molina.studio`). Alasan di README.

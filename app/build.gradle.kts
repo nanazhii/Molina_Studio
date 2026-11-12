@@ -6,7 +6,7 @@ android {
     namespace = "com.molina.studio"
     compileSdk = 35
     defaultConfig {
-        applicationId = "com.molina.studio"
+        applicationId = "com.molina"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
