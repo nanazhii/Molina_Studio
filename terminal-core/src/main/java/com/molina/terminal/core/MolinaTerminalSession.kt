@@ -15,7 +15,7 @@ sealed interface SessionEvent {
 }
 
 /** Kontrak sesi terminal. UI hanya bergantung pada antarmuka ini. */
-interface TerminalSession {
+interface MolinaTerminalSession {
     /** Flow dingin: satu kolektor per sesi. Selesai setelah proses berakhir. */
     val events: Flow<SessionEvent>
     fun write(input: String)

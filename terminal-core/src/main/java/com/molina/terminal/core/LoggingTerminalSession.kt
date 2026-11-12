@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.onEach
  * Isi output/input TIDAK dicatat (bisa memuat kata sandi), hanya ukurannya.
  */
 class LoggingTerminalSession(
-    private val delegate: TerminalSession,
+    private val delegate: MolinaTerminalSession,
     sessionId: String,
     private val logger: MolinaLogger = MolinaLog.logger,
-) : TerminalSession by delegate {
+) : MolinaTerminalSession by delegate {
 
     private val tag = MolinaLogger.tag("term", sessionId)
 

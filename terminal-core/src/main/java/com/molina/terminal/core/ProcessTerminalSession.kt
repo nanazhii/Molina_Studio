@@ -10,9 +10,9 @@ import kotlinx.coroutines.launch
 
 /**
  * Implementasi awal berbasis ProcessBuilder (tanpa PTY).
- * Diganti/ditambah implementasi PTY (JNI) tanpa mengubah antarmuka TerminalSession.
+ * Diganti/ditambah implementasi PTY (JNI) tanpa mengubah antarmuka MolinaTerminalSession.
  */
-class ProcessTerminalSession(private val config: SessionConfig) : TerminalSession {
+class ProcessTerminalSession(private val config: SessionConfig) : MolinaTerminalSession {
 
     @Volatile
     private var process: Process? = null
