@@ -11,7 +11,7 @@ dapat diadaptasi ke repo ini. Dicatat per 2026-11-12.
 | mpv | bcde6b93cca4 | GPLv2+ (LGPLv2.1+ bila dibangun dengan -Dgpl=false) | Belum ada berkas diadaptasi |
 | mpv-android | ebf1b3f0cbe9 | MIT | MPVLib.kt (mpv-native, hanya package diganti). Build native memakai sumber upstream + patch JNI/FFmpeg lewat scripts/native_mpv.sh |
 | NewPipe | 9486b0148af8 | GPLv3 | Belum ada berkas diadaptasi |
-| termux-app | 8629e632fcb9 | GPLv3-only (terminal-emulator dan terminal-view: Apache 2.0; lihat pengecualian upstream) | Belum ada berkas diadaptasi |
+| termux-app | 8629e632fcb9 | GPLv3-only; bagian turunan Android-Terminal-Emulator berlisensi Apache 2.0 (README upstream hanya menunjuk terminal-emulator dan terminal-view, berkas tanpa header lisensi, jadi diperlakukan GPLv3-only) | terminal-emulator (lihat bagian Berkas adaptasi) |
 | proot-distro | f8abdd9957f8 | GPLv3 | Belum ada berkas diadaptasi |
 | Material Files | 93c333960aa8 | GPLv3 | Belum ada berkas diadaptasi |
 | material-components-android | 66b0eeb53afe | Apache 2.0 | Dipakai sebagai dependensi dan referensi |
@@ -43,3 +43,10 @@ commit terakhir SEBELUM waktu commit mpv-android yang dipin (2026-11-08T14:12:38
 Karena itu commit mpv yang DIBANGUN (8bc468896ec7) berbeda dari commit referensi di tabel di atas
 (bcde6b93cca4, HEAD saat repo ini disiapkan). Tabel = acuan baca; pins.env = yang benar-benar dikompilasi.
 FFmpeg n9.0.2 (946fcce07b6d). FreeType dipin ke tag VER-2-15-0; SHA dicatat di BUILD-INFO.txt.
+
+## Berkas adaptasi: termux-app
+
+Sumber: terminal-emulator/src/main/java/com/termux/terminal @ 8629e632fcb9 -> modul `terminal-emulator` (package com.molina.terminal.emulator).
+Berkas: AndroidUtils.java, ByteQueue.java, ITermImage.java, KeyHandler.java, Logger.java, TerminalBitmap.java, TerminalBuffer.java, TerminalColorScheme.java, TerminalColors.java, TerminalEmulator.java, TerminalOutput.java, TerminalRow.java, TerminalSessionClient.java, TerminalSixel.java, TextStyle.java, WcWidth.java.
+Uji unit upstream ikut diadaptasi (package sama). Tidak diadaptasi: TerminalSession.java dan JNI.java (diganti terminal-core dan terminal-pty), jni/termux.c (-> terminal-pty).
+TerminalSessionClient: tipe TerminalSession diganti TerminalOutput.

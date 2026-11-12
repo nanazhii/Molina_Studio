@@ -25,3 +25,8 @@
 - [ ] Seragamkan namespace core-log -> com.molina.core.log
 - [ ] Pecah MainActivity (navigator + bootstrap storage)
 - [ ] Buat player-mpv dan terminal-proot saat kodenya mulai ditulis
+- [x] CI hijau untuk pemecahan modul + tema (patch 1-3)
+- [x] Modul terminal-emulator (adaptasi termux-app 8629e632fcb9; 16 berkas + 19 uji)
+- [x] provenance.md dikoreksi: berkas upstream diperlakukan GPLv3-only
+- [ ] Verifikasi CI: jvm-tests (:terminal-emulator:testDebugUnitTest)
+- [ ] terminal-view, terminal-pty (JNI), terminal-core wiring, terminal-proot
