@@ -10,7 +10,7 @@ import androidx.fragment.app.Fragment
 class CinemaFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
         TextView(requireContext()).apply {
-            text = "Molina Cinema\nmpv: " + com.molina.mpv.MpvNative.isLoaded
+            text = "Molina Cinema\nmpv: " + MpvNative.isLoaded
             textSize = 24f
             setPadding(48, 96, 48, 48)
         }

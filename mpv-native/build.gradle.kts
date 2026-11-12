@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 android {
-    namespace = "com.molina.mpv"
+    namespace = "com.molina.cinema.mpv"
     compileSdk = 35
     defaultConfig {
         minSdk = 26

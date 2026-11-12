@@ -9,7 +9,9 @@ object MolinaLogSetup {
     /** Panggil sekali di Application.onCreate(). */
     fun init(context: Context) {
         val dir = resolveDir(context)
+        val previous = MolinaLog.logger
         MolinaLog.install(MolinaLogger(listOf(AndroidLogSink(), FileLogSink(dir))))
+        previous.close()
         MolinaLog.logger.i(MolinaLogger.tag("core"), "Logger aktif, file log: ${dir.absolutePath}")
     }
 

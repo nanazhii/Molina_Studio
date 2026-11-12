@@ -22,6 +22,7 @@ android {
 dependencies {
     implementation(project(":core-ui"))
     implementation(project(":core-log"))
+    implementation(project(":core-storage"))
     implementation(project(":cinema"))
     implementation(project(":files"))
     implementation(project(":terminal"))

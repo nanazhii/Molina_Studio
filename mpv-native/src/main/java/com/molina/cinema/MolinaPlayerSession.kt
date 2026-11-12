@@ -1,4 +1,4 @@
-package com.molina.mpv
+package com.molina.cinema
 
 import kotlinx.coroutines.flow.Flow
 

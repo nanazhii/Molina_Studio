@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/nav_mpv"
+    <item android:id="@+id/nav_cinema"
         android:icon="@android:drawable/ic_media_play"
-        android:title="MPV" />
+        android:title="Cinema" />
     <item android:id="@+id/nav_files"
         android:icon="@android:drawable/ic_menu_agenda"
         android:title="Berkas" />

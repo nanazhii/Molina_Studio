@@ -1,4 +1,4 @@
-package com.molina.mpv
+package com.molina.cinema
 
 import com.molina.log.MolinaLog
 import com.molina.log.MolinaLogger
