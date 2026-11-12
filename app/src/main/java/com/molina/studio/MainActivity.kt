@@ -19,9 +19,15 @@ import com.molina.log.MolinaLogSetup
 import com.molina.log.MolinaLogger
 import com.molina.settings.SettingsFragment
 import com.molina.terminal.TerminalFragment
+import com.molina.terminal.TerminalSessionFactory
+import com.molina.terminal.TerminalSessionFactoryOwner
 import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner {
+    override val terminalSessionFactory: TerminalSessionFactory by lazy {
+        createTerminalSessionFactory(applicationContext)
+    }
+
     private val logTag = MolinaLogger.tag("core")
 
     private val storagePermission =

@@ -26,5 +26,6 @@ dependencies {
     implementation(project(":cinema"))
     implementation(project(":files"))
     implementation(project(":terminal"))
+    implementation(project(":terminal-core"))
     implementation(project(":settings"))
 }

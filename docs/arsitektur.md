@@ -27,6 +27,12 @@ Satu peran per modul. Dilarang menjadi "god module".
 - `player-mpv`: implementasi `MolinaPlayerSession` di atas `MPVLib`.
 - `terminal-proot`: lingkungan Debian PRoot dan manajemen proses.
 
+## Injeksi sesi terminal
+
+- `terminal` mendefinisikan `TerminalSessionFactory` dan `TerminalSessionFactoryOwner`; `app` (MainActivity + `TerminalWiring.kt`) menyuplai pabrik yang membuat `PtyTerminalSession`.
+- Sesi hidup di `TerminalSessionHolder` (ViewModel Activity): pindah tab dan rotasi tidak mematikan shell; sesi selesai diganti baru saat tab dibuka lagi.
+- Sementara tipe kembalian pabrik masih `PtyTerminalSession` (dependensi `terminal` -> `terminal-core` belum dilepas).
+
 ## Dependensi antar-engine
 
 - `terminal-view` dan `terminal-core` boleh bergantung ke `terminal-emulator` (tipe emulator dan kontrak `MolinaTerminalSession`).
