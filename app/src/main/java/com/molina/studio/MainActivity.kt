@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val nav = findViewById<BottomNavigationView>(R.id.bottom_nav)
+        KeyboardNavHider.install(this, nav)
         nav.setOnItemSelectedListener { item ->
             val fragment: Fragment = when (item.itemId) {
                 R.id.nav_cinema -> CinemaFragment()
