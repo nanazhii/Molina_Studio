@@ -50,3 +50,9 @@ Sumber: terminal-emulator/src/main/java/com/termux/terminal @ 8629e632fcb9 -> mo
 Berkas: AndroidUtils.java, ByteQueue.java, ITermImage.java, KeyHandler.java, Logger.java, TerminalBitmap.java, TerminalBuffer.java, TerminalColorScheme.java, TerminalColors.java, TerminalEmulator.java, TerminalOutput.java, TerminalRow.java, TerminalSessionClient.java, TerminalSixel.java, TextStyle.java, WcWidth.java.
 Uji unit upstream ikut diadaptasi (package sama). Tidak diadaptasi: TerminalSession.java dan JNI.java (diganti terminal-core dan terminal-pty), jni/termux.c (-> terminal-pty).
 TerminalSessionClient: tipe TerminalSession diganti TerminalOutput.
+
+## Berkas adaptasi: termux-app (terminal-view)
+
+Sumber: terminal-view/src/main @ 8629e632fcb9 -> modul `terminal-view` (package com.molina.terminal.view).
+Berkas Java: GestureAndScaleRecognizer.java, TerminalRenderer.java, TerminalView.java, TerminalViewClient.java, PopupWindowCompatGingerbread.java, CursorController.java, TextSelectionCursorController.java, TextSelectionHandleView.java; drawable handle seleksi (warna diganti teal); strings.
+Perubahan: TerminalSession -> MolinaTerminalSession (interface baru di terminal-emulator).

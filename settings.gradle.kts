@@ -7,3 +7,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Molina_Studio"
 include(":app", ":files", ":settings", ":core-common", ":core-storage", ":core-log", ":terminal", ":terminal-core", ":cinema", ":core-ui", ":mpv-native", ":player-api", ":terminal-api", ":terminal-emulator")
+include(":terminal-view")
