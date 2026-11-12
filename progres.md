@@ -1,0 +1,27 @@
+# Progres Molina_Studio
+
+## P3 pipeline native mpv (2026-11-12)
+- [x] Clone referensi ke ~/ref: Molina_Studio (resmi), Molina-Studio (lama, hanya baca), mpv-android, mpv, termux-app, MaterialFiles
+- [x] native/pins.env + native/pins.sha256 dibuat untuk mpv-android ebf1b3f (NDK r30 30.0.16248370, FFmpeg n9.0.2, harfbuzz 15.0.0)
+- [x] scripts: ensure_ndk.sh, fetch_native.sh, native_mpv.sh, native_wget.sh, native_audit.sh, ffmpeg_components_audit.sh
+- [x] mpv-native: MPVLib.kt (JNI com.molina.cinema.MPVLib), MpvNative memuat libmpv + libplayer
+- [x] native-mpv.yml: cache _native_out per-hash pin + skrip build, verifikasi SHA256SUMS saat cache hit, input fresh
+- [x] telemetry_gate.py: host github.com dan dl.google.com hanya untuk berkas build-time native (BUILD_FILES)
+- [ ] Verifikasi: jalankan Actions > Native mpv (arm64) (belum dijalankan; build penuh pertama = tanpa cache)
+- [ ] Setelah sukses: isi FREETYPE_SHA di native/pins.env dari BUILD-INFO.txt
+- [ ] Setelah sukses: isi NATIVE_TAG dan NATIVE_SHA256 di native/prebuilt.env dari ringkasan run
+- [ ] Berikutnya: P4 sesi pemutar (implementasi MolinaPlayerSession di atas MPVLib)
+
+## Rename applicationId (2026-11-12)
+- [x] applicationId com.molina.studio -> com.molina (bentrok dengan APK repo lama; tidak bisa dipasang)
+- [x] README dan docs/penamaan.md dicatat; namespace dan JNI tidak berubah
+- [ ] Verifikasi: Build debug di Actions, copot APK lama, pasang APK baru
+- [x] Pecah modul: player-api dan terminal-api (kontrak dipisah dari engine)
+- [x] scripts/module_gate.py + dipasang di build.yml dan jvm-tests.yml
+- [x] Token tema core-ui (warna, dimens, styles, tema per tab, molinaThemed)
+- [x] docs/arsitektur.md dan docs/tema.md
+- [ ] Verifikasi build di GitHub Actions
+- [ ] Terapkan molinaThemed di Cinema/Terminal fragment
+- [ ] Seragamkan namespace core-log -> com.molina.core.log
+- [ ] Pecah MainActivity (navigator + bootstrap storage)
+- [ ] Buat player-mpv dan terminal-proot saat kodenya mulai ditulis

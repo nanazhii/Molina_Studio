@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="ShapeAppearance.Molina.Medium" parent="ShapeAppearance.Material3.Corner.Medium">
+        <item name="cornerSize">@dimen/molina_radius</item>
+    </style>
+
+    <style name="TextAppearance.Molina.Mono" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:fontFamily">monospace</item>
+    </style>
+
+    <style name="Widget.Molina.BottomNav" parent="Widget.Material3.BottomNavigationView">
+        <item name="backgroundTint">@color/molina_surface</item>
+    </style>
+</resources>

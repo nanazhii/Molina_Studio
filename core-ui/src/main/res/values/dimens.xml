@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="molina_space_xs">4dp</dimen>
+    <dimen name="molina_space_sm">8dp</dimen>
+    <dimen name="molina_space_md">16dp</dimen>
+    <dimen name="molina_space_lg">24dp</dimen>
+    <dimen name="molina_space_xl">32dp</dimen>
+    <dimen name="molina_radius">12dp</dimen>
+</resources>

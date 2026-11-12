@@ -25,6 +25,9 @@ jobs:
       - name: Gerbang telemetri dan URL
         if: hashFiles('scripts/telemetry_gate.py') != ''
         run: python3 scripts/telemetry_gate.py
+      - name: Gerbang batas modul
+        if: hashFiles('scripts/module_gate.py') != ''
+        run: python3 scripts/module_gate.py
       - name: Gerbang rahasia
         if: hashFiles('scripts/secret_gate.py') != ''
         run: python3 scripts/secret_gate.py

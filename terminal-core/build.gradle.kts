@@ -15,5 +15,6 @@ android {
 dependencies {
     api(libs.kotlinx.coroutines.android)
     api(project(":core-log"))
+    api(project(":terminal-api"))
     testImplementation(libs.junit)
 }

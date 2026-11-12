@@ -16,5 +16,6 @@ dependencies {
     implementation(project(":core-ui"))
     implementation(project(":core-log"))
     implementation(project(":mpv-native"))
+    implementation(project(":player-api"))
     implementation(libs.kotlinx.coroutines.android)
 }

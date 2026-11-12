@@ -2,8 +2,17 @@
 <resources>
     <color name="molina_bg">#0E1114</color>
     <color name="molina_surface">#171B20</color>
+    <color name="molina_surface_variant">#1F252B</color>
     <color name="molina_on_surface">#E6EAEE</color>
+    <color name="molina_on_surface_variant">#A9B3BD</color>
+    <color name="molina_outline">#333B44</color>
+    <color name="molina_error">#FF6B6B</color>
     <color name="molina_terminal_accent">#00BFA5</color>
+    <color name="molina_on_terminal_accent">#00201B</color>
+    <color name="molina_terminal_container">#003D35</color>
+    <color name="molina_cinema_bg">#07090B</color>
     <color name="molina_cinema_accent">#FFB300</color>
+    <color name="molina_on_cinema_accent">#261A00</color>
+    <color name="molina_cinema_container">#3A2A00</color>
     <color name="molina_cinema_secondary">#E53935</color>
 </resources>

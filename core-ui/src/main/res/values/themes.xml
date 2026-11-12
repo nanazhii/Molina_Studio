@@ -2,20 +2,41 @@
 <resources>
     <style name="Theme.Molina" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:windowBackground">@color/molina_bg</item>
-        <item name="colorSurface">@color/molina_surface</item>
-        <item name="colorOnSurface">@color/molina_on_surface</item>
         <item name="android:statusBarColor">@color/molina_bg</item>
         <item name="android:navigationBarColor">@color/molina_bg</item>
+        <item name="colorSurface">@color/molina_surface</item>
+        <item name="colorSurfaceVariant">@color/molina_surface_variant</item>
+        <item name="colorOnSurface">@color/molina_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/molina_on_surface_variant</item>
+        <item name="colorOutline">@color/molina_outline</item>
+        <item name="colorError">@color/molina_error</item>
+        <item name="shapeAppearanceCornerMedium">@style/ShapeAppearance.Molina.Medium</item>
+        <item name="bottomNavigationStyle">@style/Widget.Molina.BottomNav</item>
     </style>
+
     <style name="Theme.Molina.Terminal" parent="Theme.Molina">
         <item name="colorPrimary">@color/molina_terminal_accent</item>
+        <item name="colorOnPrimary">@color/molina_on_terminal_accent</item>
+        <item name="colorPrimaryContainer">@color/molina_terminal_container</item>
+        <item name="colorOnPrimaryContainer">@color/molina_terminal_accent</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.Molina.Mono</item>
     </style>
+
     <style name="Theme.Molina.Cinema" parent="Theme.Molina">
+        <item name="android:windowBackground">@color/molina_cinema_bg</item>
         <item name="colorPrimary">@color/molina_cinema_accent</item>
+        <item name="colorOnPrimary">@color/molina_on_cinema_accent</item>
+        <item name="colorPrimaryContainer">@color/molina_cinema_container</item>
+        <item name="colorOnPrimaryContainer">@color/molina_cinema_accent</item>
         <item name="colorSecondary">@color/molina_cinema_secondary</item>
     </style>
+
     <style name="Theme.Molina.App" parent="Theme.Molina">
         <item name="colorPrimary">@color/molina_terminal_accent</item>
+        <item name="colorOnPrimary">@color/molina_on_terminal_accent</item>
         <item name="colorSecondary">@color/molina_cinema_accent</item>
+        <item name="colorOnSecondary">@color/molina_on_cinema_accent</item>
+        <item name="colorSecondaryContainer">@color/molina_cinema_container</item>
+        <item name="colorOnSecondaryContainer">@color/molina_cinema_accent</item>
     </style>
 </resources>
