@@ -14,4 +14,7 @@ android {
 }
 dependencies {
     implementation(project(":core-ui"))
+    implementation(project(":core-log"))
+    implementation(project(":core-storage"))
+    testImplementation(libs.junit)
 }

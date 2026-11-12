@@ -20,4 +20,4 @@ jobs:
         with:
           gradle-version: 8.10.2
       - name: Uji unit modul
-        run: gradle :core-common:testDebugUnitTest :core-storage:testDebugUnitTest :core-log:testDebugUnitTest :terminal-core:testDebugUnitTest :mpv-native:testDebugUnitTest --stacktrace
+        run: gradle :core-common:testDebugUnitTest :core-storage:testDebugUnitTest :core-log:testDebugUnitTest :terminal-core:testDebugUnitTest :mpv-native:testDebugUnitTest :files:testDebugUnitTest --stacktrace
