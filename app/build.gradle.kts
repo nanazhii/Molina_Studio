@@ -13,6 +13,29 @@ android {
         versionName = "0.1.0"
         ndk { abiFilters += "arm64-v8a" }
     }
+    signingConfigs {
+        create("molina") {
+            val ksFile = System.getenv("MOLINA_KEYSTORE_FILE")
+            val ksPass = System.getenv("MOLINA_KEYSTORE_PASSWORD")
+            if (!ksFile.isNullOrEmpty() && !ksPass.isNullOrEmpty()) {
+                storeFile = file(ksFile)
+                storeType = "pkcs12"
+                storePassword = ksPass
+                keyAlias = "molina"
+                keyPassword = ksPass
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            val cfg = signingConfigs.getByName("molina")
+            if (cfg.storeFile != null) signingConfig = cfg
+        }
+        release {
+            val cfg = signingConfigs.getByName("molina")
+            if (cfg.storeFile != null) signingConfig = cfg
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

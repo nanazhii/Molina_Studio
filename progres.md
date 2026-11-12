@@ -40,3 +40,5 @@
 - [x] Patch 9c: menu hamburger scrollable (PopupWindow+ScrollView), tekan lama membuka menu
 - [ ] Uji perangkat: menu di mode keyboard aktif (ruang sempit), scroll, Mulai ulang sesi
 - [ ] Patch 10: terminal-proot (menunggu keputusan: rootfs diunduh vs dibundel)
+- [x] Debug memakai kunci tetap Molina (gradle debug signingConfig + build.yml untuk kedua varian)
+- [ ] Verifikasi: pasang debug di atas debug tanpa uninstall
