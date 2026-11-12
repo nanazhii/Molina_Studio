@@ -8,7 +8,7 @@ package com.molina.terminal.proot
 object RootfsPin {
     const val DEBIAN_VERSION = "13.7"
     const val URL =
-        "https://raw.githubusercontent.com/debuerreotype/docker-debian-artifacts/" +
+        "https://raw.githubusercontent.com/debuerreotype/docker-debian-artifacts/" + // gate:allow rootfs Debian resmi, dipin SHA-256
             "3b26c3995c7fae47d95ba678632a3520e97054f7/trixie/slim/oci/blobs/rootfs.tar.gz"
     const val SHA256 = "acd43e9bebc37bc4ba7a5f47bd7598913337803e53d468f37d940f11f5d5f1ef"
     const val SIZE_BYTES = 30_214_037L
