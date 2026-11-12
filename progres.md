@@ -30,3 +30,5 @@
 - [x] provenance.md dikoreksi: berkas upstream diperlakukan GPLv3-only
 - [ ] Verifikasi CI: jvm-tests (:terminal-emulator:testDebugUnitTest)
 - [ ] terminal-view, terminal-pty (JNI), terminal-core wiring, terminal-proot
+- [x] Fix nama interface TerminalSessionClient (bug replace substring)
+- [ ] Verifikasi CI jvm-tests setelah fix
