@@ -193,7 +193,7 @@ public class OperatingSystemControlTest extends TerminalTestCase {
 		withTerminalSized(3, 3).enterString("\033]10;#ABCD00\007").assertColor(TextStyle.COLOR_INDEX_FOREGROUND, 0xFFABCD00);
 		assertEnteringStringGivesResponse("\033]10;?\007", "\033]10;rgb:abab/cdcd/0000\007");
 		// Same as above but with string terminator. xterm uses the same string terminator in the response, which
-		// e.g. script posted at http://superuser.com/questions/157563/programmatic-access-to-current-xterm-background-color // gate:allow atribusi upstream
+		// e.g. script posted at http://superuser.com/questions/157563/programmatic-access-to-current-xterm-background-color // gate:allow referensi teknis
 		// relies on:
 		assertEnteringStringGivesResponse("\033]10;?\033\\", "\033]10;rgb:abab/cdcd/0000\033\\");
 	}

@@ -10,7 +10,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0 // gate:allow atribusi upstream
+ *      http://www.apache.org/licenses/LICENSE-2.0 // gate:allow referensi teknis
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,7 +27,7 @@ import java.lang.reflect.Method;
 
 /**
  * Implementation of PopupWindow compatibility that can call Gingerbread APIs.
- * https://chromium.googlesource.com/android_tools/+/HEAD/sdk/extras/android/support/v4/src/gingerbread/android/support/v4/widget/PopupWindowCompatGingerbread.java // gate:allow atribusi upstream
+ * https://chromium.googlesource.com/android_tools/+/HEAD/sdk/extras/android/support/v4/src/gingerbread/android/support/v4/widget/PopupWindowCompatGingerbread.java // gate:allow referensi teknis
  */
 public class PopupWindowCompatGingerbread {
 

@@ -102,7 +102,7 @@ public class CursorAndScreenTest extends TerminalTestCase {
 		withTerminalSized(5, 2).enterString("n枝ce").enterString("\033[G\033[4ha").assertLinesAre("an枝c", "     ");
 	}
 
-	/** HPA—Horizontal Position Absolute (http://www.vt100.net/docs/vt510-rm/HPA) */ // gate:allow atribusi upstream
+	/** HPA—Horizontal Position Absolute (http://www.vt100.net/docs/vt510-rm/HPA) */ // gate:allow referensi teknis
 	public void testCursorHorizontalPositionAbsolute() {
 		withTerminalSized(4, 4).enterString("ABC\033[`").assertCursorAt(0, 0);
 		enterString("\033[1`").assertCursorAt(0, 0).enterString("\033[2`").assertCursorAt(0, 1);
@@ -156,8 +156,8 @@ public class CursorAndScreenTest extends TerminalTestCase {
 				assertCursorAt(i, j);
 				// Device Status Report (DSR):
 				assertEnteringStringGivesResponse("\033[6n", "\033[" + (i + 1) + ";" + (j + 1) + "R");
-				// DECXCPR — Extended Cursor Position. Note that http://www.vt100.net/docs/vt510-rm/DECXCPR says // gate:allow atribusi upstream
-				// the response is "${CSI}${LINE};${COLUMN};${PAGE}R" while xterm (http://invisible-island.net/xterm/ctlseqs/ctlseqs.html) // gate:allow atribusi upstream
+				// DECXCPR — Extended Cursor Position. Note that http://www.vt100.net/docs/vt510-rm/DECXCPR says // gate:allow referensi teknis
+				// the response is "${CSI}${LINE};${COLUMN};${PAGE}R" while xterm (http://invisible-island.net/xterm/ctlseqs/ctlseqs.html) // gate:allow referensi teknis
 				// drops the question mark. Expect xterm behaviour here.
 				assertEnteringStringGivesResponse("\033[?6n", "\033[?" + (i + 1) + ";" + (j + 1) + ";1R");
 			}
@@ -182,7 +182,7 @@ public class CursorAndScreenTest extends TerminalTestCase {
 	 * Test interactions between the cursor overflow bit and various escape sequences.
 	 * <p/>
 	 * Adapted from hterm:
-	 * https://chromium.googlesource.com/chromiumos/platform/assets/+/2337afa5c063127d5ce40ec7fec9b602d096df86%5E%21/#F2 // gate:allow atribusi upstream
+	 * https://chromium.googlesource.com/chromiumos/platform/assets/+/2337afa5c063127d5ce40ec7fec9b602d096df86%5E%21/#F2 // gate:allow referensi teknis
 	 */
 	public void testClearingOfAutowrap() {
 		// Fill a row with the last hyphen wrong, then run a command that

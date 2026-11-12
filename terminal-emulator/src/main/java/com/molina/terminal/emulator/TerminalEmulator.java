@@ -17,19 +17,19 @@ import java.util.Stack;
  * Renders text into a screen. Contains all the terminal-specific knowledge and state. Emulates a subset of the X Window
  * System xterm terminal, which in turn is an emulator for a subset of the Digital Equipment Corporation vt100 terminal.
  * <p>
- * See also 7-bit Code Table defined at https://vt100.net/docs/vt220-rm/chapter2.html#S2.3.1 // gate:allow atribusi upstream
+ * See also 7-bit Code Table defined at https://vt100.net/docs/vt220-rm/chapter2.html#S2.3.1 // gate:allow referensi teknis
  * <p>
  * References:
  * <ul>
- * <li>http://invisible-island.net/xterm/ctlseqs/ctlseqs.html</li> // gate:allow atribusi upstream
- * <li>http://en.wikipedia.org/wiki/ANSI_escape_code</li> // gate:allow atribusi upstream
- * <li>http://man.he.net/man4/console_codes</li> // gate:allow atribusi upstream
- * <li>http://bazaar.launchpad.net/~leonerd/libvterm/trunk/view/head:/src/state.c</li> // gate:allow atribusi upstream
- * <li>http://www.columbia.edu/~kermit/k95manual/iso2022.html</li> // gate:allow atribusi upstream
- * <li>http://www.vt100.net/docs/vt510-rm/chapter4</li> // gate:allow atribusi upstream
- * <li>http://en.wikipedia.org/wiki/ISO/IEC_2022 - for 7-bit and 8-bit GL GR explanation</li> // gate:allow atribusi upstream
- * <li>http://bjh21.me.uk/all-escapes/all-escapes.txt - extensive!</li> // gate:allow atribusi upstream
- * <li>http://woldlab.caltech.edu/~diane/kde4.10/workingdir/kubuntu/konsole/doc/developer/old-documents/VT100/techref. // gate:allow atribusi upstream
+ * <li>http://invisible-island.net/xterm/ctlseqs/ctlseqs.html</li> // gate:allow referensi teknis
+ * <li>http://en.wikipedia.org/wiki/ANSI_escape_code</li> // gate:allow referensi teknis
+ * <li>http://man.he.net/man4/console_codes</li> // gate:allow referensi teknis
+ * <li>http://bazaar.launchpad.net/~leonerd/libvterm/trunk/view/head:/src/state.c</li> // gate:allow referensi teknis
+ * <li>http://www.columbia.edu/~kermit/k95manual/iso2022.html</li> // gate:allow referensi teknis
+ * <li>http://www.vt100.net/docs/vt510-rm/chapter4</li> // gate:allow referensi teknis
+ * <li>http://en.wikipedia.org/wiki/ISO/IEC_2022 - for 7-bit and 8-bit GL GR explanation</li> // gate:allow referensi teknis
+ * <li>http://bjh21.me.uk/all-escapes/all-escapes.txt - extensive!</li> // gate:allow referensi teknis
+ * <li>http://woldlab.caltech.edu/~diane/kde4.10/workingdir/kubuntu/konsole/doc/developer/old-documents/VT100/techref. // gate:allow referensi teknis
  * html - document for konsole - accessible!</li>
  * </ul>
  */
@@ -45,16 +45,16 @@ public final class TerminalEmulator {
     public static final int MOUSE_WHEELUP_BUTTON = 64;
     public static final int MOUSE_WHEELDOWN_BUTTON = 65;
 
-    /** Used for invalid data - http://en.wikipedia.org/wiki/Replacement_character#Replacement_character */ // gate:allow atribusi upstream
+    /** Used for invalid data - http://en.wikipedia.org/wiki/Replacement_character#Replacement_character */ // gate:allow referensi teknis
     public static final int UNICODE_REPLACEMENT_CHAR = 0xFFFD;
 
     /*
      * Escape sequences starting with an ESC character.
      *
-     * - https://vt100.net/docs/vt220-rm/chapter2.html#S2.5.1 // gate:allow atribusi upstream
-     * - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Controls-beginning-with-ESC // gate:allow atribusi upstream
-     * - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-C1-lparen-8-Bit-rparen-Control-Characters // gate:allow atribusi upstream
-     * - https://en.wikipedia.org/wiki/C0_and_C1_control_codes // gate:allow atribusi upstream
+     * - https://vt100.net/docs/vt220-rm/chapter2.html#S2.5.1 // gate:allow referensi teknis
+     * - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Controls-beginning-with-ESC // gate:allow referensi teknis
+     * - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-C1-lparen-8-Bit-rparen-Control-Characters // gate:allow referensi teknis
+     * - https://en.wikipedia.org/wiki/C0_and_C1_control_codes // gate:allow referensi teknis
      */
 
     /** Escape processing: Not currently in an escape sequence. */
@@ -106,7 +106,7 @@ public final class TerminalEmulator {
      * See also {@link #mIgnoreCrLfForOsc} to prevent printing of CR/LF characters for specific
      * `OSC` commands if required via {@link #setOscTypeVariables()}.
      * <p>
-     * - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands // gate:allow atribusi upstream
+     * - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands // gate:allow referensi teknis
      */
     private static final int ESC_OSC = 10;
     /** Escape processing: `ESC` received while receiving a {@link #ESC_OSC} command.  */
@@ -132,7 +132,7 @@ public final class TerminalEmulator {
      * See also {@link #mIsFastPathDcs} for enabling fast path for specific `DCS` commands if required.
      * <p>
      * <p>
-     * - https://vt100.net/docs/vt220-rm/chapter2.html#S2.5.3 // gate:allow atribusi upstream
+     * - https://vt100.net/docs/vt220-rm/chapter2.html#S2.5.3 // gate:allow referensi teknis
      */
     private static final int ESC_DCS = 13;
     /** Escape processing: CSI > */
@@ -167,7 +167,7 @@ public final class TerminalEmulator {
      * <p>
      * Currently, APC commands are only parsed, but ignored as none are supported.
      * <p>
-     * - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Application-Program-Command-functions // gate:allow atribusi upstream
+     * - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Application-Program-Command-functions // gate:allow referensi teknis
      */
     private static final int ESC_APC = 20;
     /** Escape processing: `ESC` received while receiving a {@link #ESC_APC} command.  */
@@ -184,7 +184,7 @@ public final class TerminalEmulator {
     private static final int DECSET_BIT_APPLICATION_CURSOR_KEYS = 1;
     private static final int DECSET_BIT_REVERSE_VIDEO = 1 << 1;
     /**
-     * http://www.vt100.net/docs/vt510-rm/DECOM: "When DECOM is set, the home cursor position is at the upper-left // gate:allow atribusi upstream
+     * http://www.vt100.net/docs/vt510-rm/DECOM: "When DECOM is set, the home cursor position is at the upper-left // gate:allow referensi teknis
      * corner of the screen, within the margins. The starting point for line numbers depends on the current top margin
      * setting. The cursor cannot move outside of the margins. When DECOM is reset, the home cursor position is at the
      * upper-left corner of the screen. The starting point for line numbers is independent of the margins. The cursor
@@ -192,7 +192,7 @@ public final class TerminalEmulator {
      */
     private static final int DECSET_BIT_ORIGIN_MODE = 1 << 2;
     /**
-     * http://www.vt100.net/docs/vt510-rm/DECAWM: "If the DECAWM function is set, then graphic characters received when // gate:allow atribusi upstream
+     * http://www.vt100.net/docs/vt510-rm/DECAWM: "If the DECAWM function is set, then graphic characters received when // gate:allow referensi teknis
      * the cursor is at the right border of the page appear at the beginning of the next line. Any text on the page
      * scrolls up if the cursor is at the end of the scrolling region. If the DECAWM function is reset, then graphic
      * characters received when the cursor is at the right border of the page replace characters already on the page."
@@ -211,9 +211,9 @@ public final class TerminalEmulator {
     private static final int DECSET_BIT_MOUSE_PROTOCOL_SGR = 1 << 9;
     /** DECSET 2004 - see {@link #paste(String)} */
     private static final int DECSET_BIT_BRACKETED_PASTE_MODE = 1 << 10;
-    /** Toggled with DECLRMM - http://www.vt100.net/docs/vt510-rm/DECLRMM */ // gate:allow atribusi upstream
+    /** Toggled with DECLRMM - http://www.vt100.net/docs/vt510-rm/DECLRMM */ // gate:allow referensi teknis
     private static final int DECSET_BIT_LEFTRIGHT_MARGIN_MODE = 1 << 11;
-    /** Not really DECSET bit... - http://www.vt100.net/docs/vt510-rm/DECSACE */ // gate:allow atribusi upstream
+    /** Not really DECSET bit... - http://www.vt100.net/docs/vt510-rm/DECSACE */ // gate:allow referensi teknis
     private static final int DECSET_BIT_RECTANGULAR_CHANGEATTRIBUTE = 1 << 12;
 
 
@@ -253,7 +253,7 @@ public final class TerminalEmulator {
      * The alternate screen buffer, exactly as large as the display and contains no additional saved lines (so that when
      * the alternate screen buffer is active, you cannot scroll back to view saved lines).
      * <p>
-     * See http://www.xfree86.org/current/ctlseqs.html#The%20Alternate%20Screen%20Buffer // gate:allow atribusi upstream
+     * See http://www.xfree86.org/current/ctlseqs.html#The%20Alternate%20Screen%20Buffer // gate:allow referensi teknis
      */
     final TerminalBuffer mAltBuffer;
     /** The current screen buffer, pointing at either {@link #mMainBuffer} or {@link #mAltBuffer}. */
@@ -370,7 +370,7 @@ public final class TerminalEmulator {
     private final SavedScreenState mSavedStateMain = new SavedScreenState();
     private final SavedScreenState mSavedStateAlt = new SavedScreenState();
 
-    /** http://www.vt100.net/docs/vt102-ug/table5-15.html */ // gate:allow atribusi upstream
+    /** http://www.vt100.net/docs/vt102-ug/table5-15.html */ // gate:allow referensi teknis
     private boolean mUseLineDrawingG0, mUseLineDrawingG1, mUseLineDrawingUsesG0 = true;
 
     /**
@@ -718,7 +718,7 @@ public final class TerminalEmulator {
                         // not used nowadays and increases the risk of messing up the terminal state
                         // on binary input. XTerm does not allow them in utf-8:
                         // "It is not possible to use a C1 control obtained from decoding the
-                        // UTF-8 text" - http://invisible-island.net/xterm/ctlseqs/ctlseqs.html // gate:allow atribusi upstream
+                        // UTF-8 text" - http://invisible-island.net/xterm/ctlseqs/ctlseqs.html // gate:allow referensi teknis
                     } else {
                         switch (Character.getType(codePoint)) {
                             case Character.UNASSIGNED:
@@ -733,7 +733,7 @@ public final class TerminalEmulator {
                 mUtf8Index = mUtf8ToFollow = 0;
                 emitCodePoint(UNICODE_REPLACEMENT_CHAR);
                 // The Unicode Standard Version 6.2 – Core Specification
-                // (http://www.unicode.org/versions/Unicode6.2.0/ch03.pdf): // gate:allow atribusi upstream
+                // (http://www.unicode.org/versions/Unicode6.2.0/ch03.pdf): // gate:allow referensi teknis
                 // "If the converter encounters an ill-formed UTF-8 code unit sequence which starts with a valid first
                 // byte, but which does not continue with valid successor bytes (see Table 3-7), it must not consume the
                 // successor bytes as part of the ill-formed subsequence
@@ -894,7 +894,7 @@ public final class TerminalEmulator {
                         doCsiUnsupportedParameterOrIntermediateByte(b);
                         break;
                     case ESC_CSI_EXCLAMATION:
-                        if (b == 'p') { // Soft terminal reset (DECSTR, http://vt100.net/docs/vt510-rm/DECSTR). // gate:allow atribusi upstream
+                        if (b == 'p') { // Soft terminal reset (DECSTR, http://vt100.net/docs/vt510-rm/DECSTR). // gate:allow referensi teknis
                             reset();
                         } else {
                             unknownSequence(b);
@@ -914,7 +914,7 @@ public final class TerminalEmulator {
                         int effectiveRightMargin = originMode ? mRightMargin : mColumns;
                         switch (b) {
                             case 'v': // ${CSI}${SRC_TOP}${SRC_LEFT}${SRC_BOTTOM}${SRC_RIGHT}${SRC_PAGE}${DST_TOP}${DST_LEFT}${DST_PAGE}$v"
-                                // Copy rectangular area (DECCRA - http://vt100.net/docs/vt510-rm/DECCRA): // gate:allow atribusi upstream
+                                // Copy rectangular area (DECCRA - http://vt100.net/docs/vt510-rm/DECCRA): // gate:allow referensi teknis
                                 // "If Pbs is greater than Pts, or Pls is greater than Prs, the terminal ignores DECCRA.
                                 // The coordinates of the rectangular area are affected by the setting of origin mode (DECOM).
                                 // DECCRA is not affected by the page margins.
@@ -937,11 +937,11 @@ public final class TerminalEmulator {
                                 mScreen.blockCopy(leftSource, topSource, widthToCopy, heightToCopy, destinationLeft, destionationTop);
                                 break;
                             case '{': // ${CSI}${TOP}${LEFT}${BOTTOM}${RIGHT}${"
-                                // Selective erase rectangular area (DECSERA - http://www.vt100.net/docs/vt510-rm/DECSERA). // gate:allow atribusi upstream
+                                // Selective erase rectangular area (DECSERA - http://www.vt100.net/docs/vt510-rm/DECSERA). // gate:allow referensi teknis
                             case 'x': // ${CSI}${CHAR};${TOP}${LEFT}${BOTTOM}${RIGHT}$x"
-                                // Fill rectangular area (DECFRA - http://www.vt100.net/docs/vt510-rm/DECFRA). // gate:allow atribusi upstream
+                                // Fill rectangular area (DECFRA - http://www.vt100.net/docs/vt510-rm/DECFRA). // gate:allow referensi teknis
                             case 'z': // ${CSI}$${TOP}${LEFT}${BOTTOM}${RIGHT}$z"
-                                // Erase rectangular area (DECERA - http://www.vt100.net/docs/vt510-rm/DECERA). // gate:allow atribusi upstream
+                                // Erase rectangular area (DECERA - http://www.vt100.net/docs/vt510-rm/DECERA). // gate:allow referensi teknis
                                 boolean erase = b != 'x';
                                 boolean selective = b == '{';
                                 // Only DECSERA keeps visual attributes, DECERA does not:
@@ -965,9 +965,9 @@ public final class TerminalEmulator {
                                 }
                                 break;
                             case 'r': // "${CSI}${TOP}${LEFT}${BOTTOM}${RIGHT}${ATTRIBUTES}$r"
-                                // Change attributes in rectangular area (DECCARA - http://vt100.net/docs/vt510-rm/DECCARA). // gate:allow atribusi upstream
+                                // Change attributes in rectangular area (DECCARA - http://vt100.net/docs/vt510-rm/DECCARA). // gate:allow referensi teknis
                             case 't': // "${CSI}${TOP}${LEFT}${BOTTOM}${RIGHT}${ATTRIBUTES}$t"
-                                // Reverse attributes in rectangular area (DECRARA - http://www.vt100.net/docs/vt510-rm/DECRARA). // gate:allow atribusi upstream
+                                // Reverse attributes in rectangular area (DECRARA - http://www.vt100.net/docs/vt510-rm/DECRARA). // gate:allow referensi teknis
                                 boolean reverse = b == 't';
                                 // FIXME: "coordinates of the rectangular area are affected by the setting of origin mode (DECOM)".
                                 int top = Math.min(getArg(0, 1, true) - 1, effectiveBottomMargin) + effectiveTopMargin;
@@ -1031,7 +1031,7 @@ public final class TerminalEmulator {
                         break;
                     case ESC_CSI_DOUBLE_QUOTE:
                         if (b == 'q') {
-                            // http://www.vt100.net/docs/vt510-rm/DECSCA // gate:allow atribusi upstream
+                            // http://www.vt100.net/docs/vt510-rm/DECSCA // gate:allow referensi teknis
                             int arg = getArg0(0);
                             if (arg == 0 || arg == 2) {
                                 // DECSED and DECSEL can erase characters.
@@ -1098,7 +1098,7 @@ public final class TerminalEmulator {
                     case ESC_CSI_ARGS_SPACE:
                         int arg = getArg0(0);
                         switch (b) {
-                            case 'q': // "${CSI}${STYLE} q" - set cursor style (http://www.vt100.net/docs/vt510-rm/DECSCUSR). // gate:allow atribusi upstream
+                            case 'q': // "${CSI}${STYLE} q" - set cursor style (http://www.vt100.net/docs/vt510-rm/DECSCUSR). // gate:allow referensi teknis
                                 switch (arg) {
                                     case 0: // Blinking block.
                                     case 1: // Blinking block.
@@ -1126,7 +1126,7 @@ public final class TerminalEmulator {
                     case ESC_CSI_ARGS_ASTERIX:
                         int attributeChangeExtent = getArg0(0);
                         if (b == 'x' && (attributeChangeExtent >= 0 && attributeChangeExtent <= 2)) {
-                            // Select attribute change extent (DECSACE - http://www.vt100.net/docs/vt510-rm/DECSACE). // gate:allow atribusi upstream
+                            // Select attribute change extent (DECSACE - http://www.vt100.net/docs/vt510-rm/DECSACE). // gate:allow referensi teknis
                             setDecsetinternalBit(DECSET_BIT_RECTANGULAR_CHANGEATTRIBUTE, attributeChangeExtent == 2);
                         } else {
                             unknownSequence(b);
@@ -1174,10 +1174,10 @@ public final class TerminalEmulator {
                 String dcs = mTerminalControlArgs.toString();
 
                 // Request Selection or Setting (DECRQSS) `DCS $ q P t ST`.
-                // - https://vt100.net/docs/vt510-rm/DECRQSS.html // gate:allow atribusi upstream
+                // - https://vt100.net/docs/vt510-rm/DECRQSS.html // gate:allow referensi teknis
                 if (dcs.startsWith("$q")) {
                     if (dcs.equals("$q\"p")) {
-                        // DECSCL, conformance level, http://www.vt100.net/docs/vt510-rm/DECSCL: // gate:allow atribusi upstream
+                        // DECSCL, conformance level, http://www.vt100.net/docs/vt510-rm/DECSCL: // gate:allow referensi teknis
                         String csiString = "64;1\"p";
                         mSession.write("\033P1$r" + csiString + "\033\\");
                     } else {
@@ -1217,8 +1217,8 @@ public final class TerminalEmulator {
                     // where 0x1B 0x5B 0x31 0x3B 0x32 0x44 = ESC [ 1 ; 2 D
                     // which we find in: TermKeyListener.java: KEY_MAP.put(KEYMOD_SHIFT | KEYCODE_DPAD_LEFT, "\033[1;2D");
 
-                    // See http://h30097.www3.hp.com/docs/base_doc/DOCUMENTATION/V40G_HTML/MAN/MAN4/0178____.HTM for what to // gate:allow atribusi upstream
-                    // respond, as well as http://www.freebsd.org/cgi/man.cgi?query=termcap&sektion=5#CAPABILITIES for // gate:allow atribusi upstream
+                    // See http://h30097.www3.hp.com/docs/base_doc/DOCUMENTATION/V40G_HTML/MAN/MAN4/0178____.HTM for what to // gate:allow referensi teknis
+                    // respond, as well as http://www.freebsd.org/cgi/man.cgi?query=termcap&sektion=5#CAPABILITIES for // gate:allow referensi teknis
                     // the meaning of e.g. "ku", "kd", "kr", "kl"
 
                     for (String part : dcs.substring(2).split(";")) {
@@ -1436,13 +1436,13 @@ public final class TerminalEmulator {
 
             if (
                 // Sixel data characters in the range of `?` (0x3F) to `~` (0x7E).
-                // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.2.1 // gate:allow atribusi upstream
+                // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.2.1 // gate:allow referensi teknis
                 (ch >= '?' && ch <= '~')
                 // Graphics Carriage Return `$`.
-                // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.4 // gate:allow atribusi upstream
+                // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.4 // gate:allow referensi teknis
                 || ch == '$'
                 // Graphics New Line `-`.
-                // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.5 // gate:allow atribusi upstream
+                // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.5 // gate:allow referensi teknis
                 || ch == '-'
             ) {
                 mScreen.sixelReadData(ch, repeat);
@@ -1450,7 +1450,7 @@ public final class TerminalEmulator {
                 repeat = 1;
             }
             // Color Introducer `#`
-            // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.3 // gate:allow atribusi upstream
+            // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.3 // gate:allow referensi teknis
             else if (ch == '#') {
                 index++; // Consume '#'.
 
@@ -1481,12 +1481,12 @@ public final class TerminalEmulator {
                 }
 
                 // Basic Colors `# Pc`
-                // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.3.1 // gate:allow atribusi upstream
+                // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.3.1 // gate:allow referensi teknis
                 if (index == dcs.length() || dcs.charAt(index) != ';') {
                     mScreen.sixelSetColor(color);
                 }
                 // HLS or RGB Colors `# Pc; Pu; Px; Py; Pz`
-                // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.3.2 // gate:allow atribusi upstream
+                // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.3.2 // gate:allow referensi teknis
                 else if (dcs.charAt(index) == ';') {
                     index++; // Consume ';'.
 
@@ -1559,7 +1559,7 @@ public final class TerminalEmulator {
                 }
             }
             // Graphics Repeat Introducer `! Pn character`.
-            // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.1 // gate:allow atribusi upstream
+            // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.1 // gate:allow referensi teknis
             else if (ch == '!') {
                 index++; // Consume '!'.
 
@@ -1591,7 +1591,7 @@ public final class TerminalEmulator {
                 }
             }
             // Raster Attributes `" Pan; Pad; Ph; Pv`
-            // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.2 // gate:allow atribusi upstream
+            // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.2 // gate:allow referensi teknis
             else if (ch == '"') {
                 index++; // Consume '"'.
 
@@ -1685,8 +1685,8 @@ public final class TerminalEmulator {
      * > - then by any number of "intermediate bytes" in the range 0x20–0x2F (ASCII space and !"#$%&'()*+,-./),
      * > - then finally by a single "final byte" in the range 0x40–0x7E (ASCII @A–Z[\]^_`a–z{|}~).
      *
-     * - https://en.wikipedia.org/wiki/ANSI_escape_code#Control_Sequence_Introducer_commands // gate:allow atribusi upstream
-     * - https://invisible-island.net/xterm/ecma-48-parameter-format.html#section5.4 // gate:allow atribusi upstream
+     * - https://en.wikipedia.org/wiki/ANSI_escape_code#Control_Sequence_Introducer_commands // gate:allow referensi teknis
+     * - https://invisible-island.net/xterm/ecma-48-parameter-format.html#section5.4 // gate:allow referensi teknis
      */
     private void doCsiUnsupportedParameterOrIntermediateByte(int b) {
         if (mEscapeState == ESC_CSI_UNSUPPORTED_PARAMETER_BYTE && b >= 0x30 && b <= 0x3F) {
@@ -1708,8 +1708,8 @@ public final class TerminalEmulator {
     /** Process byte while in the {@link #ESC_CSI_QUESTIONMARK} escape state. */
     private void doCsiQuestionMark(int b) {
         switch (b) {
-            case 'J': // Selective erase in display (DECSED) - http://www.vt100.net/docs/vt510-rm/DECSED. // gate:allow atribusi upstream
-            case 'K': // Selective erase in line (DECSEL) - http://vt100.net/docs/vt510-rm/DECSEL. // gate:allow atribusi upstream
+            case 'J': // Selective erase in display (DECSED) - http://www.vt100.net/docs/vt510-rm/DECSED. // gate:allow referensi teknis
+            case 'K': // Selective erase in line (DECSEL) - http://vt100.net/docs/vt510-rm/DECSEL. // gate:allow referensi teknis
                 mAboutToAutoWrap = false;
                 int fillChar = ' ';
                 int startCol = -1;
@@ -1757,7 +1757,7 @@ public final class TerminalEmulator {
             case 'n': // Device Status Report (DSR, DEC-specific).
                 switch (getArg0(-1)) {
                     case 6:
-                        // Extended Cursor Position (DECXCPR - http://www.vt100.net/docs/vt510-rm/DECXCPR). Page=1. // gate:allow atribusi upstream
+                        // Extended Cursor Position (DECXCPR - http://www.vt100.net/docs/vt510-rm/DECXCPR). Page=1. // gate:allow referensi teknis
                         mSession.write(String.format(Locale.US, "\033[?%d;%d;1R", mCursorRow + 1, mCursorCol + 1));
                         break;
                     default:
@@ -1894,9 +1894,9 @@ public final class TerminalEmulator {
         switch (b) {
             case 'c': // "${CSI}>c" or "${CSI}>c". Secondary Device Attributes (DA2).
                 // Originally this was used for the terminal to respond with "identification code, firmware version level,
-                // and hardware options" (http://vt100.net/docs/vt510-rm/DA2), with the first "41" meaning the VT420 // gate:allow atribusi upstream
+                // and hardware options" (http://vt100.net/docs/vt510-rm/DA2), with the first "41" meaning the VT420 // gate:allow referensi teknis
                 // terminal type. This is not used anymore, but the second version level field has been changed by xterm
-                // to mean it's release number ("patch numbers" listed at http://invisible-island.net/xterm/xterm.log.html), // gate:allow atribusi upstream
+                // to mean it's release number ("patch numbers" listed at http://invisible-island.net/xterm/xterm.log.html), // gate:allow referensi teknis
                 // and some applications use it as a feature check:
                 // * tmux used to have a "xterm won't reach version 500 for a while so set that as the upper limit" check,
                 // and then check "xterm_version > 270" if rectangular area operations such as DECCRA could be used.
@@ -1906,10 +1906,10 @@ public final class TerminalEmulator {
                 mSession.write("\033[>41;320;0c");
                 break;
             case 'm':
-                // https://bugs.launchpad.net/gnome-terminal/+bug/96676/comments/25 // gate:allow atribusi upstream
+                // https://bugs.launchpad.net/gnome-terminal/+bug/96676/comments/25 // gate:allow referensi teknis
                 // Depending on the first number parameter, this can set one of the xterm resources
                 // modifyKeyboard, modifyCursorKeys, modifyFunctionKeys and modifyOtherKeys.
-                // http://invisible-island.net/xterm/manpage/xterm.html#RESOURCES // gate:allow atribusi upstream
+                // http://invisible-island.net/xterm/manpage/xterm.html#RESOURCES // gate:allow referensi teknis
 
                 // * modifyKeyboard (parameter=1):
                 // Normally xterm makes a special case regarding modifiers (shift, control, etc.) to handle special keyboard
@@ -2022,7 +2022,7 @@ public final class TerminalEmulator {
             case ')':
                 continueSequence(ESC_SELECT_RIGHT_PAREN);
                 break;
-            case '6': // Back index (http://www.vt100.net/docs/vt510-rm/DECBI). Move left, insert blank column if start. // gate:allow atribusi upstream
+            case '6': // Back index (http://www.vt100.net/docs/vt510-rm/DECBI). Move left, insert blank column if start. // gate:allow referensi teknis
                 if (mCursorCol > mLeftMargin) {
                     mCursorCol--;
                 } else {
@@ -2031,13 +2031,13 @@ public final class TerminalEmulator {
                     mScreen.blockSet(mLeftMargin, mTopMargin, 1, rows, ' ', TextStyle.encode(mForeColor, mBackColor, 0));
                 }
                 break;
-            case '7': // DECSC save cursor - http://www.vt100.net/docs/vt510-rm/DECSC // gate:allow atribusi upstream
+            case '7': // DECSC save cursor - http://www.vt100.net/docs/vt510-rm/DECSC // gate:allow referensi teknis
                 saveCursor();
                 break;
-            case '8': // DECRC restore cursor - http://www.vt100.net/docs/vt510-rm/DECRC // gate:allow atribusi upstream
+            case '8': // DECRC restore cursor - http://www.vt100.net/docs/vt510-rm/DECRC // gate:allow referensi teknis
                 restoreCursor();
                 break;
-            case '9': // Forward Index (http://www.vt100.net/docs/vt510-rm/DECFI). Move right, insert blank column if end. // gate:allow atribusi upstream
+            case '9': // Forward Index (http://www.vt100.net/docs/vt510-rm/DECFI). Move right, insert blank column if end. // gate:allow referensi teknis
                 if (mCursorCol < mRightMargin - 1) {
                     mCursorCol++;
                 } else {
@@ -2046,7 +2046,7 @@ public final class TerminalEmulator {
                     mScreen.blockSet(mRightMargin - 1, mTopMargin, 1, rows, ' ', TextStyle.encode(mForeColor, mBackColor, 0));
                 }
                 break;
-            case 'c': // RIS - Reset to Initial State (http://vt100.net/docs/vt510-rm/RIS). // gate:allow atribusi upstream
+            case 'c': // RIS - Reset to Initial State (http://vt100.net/docs/vt510-rm/RIS). // gate:allow referensi teknis
                 reset();
                 mMainBuffer.clearTranscript();
                 blockClear(0, 0, mColumns, mRows);
@@ -2055,7 +2055,7 @@ public final class TerminalEmulator {
             case 'D': // INDEX
                 doLinefeed();
                 break;
-            case 'E': // Next line (http://www.vt100.net/docs/vt510-rm/NEL). // gate:allow atribusi upstream
+            case 'E': // Next line (http://www.vt100.net/docs/vt510-rm/NEL). // gate:allow referensi teknis
                 setCursorCol(isDecsetInternalBitSet(DECSET_BIT_ORIGIN_MODE) ? mLeftMargin : 0);
                 doLinefeed();
                 break;
@@ -2066,7 +2066,7 @@ public final class TerminalEmulator {
                 mTabStop[mCursorCol] = true;
                 break;
             case 'M': // "${ESC}M" - reverse index (RI).
-                // http://www.vt100.net/docs/vt100-ug/chapter3.html: "Move the active position to the same horizontal // gate:allow atribusi upstream
+                // http://www.vt100.net/docs/vt100-ug/chapter3.html: "Move the active position to the same horizontal // gate:allow referensi teknis
                 // position on the preceding line. If the active position is at the top margin, a scroll down is performed".
                 if (mCursorRow <= mTopMargin) {
                     mScreen.blockCopy(mLeftMargin, mTopMargin, mRightMargin - mLeftMargin, mBottomMargin - (mTopMargin + 1), mLeftMargin, mTopMargin + 1);
@@ -2107,7 +2107,7 @@ public final class TerminalEmulator {
         }
     }
 
-    /** DECSC save cursor - http://www.vt100.net/docs/vt510-rm/DECSC . See {@link #restoreCursor()}. */ // gate:allow atribusi upstream
+    /** DECSC save cursor - http://www.vt100.net/docs/vt510-rm/DECSC . See {@link #restoreCursor()}. */ // gate:allow referensi teknis
     private void saveCursor() {
         SavedScreenState state = (mScreen == mMainBuffer) ? mSavedStateMain : mSavedStateAlt;
         state.mSavedCursorRow = mCursorRow;
@@ -2121,7 +2121,7 @@ public final class TerminalEmulator {
         state.mUseLineDrawingUsesG0 = mUseLineDrawingUsesG0;
     }
 
-    /** DECRS restore cursor - http://www.vt100.net/docs/vt510-rm/DECRC. See {@link #saveCursor()}. */ // gate:allow atribusi upstream
+    /** DECRS restore cursor - http://www.vt100.net/docs/vt510-rm/DECRC. See {@link #saveCursor()}. */ // gate:allow referensi teknis
     private void restoreCursor() {
         SavedScreenState state = (mScreen == mMainBuffer) ? mSavedStateMain : mSavedStateAlt;
         setCursorRowCol(state.mSavedCursorRow, state.mSavedCursorCol);
@@ -2154,7 +2154,7 @@ public final class TerminalEmulator {
                 continueSequence(ESC_CSI_ARGS_ASTERIX);
                 break;
             case '@': {
-                // "CSI{n}@" - Insert ${n} space characters (ICH) - http://www.vt100.net/docs/vt510-rm/ICH. // gate:allow atribusi upstream
+                // "CSI{n}@" - Insert ${n} space characters (ICH) - http://www.vt100.net/docs/vt510-rm/ICH. // gate:allow referensi teknis
                 mAboutToAutoWrap = false;
                 int columnsAfterCursor = mColumns - mCursorCol;
                 int spacesToInsert = Math.min(getArg0(1), columnsAfterCursor);
@@ -2254,7 +2254,7 @@ public final class TerminalEmulator {
             break;
             case 'P': // "${CSI}{N}P" - delete ${N} characters (DCH).
             {
-                // http://www.vt100.net/docs/vt510-rm/DCH: "If ${N} is greater than the number of characters between the // gate:allow atribusi upstream
+                // http://www.vt100.net/docs/vt510-rm/DCH: "If ${N} is greater than the number of characters between the // gate:allow referensi teknis
                 // cursor and the right margin, then DCH only deletes the remaining characters.
                 // As characters are deleted, the remaining characters between the cursor and right margin move to the left.
                 // Character attributes move with the characters. The terminal adds blank spaces with no visual character
@@ -2276,7 +2276,7 @@ public final class TerminalEmulator {
             case 'T':
                 if (mArgIndex == 0) {
                     // "${CSI}${N}T" - Scroll down N lines (default = 1) (SD).
-                    // http://vt100.net/docs/vt510-rm/SD: "N is the number of lines to move the user window up in page // gate:allow atribusi upstream
+                    // http://vt100.net/docs/vt510-rm/SD: "N is the number of lines to move the user window up in page // gate:allow referensi teknis
                     // memory. N new lines appear at the top of the display. N old lines disappear at the bottom of the
                     // display. You cannot pan past the top margin of the current page".
                     final int linesToScrollArg = getArg0(1);
@@ -2315,7 +2315,7 @@ public final class TerminalEmulator {
             case '=': // "Esc [ =" -- start of a private parameter byte
                 continueSequence(ESC_CSI_UNSUPPORTED_PARAMETER_BYTE);
                 break;
-            case '`': // Horizontal position absolute (HPA - http://www.vt100.net/docs/vt510-rm/HPA). // gate:allow atribusi upstream
+            case '`': // Horizontal position absolute (HPA - http://www.vt100.net/docs/vt510-rm/HPA). // gate:allow referensi teknis
                 setCursorColRespectingOriginMode(getArg0(1) - 1);
                 break;
             case 'b': // Repeat the preceding graphic character Ps times (REP).
@@ -2323,7 +2323,7 @@ public final class TerminalEmulator {
                 final int numRepeat = getArg0(1);
                 for (int i = 0; i < numRepeat; i++) emitCodePoint(mLastEmittedCodePoint);
                 break;
-            case 'c': // Primary Device Attributes (http://www.vt100.net/docs/vt510-rm/DA1) if argument is missing or zero. // gate:allow atribusi upstream
+            case 'c': // Primary Device Attributes (http://www.vt100.net/docs/vt510-rm/DA1) if argument is missing or zero. // gate:allow referensi teknis
                 // The important part that may still be used by some (tmux stores this value but does not currently use it)
                 // is the first response parameter identifying the terminal service class, where we send 64 for "vt420".
                 // This is followed by a list of attributes which is probably unused by applications. Send like xterm.
@@ -2379,7 +2379,7 @@ public final class TerminalEmulator {
                 break;
             case 'r': // "CSI${top};${bottom}r" - set top and bottom Margins (DECSTBM).
             {
-                // https://vt100.net/docs/vt510-rm/DECSTBM.html // gate:allow atribusi upstream
+                // https://vt100.net/docs/vt510-rm/DECSTBM.html // gate:allow referensi teknis
                 // The top margin defaults to 1, the bottom margin defaults to mRows.
                 // The escape sequence numbers top 1..23, but we number top 0..22.
                 // The escape sequence numbers bottom 2..24, and so do we (because we use a zero based numbering
@@ -2395,7 +2395,7 @@ public final class TerminalEmulator {
             break;
             case 's':
                 if (isDecsetInternalBitSet(DECSET_BIT_LEFTRIGHT_MARGIN_MODE)) {
-                    // Set left and right margins (DECSLRM - http://www.vt100.net/docs/vt510-rm/DECSLRM). // gate:allow atribusi upstream
+                    // Set left and right margins (DECSLRM - http://www.vt100.net/docs/vt510-rm/DECSLRM). // gate:allow referensi teknis
                     mLeftMargin = Math.min(getArg0(1) - 1, mColumns - 2);
                     mRightMargin = Math.max(mLeftMargin + 1, Math.min(getArg1(mColumns), mColumns));
                     // DECSLRM moves the cursor to column 1, line 1 of the page.
@@ -2462,7 +2462,7 @@ public final class TerminalEmulator {
         }
     }
 
-    /** Select Graphic Rendition (SGR) - see http://en.wikipedia.org/wiki/ANSI_escape_code#graphics. */ // gate:allow atribusi upstream
+    /** Select Graphic Rendition (SGR) - see http://en.wikipedia.org/wiki/ANSI_escape_code#graphics. */ // gate:allow referensi teknis
     private void selectGraphicRendition() {
         if (mArgIndex >= mArgs.length) mArgIndex = mArgs.length - 1;
         for (int i = 0; i <= mArgIndex; i++) {
@@ -2491,13 +2491,13 @@ public final class TerminalEmulator {
                 mEffect |= TextStyle.CHARACTER_ATTRIBUTE_ITALIC;
             } else if (code == 4) {
                 if (i + 1 <= mArgIndex && ((mArgsSubParamsBitSet & (1 << (i + 1))) != 0)) {
-                    // Sub parameter, see https://sw.kovidgoyal.net/kitty/underlines/ // gate:allow atribusi upstream
+                    // Sub parameter, see https://sw.kovidgoyal.net/kitty/underlines/ // gate:allow referensi teknis
                     i++;
                     if (mArgs[i] == 0) {
                         // No underline.
                         mEffect &= ~TextStyle.CHARACTER_ATTRIBUTE_UNDERLINE;
                     } else {
-                        // Different variations of underlines: https://sw.kovidgoyal.net/kitty/underlines/ // gate:allow atribusi upstream
+                        // Different variations of underlines: https://sw.kovidgoyal.net/kitty/underlines/ // gate:allow referensi teknis
                         mEffect |= TextStyle.CHARACTER_ATTRIBUTE_UNDERLINE;
                     }
                 } else {
@@ -2710,7 +2710,7 @@ public final class TerminalEmulator {
                     // Android has a `~100KB` limit for sharing/sending `UTF-16` encoded `String`
                     // with binder tranasactions, including clipboard, otherwise can result in a
                     // `TransactionTooLargeException`.
-                    // - https://www.reddit.com/r/tasker/comments/prro8t/autoshare_crashed_when_i_pasted_the_file_path/ // gate:allow atribusi upstream
+                    // - https://www.reddit.com/r/tasker/comments/prro8t/autoshare_crashed_when_i_pasted_the_file_path/ // gate:allow referensi teknis
                     terminalControlArgsMaxLength = (100 * 1024)  +
                         /* `52;Pc;` */ 10;
                     break;
@@ -2719,9 +2719,9 @@ public final class TerminalEmulator {
                     mIgnoreCrLfForOsc = true;
                     // Expect large amount of data for image bytes.
                     // `imgcat` utility splits image bytes into 200-byte chunks when sending with `FilePart=` commands.
-                    // - https://github.com/gnachman/iTerm2-shell-integration/blob/d1d4012068c3c6761d5676c28ed73e0e2df2b715/utilities/imgcat#L89 // gate:allow atribusi upstream
+                    // - https://github.com/gnachman/iTerm2-shell-integration/blob/d1d4012068c3c6761d5676c28ed73e0e2df2b715/utilities/imgcat#L89 // gate:allow referensi teknis
                     // > Older versions of tmux have a limit of 256 bytes for the entire sequence.
-                    // - https://iterm2.com/documentation-images.html // gate:allow atribusi upstream
+                    // - https://iterm2.com/documentation-images.html // gate:allow referensi teknis
                     terminalControlArgsCapacity = 256;
                     terminalControlArgsMaxLength = TerminalBitmap.MAX_BITMAP_SIZE +
                         /* `1337;File=inline=1;size=209715200;name=xxxxxxxxxxxxxxxxxxxxxxxx;width=8192px;height=8192px;preserveAspectRatio=1:` */ 150;
@@ -2897,8 +2897,8 @@ public final class TerminalEmulator {
             case 119: // Reset highlight color.
                 break;
             case 1337: // iTerm image
-                // - https://iterm2.com/documentation-images.html // gate:allow atribusi upstream
-                // - https://iterm2.com/documentation-escape-codes.html // gate:allow atribusi upstream
+                // - https://iterm2.com/documentation-images.html // gate:allow referensi teknis
+                // - https://iterm2.com/documentation-escape-codes.html // gate:allow referensi teknis
                 String controlCommandPrefix = mTerminalControlArgs.substring(5, Math.min(19, argsLength));
 
                 if (controlCommandPrefix.startsWith("File=") ||
@@ -3040,11 +3040,11 @@ public final class TerminalEmulator {
                 break;
             case 20: // Normal Linefeed (LNM).
                 unknownParameter(modeBit);
-                // http://www.vt100.net/docs/vt510-rm/LNM // gate:allow atribusi upstream
+                // http://www.vt100.net/docs/vt510-rm/LNM // gate:allow referensi teknis
                 break;
             case 34:
                 // Normal cursor visibility - when using TERM=screen, see
-                // http://www.gnu.org/software/screen/manual/html_node/Control-Sequences.html // gate:allow atribusi upstream
+                // http://www.gnu.org/software/screen/manual/html_node/Control-Sequences.html // gate:allow referensi teknis
                 break;
             default:
                 unknownParameter(modeBit);
@@ -3096,8 +3096,8 @@ public final class TerminalEmulator {
      * sequences, the default value is 1.
      *
      * <p>References:
-     * <a href="https://vt100.net/docs/vt510-rm/chapter4.html#S4.3.3">VT510 Video Terminal Programmer Information: Control Sequences</a> // gate:allow atribusi upstream
-     * <a href="https://github.com/alacritty/vte/issues/22">alacritty/vte: Implement colon separated CSI parameters</a> // gate:allow atribusi upstream
+     * <a href="https://vt100.net/docs/vt510-rm/chapter4.html#S4.3.3">VT510 Video Terminal Programmer Information: Control Sequences</a> // gate:allow referensi teknis
+     * <a href="https://github.com/alacritty/vte/issues/22">alacritty/vte: Implement colon separated CSI parameters</a> // gate:allow referensi teknis
      * */
     private void parseArg(int b) {
         if (b >= '0' && b <= '9') {
@@ -3207,9 +3207,9 @@ public final class TerminalEmulator {
      * By default, if `StringBuilder` reaches capacity, it sets new capacity to `(oldCapacity * 2) + 2`.
      * So if initial capacity is `16`, and data to be received is 1024 bytes, then 6 reallocations
      * will be done, so command processors should
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:libcore/ojluni/src/main/java/java/lang/AbstractStringBuilder.java;l=758 // gate:allow atribusi upstream
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:libcore/ojluni/src/main/java/java/lang/AbstractStringBuilder.java;l=183 // gate:allow atribusi upstream
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:libcore/ojluni/src/main/java/java/lang/AbstractStringBuilder.java;l=210 // gate:allow atribusi upstream
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:libcore/ojluni/src/main/java/java/lang/AbstractStringBuilder.java;l=758 // gate:allow referensi teknis
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:libcore/ojluni/src/main/java/java/lang/AbstractStringBuilder.java;l=183 // gate:allow referensi teknis
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:libcore/ojluni/src/main/java/java/lang/AbstractStringBuilder.java;l=210 // gate:allow referensi teknis
      *
      * See also {@link StringBuilder#ensureCapacity(int)}.
      *
@@ -3291,7 +3291,7 @@ public final class TerminalEmulator {
     private void emitCodePoint(int codePoint) {
         mLastEmittedCodePoint = codePoint;
         if (mUseLineDrawingUsesG0 ? mUseLineDrawingG0 : mUseLineDrawingG1) {
-            // http://www.vt100.net/docs/vt102-ug/table5-15.html. // gate:allow atribusi upstream
+            // http://www.vt100.net/docs/vt102-ug/table5-15.html. // gate:allow referensi teknis
             switch (codePoint) {
                 case '_':
                     codePoint = ' '; // Blank.
@@ -3556,7 +3556,7 @@ public final class TerminalEmulator {
         if (bracketed) mSession.write("\033[201~");
     }
 
-    /** http://www.vt100.net/docs/vt510-rm/DECSC */ // gate:allow atribusi upstream
+    /** http://www.vt100.net/docs/vt510-rm/DECSC */ // gate:allow referensi teknis
     static final class SavedScreenState {
         /** Saved state of the cursor position, Used to implement the save/restore cursor position escape sequences. */
         int mSavedCursorRow, mSavedCursorCol;

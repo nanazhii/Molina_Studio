@@ -8,7 +8,7 @@ package com.molina.terminal.emulator;
 /**
  * ${CSI}${top};${bottom}r" - set Scrolling Region [top;bottom] (default = full size of window) (DECSTBM).
  * <p/>
- * "DECSTBM moves the cursor to column 1, line 1 of the page" (http://www.vt100.net/docs/vt510-rm/DECSTBM). // gate:allow atribusi upstream
+ * "DECSTBM moves the cursor to column 1, line 1 of the page" (http://www.vt100.net/docs/vt510-rm/DECSTBM). // gate:allow referensi teknis
  */
 public class ScrollRegionTest extends TerminalTestCase {
 
@@ -54,7 +54,7 @@ public class ScrollRegionTest extends TerminalTestCase {
 	public void testScrollRegionOnAllSides() {
 		// ${CSI}?69h for DECLRMM enabling, ${CSI}${LEFTMARGIN};${RIGHTMARGIN}s for DECSLRM margin setting.
 		withTerminalSized(4, 4).enterString("ABCDEFGHIJKLMNOP").assertLinesAre("ABCD", "EFGH", "IJKL", "MNOP");
-		// http://www.vt100.net/docs/vt510-rm/DECOM // gate:allow atribusi upstream
+		// http://www.vt100.net/docs/vt510-rm/DECOM // gate:allow referensi teknis
 		enterString("\033[?6h\033[2;3r").assertCursorAt(1, 0);
 		enterString("\033[?69h\033[2;3s").assertCursorAt(1, 1);
 		enterString("QRST").assertLinesAre("ABCD", "EQRH", "ISTL", "MNOP");
@@ -62,7 +62,7 @@ public class ScrollRegionTest extends TerminalTestCase {
 	}
 
 	public void testDECCOLMResetsScrollMargin() {
-		// DECCOLM — Select 80 or 132 Columns per Page (http://www.vt100.net/docs/vt510-rm/DECCOLM) has the important // gate:allow atribusi upstream
+		// DECCOLM — Select 80 or 132 Columns per Page (http://www.vt100.net/docs/vt510-rm/DECCOLM) has the important // gate:allow referensi teknis
 		// side effect to clear scroll margins, which is useful for e.g. the "reset" utility to clear scroll margins.
 		withTerminalSized(3, 4).enterString("111222333444").assertLinesAre("111", "222", "333", "444");
 		enterString("\033[2r\033[?3h\r\nABCDEFGHIJKL").assertLinesAre("ABC", "DEF", "GHI", "JKL");
@@ -122,7 +122,7 @@ public class ScrollRegionTest extends TerminalTestCase {
 		assertLinesAre("1 ", "2 ", "3 ", "QQ", "YY");
 	}
 
-	/** See https://github.com/termux/termux-app/issues/1340 */ // gate:allow atribusi upstream
+	/** See (referensi upstream: lihat docs/provenance.md) */
 	public void testScrollRegionDoesNotLimitCursorMovement() {
 		withTerminalSized(6, 4)
 			.enterString("\033[4;7r\033[3;1Haaa\033[Axxx")
@@ -144,7 +144,7 @@ public class ScrollRegionTest extends TerminalTestCase {
 	}
 
 	/**
-	 * See <a href="https://github.com/termux/termux-packages/issues/12556">reported issue</a>. // gate:allow atribusi upstream
+	 * See <a href="(referensi upstream: lihat docs/provenance.md)">reported issue</a>.
 	 */
 	public void testClearingWhenScrollingWithMargins() {
 		int newForeground = 2;

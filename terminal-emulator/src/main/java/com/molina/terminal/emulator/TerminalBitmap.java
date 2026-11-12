@@ -39,7 +39,7 @@ public class TerminalBitmap {
      * - 3840x2160 (4K UHD): 33,177,600 bytes/33MB.
      * - 7680x4320 (8K UHD): 132,710,400 bytes/132MB.
      * .
-     * - https://en.wikipedia.org/wiki/Display_resolution_standards#High-definition // gate:allow atribusi upstream
+     * - https://en.wikipedia.org/wiki/Display_resolution_standards#High-definition // gate:allow referensi teknis
      *
      * The terminal uses {@link Canvas#drawBitmap(Bitmap, Rect, RectF, Paint)} to draw the bitmap
      * when `TerminalRenderer.render()` is called.
@@ -49,9 +49,9 @@ public class TerminalBitmap {
      * {@link Canvas#getMaximumBitmapHeight()}. It is hardcoded with the value `32766` as defined by
      * Skia (2D graphics library), which technically has the limit `32767` as it requires supporting
      * math on 16-bit buffers.
-     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/f61970fc79e9c5cf340fa942597628242361864a // gate:allow atribusi upstream
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/graphics/java/android/graphics/Canvas.java;l=76-78 // gate:allow atribusi upstream
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:external/skia/src/shaders/SkImageShader.cpp;l=254-267 // gate:allow atribusi upstream
+     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/f61970fc79e9c5cf340fa942597628242361864a // gate:allow referensi teknis
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/graphics/java/android/graphics/Canvas.java;l=76-78 // gate:allow referensi teknis
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:external/skia/src/shaders/SkImageShader.cpp;l=254-267 // gate:allow referensi teknis
      *
      * The {@link RecordingCanvas} class defines `RecordingCanvas.MAX_BITMAP_SIZE` for the
      * maximum size (not dimension) for a bitmap, which is checked by
@@ -69,10 +69,10 @@ public class TerminalBitmap {
      * system property if set for Android `>= 12`, otherwise `150MB` (`100MB` for Android `10-14`).
      * The values `>= 150MB` are enough to support `7680x4320` (8K UHD) bitmaps.
      * Some devices like larger xiaomi devices have `ro.hwui.max_texture_allocation_size` set to `209715200` (`200MB`).
-     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/e4d011201cea40d46cb2b2eef401db8fddc5c9c6 // gate:allow atribusi upstream
-     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/0e717a9d06ded980908649393bd73e46ffafcd54 // gate:allow atribusi upstream
-     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/97396260ed06cc9d1834d4d8e4e649a3ef09f1f3 // gate:allow atribusi upstream
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/graphics/java/android/graphics/RecordingCanvas.java;l=42-50 // gate:allow atribusi upstream
+     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/e4d011201cea40d46cb2b2eef401db8fddc5c9c6 // gate:allow referensi teknis
+     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/0e717a9d06ded980908649393bd73e46ffafcd54 // gate:allow referensi teknis
+     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/97396260ed06cc9d1834d4d8e4e649a3ef09f1f3 // gate:allow referensi teknis
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/graphics/java/android/graphics/RecordingCanvas.java;l=42-50 // gate:allow referensi teknis
      *
      * The Android wallpaper manager service also checks if dimensions of cropped wallpaper exceeds
      * max texture size that the GPU can support, otherwise it will cause System UI to keep crashing
@@ -81,10 +81,10 @@ public class TerminalBitmap {
      * otherwise by value for `GL_MAX_TEXTURE_SIZE`. The `sys.max_texture_size` defines the maximum
      * width or height of a texture, not total size. Its value can be low like `2048` or high like
      * `16384` for 16K support.
-     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/32c6a7c691b0d91085c1ed13fe6f1c473c94b4c8 // gate:allow atribusi upstream
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/services/core/java/com/android/server/wallpaper/WallpaperCropper.java;l=461 // gate:allow atribusi upstream
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/services/core/java/com/android/server/wallpaper/GLHelper.java;l=145 // gate:allow atribusi upstream
-     * - https://developer.android.com/reference/android/opengl/GLES10#GL_MAX_TEXTURE_SIZE // gate:allow atribusi upstream
+     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/32c6a7c691b0d91085c1ed13fe6f1c473c94b4c8 // gate:allow referensi teknis
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/services/core/java/com/android/server/wallpaper/WallpaperCropper.java;l=461 // gate:allow referensi teknis
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/services/core/java/com/android/server/wallpaper/GLHelper.java;l=145 // gate:allow referensi teknis
+     * - https://developer.android.com/reference/android/opengl/GLES10#GL_MAX_TEXTURE_SIZE // gate:allow referensi teknis
      *
      * The {@link WallpaperManager#getDesiredMinimumWidth()} and {@link WallpaperManager#getDesiredMinimumHeight()}
      * can also be called to get minimum suggested width and height of the wallpaper that an app
@@ -95,22 +95,22 @@ public class TerminalBitmap {
      * dimensions depending on the homescreen pages config by calling
      * {@link WallpaperManager#suggestDesiredDimensions(int, int)}, which also ensures that values
      * passed are scaled down to `sys.max_texture_size` system property if its set.
-     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/289c273ec49462c7bfdbf6238e9016936da7307c // gate:allow atribusi upstream
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/core/java/android/app/WallpaperManager.java;l=2737-2794 // gate:allow atribusi upstream
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java;l=2330-2366 // gate:allow atribusi upstream
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/services/core/java/com/android/server/wallpaper/WallpaperDisplayHelper.java;l=108-115 // gate:allow atribusi upstream
-     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/core/java/android/view/Display.java;l=1052-1063 // gate:allow atribusi upstream
+     * - https://cs.android.com/android/_/android/platform/frameworks/base/+/289c273ec49462c7bfdbf6238e9016936da7307c // gate:allow referensi teknis
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/core/java/android/app/WallpaperManager.java;l=2737-2794 // gate:allow referensi teknis
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java;l=2330-2366 // gate:allow referensi teknis
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/services/core/java/com/android/server/wallpaper/WallpaperDisplayHelper.java;l=108-115 // gate:allow referensi teknis
+     * - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/core/java/android/view/Display.java;l=1052-1063 // gate:allow referensi teknis
      *
      * If an app specifies `largeHeap=true` in its `AndroidManifest.xml`, then it can be allocated
-     * larger heap memory to load larger bitmaps maps instead of resulting in an OOM. The Termux app // gate:allow atribusi upstream
+     * larger heap memory to load larger bitmaps maps instead of resulting in an OOM. The Molina app
      * does not have it enabled, and hence is more likely to have OOMs when loading larger bitmaps.
-     * - https://developer.android.com/guide/topics/manifest/application-element#largeHeap // gate:allow atribusi upstream
-     * - https://developer.android.com/topic/performance/memory // gate:allow atribusi upstream
+     * - https://developer.android.com/guide/topics/manifest/application-element#largeHeap // gate:allow referensi teknis
+     * - https://developer.android.com/topic/performance/memory // gate:allow referensi teknis
      */
     public static final int MAX_BITMAP_SIZE = initMaxBitmapSize();
     private static int initMaxBitmapSize() {
         // Synced with `RecordingCanvas.MAX_BITMAP_SIZE`.
-        // - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/graphics/java/android/graphics/RecordingCanvas.java;l=42-50 // gate:allow atribusi upstream
+        // - https://cs.android.com/android/platform/superproject/+/android-16.0.0_r1:frameworks/base/graphics/java/android/graphics/RecordingCanvas.java;l=42-50 // gate:allow referensi teknis
         int defaultSize =
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM ?
                     150 * 1024 * 1024 : // 150 MB

@@ -367,7 +367,7 @@ public class TerminalRowTest extends TestCase {
 		assertEquals(3, row.findStartOfColumn(4));
 	}
 
-	// https://github.com/jackpal/Android-Terminal-Emulator/issues/145 // gate:allow atribusi upstream
+	// https://github.com/jackpal/Android-Terminal-Emulator/issues/145 // gate:allow referensi teknis
 	public void testCrashATE145() {
 		// 0xC2541 is unassigned, use display width 1 for UNICODE_REPLACEMENT_CHAR.
 		// assertEquals(1, WcWidth.width(0xC2541));

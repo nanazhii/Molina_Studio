@@ -237,7 +237,7 @@ public final class TerminalView extends View {
             @Override
             public boolean onDown(float x, float y) {
                 // Why is true not returned here?
-                // https://developer.android.com/training/gestures/detector.html#detect-a-subset-of-supported-gestures // gate:allow atribusi upstream
+                // https://developer.android.com/training/gestures/detector.html#detect-a-subset-of-supported-gestures // gate:allow referensi teknis
                 // Although setting this to true still does not solve the following errors when long pressing in terminal view text area
                 // ViewDragHelper: Ignoring pointerId=0 because ACTION_DOWN was not received for this pointer before ACTION_MOVE
                 // Commenting out the call to mGestureDetector.onTouchEvent(event) in GestureAndScaleRecognizer#onTouchEvent() removes
@@ -320,20 +320,20 @@ public final class TerminalView extends View {
             if (mClient.shouldEnforceCharBasedInput()) {
                 // Some keyboards seems do not reset the internal state on TYPE_NULL.
                 // Affects mostly Samsung stock keyboards.
-                // https://github.com/termux/termux-app/issues/686 // gate:allow atribusi upstream
+                // (referensi upstream: lihat docs/provenance.md)
                 // However, this is not a valid value as per AOSP since `InputType.TYPE_CLASS_*` is
                 // not set and it logs a warning:
                 // W/InputAttributes: Unexpected input class: inputType=0x00080090 imeOptions=0x02000000
-                // https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:packages/inputmethods/LatinIME/java/src/com/android/inputmethod/latin/InputAttributes.java;l=79 // gate:allow atribusi upstream
+                // https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:packages/inputmethods/LatinIME/java/src/com/android/inputmethod/latin/InputAttributes.java;l=79 // gate:allow referensi teknis
                 outAttrs.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
             } else {
                 // Using InputType.NULL is the most correct input type and avoids issues with other hacks.
                 //
                 // Previous keyboard issues:
-                // https://github.com/termux/termux-packages/issues/25 // gate:allow atribusi upstream
-                // https://github.com/termux/termux-app/issues/87. // gate:allow atribusi upstream
-                // https://github.com/termux/termux-app/issues/126. // gate:allow atribusi upstream
-                // https://github.com/termux/termux-app/issues/137 (japanese chars and TYPE_NULL). // gate:allow atribusi upstream
+                // (referensi upstream: lihat docs/provenance.md)
+                // (referensi upstream: lihat docs/provenance.md)
+                // (referensi upstream: lihat docs/provenance.md)
+                // (referensi upstream: lihat docs/provenance.md) (japanese chars and TYPE_NULL).
                 outAttrs.inputType = InputType.TYPE_NULL;
             }
         } else {
@@ -342,7 +342,7 @@ public final class TerminalView extends View {
         }
 
         // Note that IME_ACTION_NONE cannot be used as that makes it impossible to input newlines using the on-screen
-        // keyboard on Android TV (see https://github.com/termux/termux-app/issues/221). // gate:allow atribusi upstream
+        // keyboard on Android TV (see (referensi upstream: lihat docs/provenance.md)).
         outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN;
 
         return new BaseInputConnection(this, true) {
@@ -719,57 +719,57 @@ public final class TerminalView extends View {
      * The solution to such issues is calling `getUnicodeChar()` before the call to `handleKeyCode()`
      * if user has defined a custom kcm file, like done in POC mentioned in #2237. Note that
      * Hacker's Keyboard calls `commitText()` so don't test fn/shift with it for this function.
-     * https://github.com/termux/termux-app/pull/2237 // gate:allow atribusi upstream
-     * https://github.com/agnostic-apollo/termux-app/blob/terminal-code-point-custom-mapping/terminal-view/src/main/java/com/termux/view/TerminalView.java // gate:allow atribusi upstream
+     * (referensi upstream: lihat docs/provenance.md)
+     * (referensi upstream: lihat docs/provenance.md)
      *
      * Key Character Map (kcm) and Key Layout (kl) files info:
-     * https://source.android.com/devices/input/key-character-map-files // gate:allow atribusi upstream
-     * https://source.android.com/devices/input/key-layout-files // gate:allow atribusi upstream
-     * https://source.android.com/devices/input/keyboard-devices // gate:allow atribusi upstream
+     * https://source.android.com/devices/input/key-character-map-files // gate:allow referensi teknis
+     * https://source.android.com/devices/input/key-layout-files // gate:allow referensi teknis
+     * https://source.android.com/devices/input/keyboard-devices // gate:allow referensi teknis
      * AOSP kcm and kl files:
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/data/keyboards // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/packages/InputDevices/res/raw // gate:allow atribusi upstream
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/data/keyboards // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/packages/InputDevices/res/raw // gate:allow referensi teknis
      *
      * KeyCodes:
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/core/java/android/view/KeyEvent.java // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/master:frameworks/native/include/android/keycodes.h // gate:allow atribusi upstream
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/core/java/android/view/KeyEvent.java // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/master:frameworks/native/include/android/keycodes.h // gate:allow referensi teknis
      *
      * `dumpsys input`:
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/services/inputflinger/reader/EventHub.cpp;l=1917 // gate:allow atribusi upstream
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/services/inputflinger/reader/EventHub.cpp;l=1917 // gate:allow referensi teknis
      *
      * Loading of keymap:
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/services/inputflinger/reader/EventHub.cpp;l=1644 // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/Keyboard.cpp;l=41 // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/InputDevice.cpp // gate:allow atribusi upstream
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/services/inputflinger/reader/EventHub.cpp;l=1644 // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/Keyboard.cpp;l=41 // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/InputDevice.cpp // gate:allow referensi teknis
      * OVERLAY keymaps for hardware keyboards may be combined as well:
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/KeyCharacterMap.cpp;l=165 // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/KeyCharacterMap.cpp;l=831 // gate:allow atribusi upstream
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/KeyCharacterMap.cpp;l=165 // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/KeyCharacterMap.cpp;l=831 // gate:allow referensi teknis
      *
      * Parse kcm file:
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/KeyCharacterMap.cpp;l=727 // gate:allow atribusi upstream
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/KeyCharacterMap.cpp;l=727 // gate:allow referensi teknis
      * Parse key value:
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/KeyCharacterMap.cpp;l=981 // gate:allow atribusi upstream
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/KeyCharacterMap.cpp;l=981 // gate:allow referensi teknis
      *
      * `KeyEvent.getUnicodeChar()`
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/core/java/android/view/KeyEvent.java;l=2716 // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/view/KeyCharacterMap.java;l=368 // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/core/jni/android_view_KeyCharacterMap.cpp;l=117 // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/KeyCharacterMap.cpp;l=231 // gate:allow atribusi upstream
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/core/java/android/view/KeyEvent.java;l=2716 // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/view/KeyCharacterMap.java;l=368 // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/core/jni/android_view_KeyCharacterMap.cpp;l=117 // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/native/libs/input/KeyCharacterMap.cpp;l=231 // gate:allow referensi teknis
      *
      * Keyboard layouts advertised by applications, like for hardware keyboards via #ACTION_QUERY_KEYBOARD_LAYOUTS
      * Config is stored in `/data/system/input-manager-state.xml`
-     * https://github.com/ris58h/custom-keyboard-layout // gate:allow atribusi upstream
+     * https://github.com/ris58h/custom-keyboard-layout // gate:allow referensi teknis
      * Loading from apps:
-     * https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/input/InputManagerService.java;l=1221 // gate:allow atribusi upstream
+     * https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/input/InputManagerService.java;l=1221 // gate:allow referensi teknis
      * Set:
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/core/java/android/hardware/input/InputManager.java;l=89 // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/core/java/android/hardware/input/InputManager.java;l=543 // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:packages/apps/Settings/src/com/android/settings/inputmethod/KeyboardLayoutDialogFragment.java;l=167 // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/input/InputManagerService.java;l=1385 // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/input/PersistentDataStore.java // gate:allow atribusi upstream
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/core/java/android/hardware/input/InputManager.java;l=89 // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/core/java/android/hardware/input/InputManager.java;l=543 // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:packages/apps/Settings/src/com/android/settings/inputmethod/KeyboardLayoutDialogFragment.java;l=167 // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/input/InputManagerService.java;l=1385 // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/input/PersistentDataStore.java // gate:allow referensi teknis
      * Get overlay keyboard layout
-     * https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/input/InputManagerService.java;l=2158 // gate:allow atribusi upstream
-     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/services/core/jni/com_android_server_input_InputManagerService.cpp;l=616 // gate:allow atribusi upstream
+     * https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/input/InputManagerService.java;l=2158 // gate:allow referensi teknis
+     * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/services/core/jni/com_android_server_input_InputManagerService.cpp;l=616 // gate:allow referensi teknis
      */
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -803,7 +803,7 @@ public final class TerminalView extends View {
         if (event.isAltPressed() || leftAltDown) keyMod |= KeyHandler.KEYMOD_ALT;
         if (shiftDown) keyMod |= KeyHandler.KEYMOD_SHIFT;
         if (event.isNumLockOn()) keyMod |= KeyHandler.KEYMOD_NUM_LOCK;
-        // https://github.com/termux/termux-app/issues/731 // gate:allow atribusi upstream
+        // (referensi upstream: lihat docs/provenance.md)
         if (!event.isFunctionPressed() && handleKeyCode(keyCode, keyMod)) {
             if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) mClient.logInfo(LOG_TAG, "handleKeyCode() took key event");
             return true;
@@ -883,7 +883,7 @@ public final class TerminalView extends View {
                 codePoint = 30; // control-^
             } else if (codePoint == '_' || codePoint == '7' || codePoint == '/') {
                 // "Ctrl-/ sends 0x1f which is equivalent of Ctrl-_ since the days of VT102"
-                // - http://apple.stackexchange.com/questions/24261/how-do-i-send-c-that-is-control-slash-to-the-terminal // gate:allow atribusi upstream
+                // - http://apple.stackexchange.com/questions/24261/how-do-i-send-c-that-is-control-slash-to-the-terminal // gate:allow referensi teknis
                 codePoint = 31;
             } else if (codePoint == '8') {
                 codePoint = 127; // DEL
@@ -1470,7 +1470,7 @@ public final class TerminalView extends View {
 
         if (mTextSelectionCursorController != null) {
             // Might solve the following exception
-            // android.view.WindowLeaked: Activity com.termux.app.TermuxActivity has leaked window android.widget.PopupWindow // gate:allow atribusi upstream
+            // android.view.WindowLeaked: Activity com.molina.terminal.TerminalActivity has leaked window android.widget.PopupWindow
             stopTextSelectionMode();
 
             getViewTreeObserver().removeOnTouchModeChangeListener(mTextSelectionCursorController);

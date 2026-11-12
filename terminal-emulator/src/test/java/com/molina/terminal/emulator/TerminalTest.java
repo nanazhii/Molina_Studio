@@ -62,7 +62,7 @@ public class TerminalTest extends TerminalTestCase {
 		assertEquals("\033[<0;3;4m", mOutput.getOutputAndClear());
 
 		// When the client says that a click is outside (which could happen when pixels are outside
-		// the terminal area, see https://github.com/termux/termux-app/issues/501) the terminal // gate:allow atribusi upstream
+		// the terminal area, see (referensi upstream: lihat docs/provenance.md)) the terminal
 		// sends a click at the edge.
 		mTerminal.sendMouseEvent(TerminalEmulator.MOUSE_LEFT_BUTTON, 0, 0, true);
 		assertEquals("\033[<0;1;1M", mOutput.getOutputAndClear());
@@ -321,7 +321,7 @@ public class TerminalTest extends TerminalTestCase {
 	}
 
 	public void testSoftTerminalReset() {
-		// See http://vt100.net/docs/vt510-rm/DECSTR and https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=650304 // gate:allow atribusi upstream
+		// See http://vt100.net/docs/vt510-rm/DECSTR and https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=650304 // gate:allow referensi teknis
 		// "\033[?7l" is DECRST to disable wrap-around, and DECSTR ("\033[!p") should reset it.
 		withTerminalSized(3, 3).enterString("\033[?7lABCD").assertLinesAre("ABD", "   ", "   ");
 		enterString("\033[!pEF").assertLinesAre("ABE", "F  ", "   ");

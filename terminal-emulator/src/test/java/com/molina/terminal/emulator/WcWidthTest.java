@@ -55,7 +55,7 @@ public class WcWidthTest extends TestCase {
 	}
 
 	public void testWordJoiner() {
-		// https://en.wikipedia.org/wiki/Word_joiner // gate:allow atribusi upstream
+		// https://en.wikipedia.org/wiki/Word_joiner // gate:allow referensi teknis
 		// The word joiner (WJ) is a code point in Unicode used to separate words when using scripts
 		// that do not use explicit spacing. It is encoded since Unicode version 3.2
 		// (released in 2002) as U+2060 WORD JOINER (HTML &#8288;).
@@ -64,7 +64,7 @@ public class WcWidthTest extends TestCase {
 	}
 
 	public void testSofthyphen() {
-		// http://osdir.com/ml/internationalization.linux/2003-05/msg00006.html: // gate:allow atribusi upstream
+		// http://osdir.com/ml/internationalization.linux/2003-05/msg00006.html: // gate:allow referensi teknis
 		// "Existing implementation practice in terminals is that the SOFT HYPHEN is
 		// a spacing graphical character, and the purpose of my wcwidth() was to
 		// predict the advancement of the cursor position after a string is sent to

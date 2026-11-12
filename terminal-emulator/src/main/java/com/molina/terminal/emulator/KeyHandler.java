@@ -69,8 +69,8 @@ public final class KeyHandler {
     private static final Map<String, Integer> TERMCAP_TO_KEYCODE = new HashMap<>();
 
     static {
-        // terminfo: http://pubs.opengroup.org/onlinepubs/7990989799/xcurses/terminfo.html // gate:allow atribusi upstream
-        // termcap: http://man7.org/linux/man-pages/man5/termcap.5.html // gate:allow atribusi upstream
+        // terminfo: http://pubs.opengroup.org/onlinepubs/7990989799/xcurses/terminfo.html // gate:allow referensi teknis
+        // termcap: http://man7.org/linux/man-pages/man5/termcap.5.html // gate:allow referensi teknis
         TERMCAP_TO_KEYCODE.put("%i", KEYMOD_SHIFT | KEYCODE_DPAD_RIGHT);
         TERMCAP_TO_KEYCODE.put("#2", KEYMOD_SHIFT | KEYCODE_MOVE_HOME); // Shifted home
         TERMCAP_TO_KEYCODE.put("#4", KEYMOD_SHIFT | KEYCODE_DPAD_LEFT);

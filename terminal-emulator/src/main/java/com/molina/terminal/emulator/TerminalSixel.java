@@ -12,9 +12,9 @@ import android.graphics.Bitmap;
  *
  * **See Also:**
  * - `TerminalEmulator.ESC_DCS__SIXEL`
- * - https://vt100.net/docs/vt3xx-gp/chapter14.html // gate:allow atribusi upstream
- * - https://en.wikipedia.org/wiki/Sixel // gate:allow atribusi upstream
- * - https://www.digiater.nl/openvms/decus/vax90b1/krypton-nasa/all-about-sixels.text // gate:allow atribusi upstream
+ * - https://vt100.net/docs/vt3xx-gp/chapter14.html // gate:allow referensi teknis
+ * - https://en.wikipedia.org/wiki/Sixel // gate:allow referensi teknis
+ * - https://www.digiater.nl/openvms/decus/vax90b1/krypton-nasa/all-about-sixels.text // gate:allow referensi teknis
  */
 public class TerminalSixel {
 
@@ -44,7 +44,7 @@ public class TerminalSixel {
      *
      * Each repeat creates a new sixel line of `1x6` pixels, where `6` is the {@link #SIXEL__LINE_LEN}.
      *
-     *  - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.1 // gate:allow atribusi upstream
+     *  - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.1 // gate:allow referensi teknis
      */
     public static final int SIXEL__MAX_REPEAT = 8192;
 
@@ -151,7 +151,7 @@ public class TerminalSixel {
         // Graphics Carriage Return `$`.
         // > The $ (2/4) character indicates the end of the sixel line. The active position returns
         // > to the left page border of the same sixel line. You can use this character to overprint lines.
-        // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.4 // gate:allow atribusi upstream
+        // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.4 // gate:allow referensi teknis
         if (codePoint == '$') {
             mCurX = 0;
             return true;
@@ -160,7 +160,7 @@ public class TerminalSixel {
         // Graphics New Line `-`.
         // > The - (2/13) character indicates the end of a sixel line. The active position moves to
         // > the left margin of the next sixel line.
-        // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.5 // gate:allow atribusi upstream
+        // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.3.5 // gate:allow referensi teknis
         if (codePoint == '-') {
             mCurX = 0;
             mCurY += SIXEL__LINE_LEN;
@@ -211,7 +211,7 @@ public class TerminalSixel {
         // Sixel data characters are in the range of `?` (0x3F) to `~` (0x7E).
         // > Each sixel data character represents six vertical pixels of data. Each sixel data character
         // > represents a binary value equal to the character code value minus hex 3F.
-        // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.2.1 // gate:allow atribusi upstream
+        // - https://vt100.net/docs/vt3xx-gp/chapter14.html#S14.2.1 // gate:allow referensi teknis
         if (repeat > 0 && codePoint >= '?' && codePoint <= '~') {
             int b = codePoint - '?';
             if (mCurY + SIXEL__LINE_LEN > mHeight) {

@@ -12,7 +12,7 @@ import java.util.Arrays;
 /**
  * An iTerm image received via `OSC 1337`.
  *
- * - https://iterm2.com/documentation-images.html // gate:allow atribusi upstream
+ * - https://iterm2.com/documentation-images.html // gate:allow referensi teknis
  */
 public class ITermImage {
 

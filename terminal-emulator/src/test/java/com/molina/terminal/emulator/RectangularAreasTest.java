@@ -7,7 +7,7 @@ package com.molina.terminal.emulator;
 
 public class RectangularAreasTest extends TerminalTestCase {
 
-	/** http://www.vt100.net/docs/vt510-rm/DECFRA */ // gate:allow atribusi upstream
+	/** http://www.vt100.net/docs/vt510-rm/DECFRA */ // gate:allow referensi teknis
 	public void testFillRectangularArea() {
 		withTerminalSized(3, 3).enterString("\033[88$x").assertLinesAre("XXX", "XXX", "XXX");
 		withTerminalSized(3, 3).enterString("\033[88;1;1;2;10$x").assertLinesAre("XXX", "XXX", "   ");
@@ -17,7 +17,7 @@ public class RectangularAreasTest extends TerminalTestCase {
 		withTerminalSized(3, 3).enterString("\033[88;100;1;100;2$x").assertLinesAre("   ", "   ", "   ");
 	}
 
-	/** http://www.vt100.net/docs/vt510-rm/DECERA */ // gate:allow atribusi upstream
+	/** http://www.vt100.net/docs/vt510-rm/DECERA */ // gate:allow referensi teknis
 	public void testEraseRectangularArea() {
 		withTerminalSized(3, 3).enterString("ABCDEFGHI\033[$z").assertLinesAre("   ", "   ", "   ");
 		withTerminalSized(3, 3).enterString("ABCDEFGHI\033[1;1;2;10$z").assertLinesAre("   ", "   ", "GHI");
@@ -29,7 +29,7 @@ public class RectangularAreasTest extends TerminalTestCase {
 		withTerminalSized(3, 3).enterString("A\033[$zBC").assertLinesAre(" BC", "   ", "   ");
 	}
 
-	/** http://www.vt100.net/docs/vt510-rm/DECSED */ // gate:allow atribusi upstream
+	/** http://www.vt100.net/docs/vt510-rm/DECSED */ // gate:allow referensi teknis
 	public void testSelectiveEraseInDisplay() {
 		// ${CSI}1"q enables protection, ${CSI}0"q disables it.
 		// ${CSI}?${0,1,2}J" erases (0=cursor to end, 1=start to cursor, 2=complete display).
@@ -38,7 +38,7 @@ public class RectangularAreasTest extends TerminalTestCase {
 		withTerminalSized(3, 3).enterString("\033[1\"qABCDE\033[0\"qFGHI\033[?2J").assertLinesAre("ABC", "DE ", "   ");
 	}
 
-	/** http://vt100.net/docs/vt510-rm/DECSEL */ // gate:allow atribusi upstream
+	/** http://vt100.net/docs/vt510-rm/DECSEL */ // gate:allow referensi teknis
 	public void testSelectiveEraseInLine() {
 		// ${CSI}1"q enables protection, ${CSI}0"q disables it.
 		// ${CSI}?${0,1,2}K" erases (0=cursor to end, 1=start to cursor, 2=complete line).
@@ -50,7 +50,7 @@ public class RectangularAreasTest extends TerminalTestCase {
 		withTerminalSized(3, 3).enterString("ABC\033[1\"qD\033[0\"qE\033[?2KFGHI").assertLinesAre("ABC", "D F", "GHI");
 	}
 
-	/** http://www.vt100.net/docs/vt510-rm/DECSERA */ // gate:allow atribusi upstream
+	/** http://www.vt100.net/docs/vt510-rm/DECSERA */ // gate:allow referensi teknis
 	public void testSelectiveEraseInRectangle() {
 		// ${CSI}1"q enables protection, ${CSI}0"q disables it.
 		// ${CSI}?${TOP};${LEFT};${BOTTOM};${RIGHT}${" erases.
@@ -65,7 +65,7 @@ public class RectangularAreasTest extends TerminalTestCase {
 		withTerminalSized(3, 3).enterString("ABCD\033[1\"qE\033[0\"qFGHI\033[1;1;2;10${").assertLinesAre("   ", " E ", "GHI");
 	}
 
-	/** http://vt100.net/docs/vt510-rm/DECCRA */ // gate:allow atribusi upstream
+	/** http://vt100.net/docs/vt510-rm/DECCRA */ // gate:allow referensi teknis
 	public void testRectangularCopy() {
 		// "${CSI}${SRC_TOP};${SRC_LEFT};${SRC_BOTTOM};${SRC_RIGHT};${SRC_PAGE};${DST_TOP};${DST_LEFT};${DST_PAGE}\$v"
 		withTerminalSized(7, 3).enterString("ABC\r\nDEF\r\nGHI\033[1;1;2;2;1;2;5;1$v").assertLinesAre("ABC    ", "DEF AB ", "GHI DE ");
@@ -84,19 +84,19 @@ public class RectangularAreasTest extends TerminalTestCase {
 		enterString("\033[1;1;2;2;1;2;2;1$v").assertLinesAre(" ABC ", " DAB ", " GDE ", " JK  ", "     ");
 	}
 
-	/** http://vt100.net/docs/vt510-rm/DECCARA */ // gate:allow atribusi upstream
+	/** http://vt100.net/docs/vt510-rm/DECCARA */ // gate:allow referensi teknis
 	public void testChangeAttributesInRectangularArea() {
 		final int b = TextStyle.CHARACTER_ATTRIBUTE_BOLD;
 		// "${CSI}${TOP};${LEFT};${BOTTOM};${RIGHT};${ATTRIBUTES}\$r"
 		withTerminalSized(3, 3).enterString("ABCDEFGHI\033[1;1;2;2;1$r").assertLinesAre("ABC", "DEF", "GHI");
 		assertEffectAttributesSet(effectLine(b, b, b), effectLine(b, b, 0), effectLine(0, 0, 0));
 
-		// Now with http://www.vt100.net/docs/vt510-rm/DECSACE ("${CSI}2*x") specifying rectangle: // gate:allow atribusi upstream
+		// Now with http://www.vt100.net/docs/vt510-rm/DECSACE ("${CSI}2*x") specifying rectangle: // gate:allow referensi teknis
 		withTerminalSized(3, 3).enterString("\033[2*xABCDEFGHI\033[1;1;2;2;1$r").assertLinesAre("ABC", "DEF", "GHI");
 		assertEffectAttributesSet(effectLine(b, b, 0), effectLine(b, b, 0), effectLine(0, 0, 0));
 	}
 
-	/** http://vt100.net/docs/vt510-rm/DECCARA */ // gate:allow atribusi upstream
+	/** http://vt100.net/docs/vt510-rm/DECCARA */ // gate:allow referensi teknis
 	public void testReverseAttributesInRectangularArea() {
 		final int b = TextStyle.CHARACTER_ATTRIBUTE_BOLD;
 		final int u = TextStyle.CHARACTER_ATTRIBUTE_UNDERLINE;
@@ -105,7 +105,7 @@ public class RectangularAreasTest extends TerminalTestCase {
 		withTerminalSized(3, 3).enterString("ABCDEFGHI\033[1;1;2;2;1$t").assertLinesAre("ABC", "DEF", "GHI");
 		assertEffectAttributesSet(effectLine(b, b, b), effectLine(b, b, 0), effectLine(0, 0, 0));
 
-		// Now with http://www.vt100.net/docs/vt510-rm/DECSACE ("${CSI}2*x") specifying rectangle: // gate:allow atribusi upstream
+		// Now with http://www.vt100.net/docs/vt510-rm/DECSACE ("${CSI}2*x") specifying rectangle: // gate:allow referensi teknis
 		withTerminalSized(3, 3).enterString("\033[2*xABCDEFGHI\033[1;1;2;2;1$t").assertLinesAre("ABC", "DEF", "GHI");
 		assertEffectAttributesSet(effectLine(b, b, 0), effectLine(b, b, 0), effectLine(0, 0, 0));
 

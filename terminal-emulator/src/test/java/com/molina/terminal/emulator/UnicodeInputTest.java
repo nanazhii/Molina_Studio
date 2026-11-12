@@ -10,7 +10,7 @@ import java.io.UnsupportedEncodingException;
 public class UnicodeInputTest extends TerminalTestCase {
 
 	public void testIllFormedUtf8SuccessorByteNotConsumed() throws Exception {
-		// The Unicode Standard Version 6.2 – Core Specification (http://www.unicode.org/versions/Unicode6.2.0/ch03.pdf): // gate:allow atribusi upstream
+		// The Unicode Standard Version 6.2 – Core Specification (http://www.unicode.org/versions/Unicode6.2.0/ch03.pdf): // gate:allow referensi teknis
 		// "If the converter encounters an ill-formed UTF-8 code unit sequence which starts with a valid first byte, but which does not
 		// continue with valid successor bytes (see Table 3-7), it must not consume the successor bytes as part of the ill-formed
 		// subsequence whenever those successor bytes themselves constitute part of a well-formed UTF-8 code unit subsequence."
@@ -18,7 +18,7 @@ public class UnicodeInputTest extends TerminalTestCase {
 		mTerminal.append(new byte[]{(byte) 0b11101111, (byte) 'a'}, 2);
 		assertLineIs(0, ((char) TerminalEmulator.UNICODE_REPLACEMENT_CHAR) + "a   ");
 
-		// https://code.google.com/p/chromium/issues/detail?id=212704 // gate:allow atribusi upstream
+		// https://code.google.com/p/chromium/issues/detail?id=212704 // gate:allow referensi teknis
 		byte[] input = new byte[]{
 				(byte) 0x61, (byte) 0xF1,
 				(byte) 0x80, (byte) 0x80,
@@ -45,7 +45,7 @@ public class UnicodeInputTest extends TerminalTestCase {
 		mTerminal.append(input, input.length);
 		assertLinesAre("\uFFFD\uFFFD\uFFFD\uFFFD ", "     ");
 
-		// https://bugzilla.mozilla.org/show_bug.cgi?id=746900: "with this patch 0xe0 0x80 is decoded as two U+FFFDs, // gate:allow atribusi upstream
+		// https://bugzilla.mozilla.org/show_bug.cgi?id=746900: "with this patch 0xe0 0x80 is decoded as two U+FFFDs, // gate:allow referensi teknis
 		// but 0xe0 0xa0 is decoded as a single U+FFFD, and this is correct according to the "Best Practices", but IE
 		// and Chrome (Version 22.0.1229.94) decode both of them as two U+FFFDs. Opera 12.11 decodes both of them as
 		// one U+FFFD".
@@ -86,7 +86,7 @@ public class UnicodeInputTest extends TerminalTestCase {
 	public void testCombiningCharacterInFirstColumn() throws Exception {
 		withTerminalSized(5, 3).enterString("test\r\nhi\r\n").assertLinesAre("test ", "hi   ", "     ");
 
-		// U+0302 is COMBINING CIRCUMFLEX ACCENT. Test case from mosh (http://mosh.mit.edu/). // gate:allow atribusi upstream
+		// U+0302 is COMBINING CIRCUMFLEX ACCENT. Test case from mosh (http://mosh.mit.edu/). // gate:allow referensi teknis
 		withTerminalSized(5, 5).enterString("test\r\nabc\r\n\u0302\r\ndef\r\n");
 		assertLinesAre("test ", "abc  ", " \u0302    ", "def  ", "     ");
 	}

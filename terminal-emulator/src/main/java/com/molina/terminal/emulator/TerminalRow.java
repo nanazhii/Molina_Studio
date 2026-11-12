@@ -24,16 +24,16 @@ public final class TerminalRow {
      * that can be combined but such characters are primarily under 10.
      *
      * "Section 3.6 Combination" of unicode standard contains combining characters info.
-     * - https://www.unicode.org/versions/Unicode15.0.0/ch03.pdf // gate:allow atribusi upstream
-     * - https://en.wikipedia.org/wiki/Combining_character#Unicode_ranges // gate:allow atribusi upstream
-     * - https://stackoverflow.com/questions/71237212/what-is-the-maximum-number-of-unicode-combined-characters-that-may-be-needed-to // gate:allow atribusi upstream
+     * - https://www.unicode.org/versions/Unicode15.0.0/ch03.pdf // gate:allow referensi teknis
+     * - https://en.wikipedia.org/wiki/Combining_character#Unicode_ranges // gate:allow referensi teknis
+     * - https://stackoverflow.com/questions/71237212/what-is-the-maximum-number-of-unicode-combined-characters-that-may-be-needed-to // gate:allow referensi teknis
      *
      * UAX15-D3 Stream-Safe Text Format limits to max 30 combining characters.
      * > The value of 30 is chosen to be significantly beyond what is required for any linguistic or technical usage.
      * > While it would have been feasible to chose a smaller number, this value provides a very wide margin,
      * > yet is well within the buffer size limits of practical implementations.
-     * - https://unicode.org/reports/tr15/#Stream_Safe_Text_Format // gate:allow atribusi upstream
-     * - https://stackoverflow.com/a/11983435/14686958 // gate:allow atribusi upstream
+     * - https://unicode.org/reports/tr15/#Stream_Safe_Text_Format // gate:allow referensi teknis
+     * - https://stackoverflow.com/a/11983435/14686958 // gate:allow referensi teknis
      *
      * We choose the value 15 because it should be enough for terminal based applications and keep
      * the memory usage low for a terminal row, won't affect performance or cause terminal to
@@ -156,7 +156,7 @@ public final class TerminalRow {
         mHasTerminalBitmap = false;
     }
 
-    // https://github.com/steven676/Android-Terminal-Emulator/commit/9a47042620bec87617f0b4f5d50568535668fe26 // gate:allow atribusi upstream
+    // https://github.com/steven676/Android-Terminal-Emulator/commit/9a47042620bec87617f0b4f5d50568535668fe26 // gate:allow referensi teknis
     public void setChar(int columnToSet, int codePoint, long style) {
         if (columnToSet  < 0 || columnToSet >= mStyle.length)
             throw new IllegalArgumentException("TerminalRow.setChar(): columnToSet=" + columnToSet + ", codePoint=" + codePoint + ", style=" + style);

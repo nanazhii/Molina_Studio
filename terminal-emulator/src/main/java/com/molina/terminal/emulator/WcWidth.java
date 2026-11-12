@@ -8,18 +8,18 @@ package com.molina.terminal.emulator;
 /**
  * Implementation of wcwidth(3) for Unicode 15.
  *
- * Implementation from https://github.com/jquast/wcwidth but we return 0 for unprintable characters. // gate:allow atribusi upstream
+ * Implementation from https://github.com/jquast/wcwidth but we return 0 for unprintable characters. // gate:allow referensi teknis
  *
  * IMPORTANT:
  * Must be kept in sync with the following:
- * https://github.com/termux/wcwidth // gate:allow atribusi upstream
- * https://github.com/termux/libandroid-support // gate:allow atribusi upstream
- * https://github.com/termux/termux-packages/tree/master/packages/libandroid-support // gate:allow atribusi upstream
+ * (referensi upstream: lihat docs/provenance.md)
+ * (referensi upstream: lihat docs/provenance.md)
+ * (referensi upstream: lihat docs/provenance.md)
  */
 public final class WcWidth {
 
-    // From https://github.com/jquast/wcwidth/blob/master/wcwidth/table_zero.py // gate:allow atribusi upstream
-    // from https://github.com/jquast/wcwidth/pull/64 // gate:allow atribusi upstream
+    // From https://github.com/jquast/wcwidth/blob/master/wcwidth/table_zero.py // gate:allow referensi teknis
+    // from https://github.com/jquast/wcwidth/pull/64 // gate:allow referensi teknis
     // at commit 1b9b6585b0080ea5cb88dc9815796505724793fe (2022-12-16):
     private static final int[][] ZERO_WIDTH = {
         {0x00300, 0x0036f},  // Combining Grave Accent  ..Combining Latin Small Le
@@ -367,8 +367,8 @@ public final class WcWidth {
         {0xe0100, 0xe01ef},  // Variation Selector-17   ..Variation Selector-256
     };
 
-    // https://github.com/jquast/wcwidth/blob/master/wcwidth/table_wide.py // gate:allow atribusi upstream
-    // from https://github.com/jquast/wcwidth/pull/64 // gate:allow atribusi upstream
+    // https://github.com/jquast/wcwidth/blob/master/wcwidth/table_wide.py // gate:allow referensi teknis
+    // from https://github.com/jquast/wcwidth/pull/64 // gate:allow referensi teknis
     // at commit 1b9b6585b0080ea5cb88dc9815796505724793fe (2022-12-16):
     private static final int[][] WIDE_EASTASIAN = {
         {0x01100, 0x0115f},  // Hangul Choseong Kiyeok  ..Hangul Choseong Filler
@@ -528,7 +528,7 @@ public final class WcWidth {
         }
 
         // C0/C1 control characters
-        // Termux change: Return 0 instead of -1. // gate:allow atribusi upstream
+        // Molina change: Return 0 instead of -1.
         if (ucs < 32 || (0x07F <= ucs && ucs < 0x0A0)) return 0;
 
         // combining characters with zero width

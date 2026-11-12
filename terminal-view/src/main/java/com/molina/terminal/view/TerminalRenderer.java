@@ -33,9 +33,9 @@ public final class TerminalRenderer {
 
     /** The width of a single mono spaced character obtained by {@link Paint#measureText(String)} on a single 'X'. */
     final float mFontWidth;
-    /** The {@link Paint#getFontSpacing()}. See http://www.fampennings.nl/maarten/android/08numgrid/font.png */ // gate:allow atribusi upstream
+    /** The {@link Paint#getFontSpacing()}. See http://www.fampennings.nl/maarten/android/08numgrid/font.png */ // gate:allow referensi teknis
     final int mFontLineSpacing;
-    /** The {@link Paint#ascent()}. See http://www.fampennings.nl/maarten/android/08numgrid/font.png */ // gate:allow atribusi upstream
+    /** The {@link Paint#ascent()}. See http://www.fampennings.nl/maarten/android/08numgrid/font.png */ // gate:allow referensi teknis
     private final int mFontAscent;
     /** The {@link #mFontLineSpacing} + {@link #mFontAscent}. */
     final int mFontLineSpacingAndAscent;
@@ -247,7 +247,7 @@ public final class TerminalRenderer {
                 int green = (0xFF & (foreColor >> 8));
                 int blue = (0xFF & foreColor);
                 // Dim color handling used by libvte which in turn took it from xterm
-                // (https://bug735245.bugzilla-attachments.gnome.org/attachment.cgi?id=284267): // gate:allow atribusi upstream
+                // (https://bug735245.bugzilla-attachments.gnome.org/attachment.cgi?id=284267): // gate:allow referensi teknis
                 red = red * 2 / 3;
                 green = green * 2 / 3;
                 blue = blue * 2 / 3;

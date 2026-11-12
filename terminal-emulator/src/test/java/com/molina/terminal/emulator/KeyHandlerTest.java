@@ -30,7 +30,7 @@ public class KeyHandlerTest extends TestCase {
 		}
 	}
 
-	/** See http://pubs.opengroup.org/onlinepubs/7990989799/xcurses/terminfo.html */ // gate:allow atribusi upstream
+	/** See http://pubs.opengroup.org/onlinepubs/7990989799/xcurses/terminfo.html */ // gate:allow referensi teknis
 	public void testTermCaps() {
 		// Backspace.
 		assertKeysEquals("\u007f", KeyHandler.getCodeFromTermcap("kb", false, false));
