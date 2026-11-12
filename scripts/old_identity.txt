@@ -1,3 +1,6 @@
 # Satu regex per baris (titik di-escape). Contoh:
 # com\.contoh\.devlama
 # devlama\.example\.org
+# dari clone referensi (termux-app, mpv-android)
+\bis\.xyz\.
+\bcom\.termux\b
