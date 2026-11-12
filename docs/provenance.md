@@ -9,7 +9,7 @@ dapat diadaptasi ke repo ini. Dicatat per 2026-11-12.
 | Upstream | Commit referensi | Lisensi | Status adaptasi |
 |---|---|---|---|
 | mpv | bcde6b93cca4 | GPLv2+ (LGPLv2.1+ bila dibangun dengan -Dgpl=false) | Belum ada berkas diadaptasi |
-| mpv-android | ebf1b3f0cbe9 | MIT | Belum ada berkas diadaptasi |
+| mpv-android | ebf1b3f0cbe9 | MIT | MPVLib.kt (mpv-native, hanya package diganti). Build native memakai sumber upstream + patch JNI/FFmpeg lewat scripts/native_mpv.sh |
 | NewPipe | 9486b0148af8 | GPLv3 | Belum ada berkas diadaptasi |
 | termux-app | 8629e632fcb9 | GPLv3-only (terminal-emulator dan terminal-view: Apache 2.0; lihat pengecualian upstream) | Belum ada berkas diadaptasi |
 | proot-distro | f8abdd9957f8 | GPLv3 | Belum ada berkas diadaptasi |
@@ -34,3 +34,12 @@ setiap kali kode diadaptasi.
 GPL-3.0-only (ditetapkan pemilik, 2026-11-12). Alasan: sebagian upstream
 berlisensi GPLv3-only sehingga hasil gabungannya tidak dapat memakai "or later".
 Lisensi libmpv dan FFmpeg bergantung pada opsi build; periksa sebelum rilis.
+
+## Pin build native (P3)
+
+Sumber build native dipin di native/pins.env (commit git) dan native/pins.sha256 (hash unduhan).
+Aturan: dependensi yang di upstream mpv-android mengambang (mpv, dav1d, libass, libplacebo) dipin ke
+commit terakhir SEBELUM waktu commit mpv-android yang dipin (2026-11-08T14:12:38+01:00).
+Karena itu commit mpv yang DIBANGUN (8bc468896ec7) berbeda dari commit referensi di tabel di atas
+(bcde6b93cca4, HEAD saat repo ini disiapkan). Tabel = acuan baca; pins.env = yang benar-benar dikompilasi.
+FFmpeg n9.0.2 (946fcce07b6d). FreeType dipin ke tag VER-2-15-0; SHA dicatat di BUILD-INFO.txt.

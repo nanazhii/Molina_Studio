@@ -2,6 +2,11 @@ name: Native mpv (arm64)
 
 on:
   workflow_dispatch:
+    inputs:
+      fresh:
+        description: "Abaikan cache dan bangun ulang dari nol"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -14,25 +19,61 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
-      - name: Prasyarat skrip native
+      - name: Prasyarat skrip dan pin native
         run: |
-          if [ ! -f scripts/native_mpv.sh ]; then
-            echo "::error::scripts/native_mpv.sh belum ada di Molina_Studio; pipeline native mpv belum dibangun."
-            exit 1
+          set -euo pipefail
+          for f in scripts/native_mpv.sh scripts/native_wget.sh scripts/ensure_ndk.sh \
+                   scripts/ffmpeg_components_audit.sh scripts/native_audit.sh \
+                   native/pins.env native/pins.sha256 native/molina_ffmpeg_profile.sh; do
+            [ -s "$f" ] || { echo "::error::$f tidak ada atau kosong"; exit 1; }
+          done
+          # Format pin: SHA git 40 hex, hash unduhan 64 hex + URL HTTPS.
+          grep -E '^[A-Z0-9_]+_SHA=' native/pins.env | grep -Ev '^FREETYPE_SHA=$' \
+            | grep -Ev '^[A-Z0-9_]+_SHA=[0-9a-f]{40}$' && { echo "::error::SHA git di pins.env tidak valid"; exit 1; } || true
+          grep -Ev '^[0-9a-f]{64}  https:[/][/][^ ]+$' native/pins.sha256 && { echo "::error::format pins.sha256 tidak valid"; exit 1; } || true
+      - name: Cache hasil build (kunci = hash pin + skrip build)
+        id: cache
+        if: ${{ !inputs.fresh }}
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: _native_out
+          key: native-mpv-arm64-v1-${{ runner.os }}-${{ hashFiles('native/pins.env', 'native/pins.sha256', 'native/molina_ffmpeg_profile.sh', 'scripts/native_mpv.sh', 'scripts/native_wget.sh', 'scripts/ensure_ndk.sh', 'scripts/ffmpeg_components_audit.sh', 'scripts/native_audit.sh') }}
+      - name: Verifikasi hasil cache
+        id: verify
+        env:
+          CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
+        run: |
+          ok=false
+          if [ "$CACHE_HIT" = "true" ]; then
+            if ( cd _native_out \
+                 && test -s molina-native-arm64.tgz && test -s BUILD-INFO.txt && test -s download-sha256.txt \
+                 && sha256sum -c SHA256SUMS ); then
+              ok=true
+              echo "Cache cocok dan utuh: build dilewati."
+            else
+              echo "::warning::Cache rusak atau tidak lengkap; build ulang. Naikkan v1 di kunci cache bila terus berulang."
+              rm -rf _native_out
+            fi
           fi
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
       - name: Paket build
+        if: steps.verify.outputs.ok != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y autoconf pkgconf libtool ninja-build python3-pip gperf nasm
           sudo pip3 install --break-system-packages meson
       - name: Bangun libmpv + libplayer (arm64)
+        if: steps.verify.outputs.ok != 'true'
         run: bash scripts/native_mpv.sh
       - name: Ringkasan hash
         if: success()
+        env:
+          CACHE_OK: ${{ steps.verify.outputs.ok }}
         run: |
           {
+            if [ "$CACHE_OK" = "true" ]; then echo '**Build:** dari cache (pin tidak berubah)'; else echo '**Build:** penuh (cache tidak ada atau dilewati)'; fi
             echo '### SHA256SUMS'; echo '```'; cat _native_out/SHA256SUMS; echo '```'
-            echo '### Hash unduhan (salin ke native/pins.sha256 setelah ditinjau)'
+            echo '### Hash unduhan (harus identik dengan native/pins.sha256)'
             echo '```'; sort -u _native_out/download-sha256.txt; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -81,4 +122,5 @@ jobs:
             echo '### Release native'
             echo "- tag: \`$TAG\`"
             echo "- sha256 tgz: \`$SUM\`"
+            echo "- isi di native/prebuilt.env: NATIVE_TAG=$TAG dan NATIVE_SHA256=$SUM"
           } >> "$GITHUB_STEP_SUMMARY"

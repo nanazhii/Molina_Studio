@@ -20,6 +20,13 @@ ALLOW_HOSTS = {"schemas.android.com", "www.w3.org", "developer.android.com",
                "kotlinlang.org", "docs.gradle.org"}
 ALLOW_GITHUB_PATH = ("/nanazhii/",)
 
+# Berkas build-time pipeline native (hanya jalan di CI). Boleh menyebut host sumber upstream dan nama
+# proyek upstream; host pelacak/donasi tetap ditolak. Tambah berkas hanya jika benar-benar perlu.
+BUILD_FILES = {"scripts/native_mpv.sh", "scripts/native_wget.sh", "scripts/ensure_ndk.sh",
+               "scripts/fetch_native.sh", "scripts/native_audit.sh",
+               "scripts/ffmpeg_components_audit.sh", "native/molina_ffmpeg_profile.sh"}
+BUILD_HOSTS = {"github.com", "dl.google.com"}
+
 DONATION_HOSTS = {"ko-fi.com", "patreon.com", "buymeacoffee.com", "paypal.me",
                   "paypal.com", "opencollective.com", "liberapay.com",
                   "saweria.co", "trakteer.id", "sociabuzz.com"}
@@ -67,6 +74,7 @@ def emit(kind, rel, no, msg):
 
 
 def scan_line(rel, no, line, errors, warns):
+    build = rel.replace(os.sep, "/") in BUILD_FILES
     for m in URL_RE.finditer(line):
         url = m.group(0)
         u = urlparse(url)
@@ -79,12 +87,14 @@ def scan_line(rel, no, line, errors, warns):
             continue
         elif host_match(host, ALLOW_HOSTS):
             continue
+        elif build and host_match(host, BUILD_HOSTS):
+            continue
         else:
             errors.append((rel, no, "URL di luar allowlist: " + url))
     for pat in TRACKER_PATTERNS:
         if re.search(pat, line, re.I):
             errors.append((rel, no, "SDK pelacak terdeteksi (%s)" % pat))
-    for pat in OLD_IDENTITY:
+    for pat in ([] if build else OLD_IDENTITY):
         if re.search(pat, line, re.I):
             errors.append((rel, no, "identitas dev lama terdeteksi (%s)" % pat))
     for pat, msg in WARN_PATTERNS:
