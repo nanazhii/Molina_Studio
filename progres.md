@@ -37,3 +37,6 @@
 - [ ] Verifikasi CI: :terminal-pty:assembleDebug menghasilkan libmolina_pty.so
 - [ ] Uji PTY di perangkat Android 8 (spawn /system/bin/sh, resize, waitFor)
 - [ ] terminal-core (implement MolinaTerminalSession + TerminalOutput), terminal-proot
+- [x] Patch 9c: menu hamburger scrollable (PopupWindow+ScrollView), tekan lama membuka menu
+- [ ] Uji perangkat: menu di mode keyboard aktif (ruang sempit), scroll, Mulai ulang sesi
+- [ ] Patch 10: terminal-proot (menunggu keputusan: rootfs diunduh vs dibundel)
