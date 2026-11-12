@@ -32,4 +32,8 @@
 - [ ] terminal-view, terminal-pty (JNI), terminal-core wiring, terminal-proot
 - [x] Fix nama interface TerminalSessionClient (bug replace substring)
 - [ ] Verifikasi CI jvm-tests setelah fix
-- [ ] Verifikasi CI hijau: module_gate, telemetry_gate, jvm-tests (emulator + view)
+- [x] CI hijau: module_gate, telemetry_gate, jvm-tests (emulator + view)
+- [x] Patch 6: modul terminal-pty (molina_pty.c, PtyNative, PtyProcess.kt, CMake arm64)
+- [ ] Verifikasi CI: :terminal-pty:assembleDebug menghasilkan libmolina_pty.so
+- [ ] Uji PTY di perangkat Android 8 (spawn /system/bin/sh, resize, waitFor)
+- [ ] terminal-core (implement MolinaTerminalSession + TerminalOutput), terminal-proot

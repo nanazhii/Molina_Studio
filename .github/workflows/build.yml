@@ -73,6 +73,12 @@ jobs:
       - name: Pastikan NDK sesuai pin
         if: hashFiles('scripts/ensure_ndk.sh') != ''
         run: bash scripts/ensure_ndk.sh
+      - name: NDK dipin untuk modul native Gradle (terminal-pty)
+        if: hashFiles('scripts/ensure_ndk.sh') != ''
+        run: |
+          bash scripts/ensure_ndk.sh --dest "$ANDROID_HOME/ndk"
+          . native/pins.env
+          ln -sfn "$ANDROID_HOME/ndk/android-ndk-$NDK_VERSION" "$ANDROID_HOME/ndk/$NDK_REVISION"
       - name: Build APK Molina
         env:
           MOLINA_KEYSTORE_PASSWORD: ${{ inputs.variant == 'release' && secrets.MOLINA_KEYSTORE_PASSWORD || '' }}

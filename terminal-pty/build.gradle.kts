@@ -5,6 +5,7 @@ plugins {
 android {
     namespace = "com.molina.terminal.pty"
     compileSdk = 35
+    ndkVersion = "30.0.16248370"
     defaultConfig {
         minSdk = 26
         ndk { abiFilters.add("arm64-v8a") }
