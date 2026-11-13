@@ -25,11 +25,13 @@ object ProotLauncher {
         id: String? = null,
         logger: MolinaLogger = MolinaLog.logger,
         lexists: (String) -> Boolean = { p -> hostLexists(p) },
+        compat: Boolean = false,
     ): ProotLaunch {
         layout.prootTmp.mkdirs()
         val command = mutableListOf(
             layout.prootBin.path,
-            "--link2symlink", "-0", "--kill-on-exit", "--sysvipc",
+            "--link2symlink", "-0", "--kill-on-exit",
+            *(if (compat) emptyArray<String>() else arrayOf("--sysvipc")),
             "-r", layout.rootfsDir.path,
             "-b", "/dev", "-b", "/proc", "-b", "/sys",
             "-b", "$SDCARD:/sdcard",
@@ -53,8 +55,8 @@ object ProotLauncher {
         if (layout.prootDir.list()?.any { it.contains(".so") } == true) {
             env["LD_LIBRARY_PATH"] = layout.prootDir.path
         }
-        if (noSeccomp) env["PROOT_NO_SECCOMP"] = "1"
-        ProotEvents.launch(logger, id, layout, noSeccomp, loader.isFile, env.containsKey("LD_LIBRARY_PATH"))
+        if (noSeccomp || compat) env["PROOT_NO_SECCOMP"] = "1"
+        ProotEvents.launch(logger, id, layout, noSeccomp || compat, loader.isFile, env.containsKey("LD_LIBRARY_PATH"))
         return ProotLaunch(command, env, hostHome)
     }
 

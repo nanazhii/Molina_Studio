@@ -104,6 +104,7 @@ Tag `Molina/term/<id>`; id sesi (`t1`, `t2`, ...) sama untuk semua peristiwa sat
 | `term.spawn-failed` | BUG | proses gagal dijalankan (exec/PTY) | `error` |
 | `term.native-missing` | BUG | pustaka native PTY tidak termuat | `error` |
 | `term.exit-early` | BUG | keluar non-nol sebelum 5 detik (mis. proot gagal) | `code`, `uptime_ms` |
+| `term.proot-assert` | BUG | proot abort assertion IS_IN_SYSENTER (seccomp/kernel lama) | `code`, `uptime_ms` |
 | `term.killed` | BUG | dihentikan sinyal (SIGSEGV, SIGKILL oleh LMK, dst.) | `signal`, `uptime_ms` |
 | `term.exit-unknown` | BUG | kode keluar tidak bisa dibaca | `uptime_ms` |
 

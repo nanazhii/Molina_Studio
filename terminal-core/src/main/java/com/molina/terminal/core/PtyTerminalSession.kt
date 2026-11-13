@@ -60,6 +60,13 @@ class PtyTerminalSession(
     private var startedAt = 0L
     private var lastCols = 0 // hanya main thread
     private var lastRows = 0
+    private val trackTail = SessionFailureDetector.isProot(config.command.firstOrNull())
+    private val outputTail = StringBuilder() // hanya main thread; untuk mendeteksi kegagalan proot
+
+    /** Penyebab gagal start proot yang dikenali; null bila tidak ada atau bukan proot. */
+    @Volatile
+    var failure: SessionFailure? = null
+        private set
 
     /** Kode keluar proses (-sinyal bila dihentikan sinyal); null selama berjalan atau bila tak diketahui. */
     @Volatile
@@ -201,6 +208,7 @@ class PtyTerminalSession(
     private fun deliver(chunk: ByteArray) {
         try {
             if (!closed.get()) {
+                if (trackTail) rememberTail(chunk)
                 term?.append(chunk, chunk.size)
                 client.onTextChanged(this)
             }
@@ -212,11 +220,20 @@ class PtyTerminalSession(
     private fun finish(code: Int?, log: Boolean = true) {
         exitStatus = code
         if (closed.get() || !finished.compareAndSet(false, true)) return
-        if (log) TermEvents.exit(logger, sessionId, code, clock() - startedAt)
-        val note = if (code == null) "\r\n[Proses selesai]\r\n" else "\r\n[Proses selesai, kode $code]\r\n"
+        val uptime = clock() - startedAt
+        if (log) TermEvents.exit(logger, sessionId, code, uptime)
+        failure = if (log) SessionFailureDetector.classify(config.command.firstOrNull(), code, uptime, outputTail.toString()) else null
+        failure?.let { TermEvents.prootFailure(logger, sessionId, it, code, uptime) }
+        val note = failure?.let { SessionFailureDetector.message(it, code) }
+            ?: if (code == null) "\r\n[Proses selesai]\r\n" else "\r\n[Proses selesai, kode $code]\r\n"
         term?.appendText(note)
         client.onTextChanged(this)
         client.onSessionFinished(this)
+    }
+
+    private fun rememberTail(chunk: ByteArray) {
+        outputTail.append(String(chunk, Charsets.ISO_8859_1))
+        if (outputTail.length > TAIL_MAX) outputTail.delete(0, outputTail.length - TAIL_MAX)
     }
 
     private fun TerminalEmulator.appendText(text: String) {
@@ -229,6 +246,7 @@ class PtyTerminalSession(
         const val MAX_PENDING_CHUNKS = 32
         const val PERMIT_POLL_MS = 50L
         const val ESC: Byte = 27
+        const val TAIL_MAX = 2048
         val STOP = ByteArray(0)
     }
 }

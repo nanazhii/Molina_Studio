@@ -24,4 +24,8 @@
     <string name="terminal_setup_banner_install">Debian belum terpasang · ketuk untuk memasang</string>
     <string name="terminal_setup_banner_proot">Debian: proot belum siap · ketuk untuk memeriksa</string>
     <string name="terminal_setup_ready">Debian %1$s siap · arm64</string>
+    <string name="terminal_compat_button">Coba mode kompatibilitas</string>
+    <string name="terminal_compat_msg_assert">Proot berhenti: ketidakcocokan kernel (seccomp).</string>
+    <string name="terminal_compat_msg_early">Proot gagal start.</string>
+    <string name="terminal_compat_msg_still">Proot masih gagal di mode kompatibilitas. Buka Log untuk detail.</string>
 </resources>

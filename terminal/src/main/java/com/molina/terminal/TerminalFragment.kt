@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.molina.core.ui.R as UiR
+import com.molina.terminal.proot.ProotCompat
 import com.molina.terminal.proot.RootfsPin
 import com.molina.terminal.view.TerminalView
 
@@ -72,9 +73,19 @@ class TerminalFragment : Fragment() {
         overlay.render(setup.state)
         setup.refresh()
 
+        val compatPanel = CompatPanelView(ctx) {
+            ProotCompat.enabled = true
+            setup.sessionIsDebian = setup.isReady()
+            terminalView.attachSession(holder.restart(owner.terminalSessionFactory))
+            terminalView.requestFocus()
+        }
+        holder.failureListener = { compatPanel.render(it, ProotCompat.enabled) }
+        compatPanel.render(holder.failure, ProotCompat.enabled)
+
         val column = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             addView(terminalView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+            addView(compatPanel, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
             addView(extraKeys, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         }
         return FrameLayout(ctx).apply {
@@ -86,6 +97,7 @@ class TerminalFragment : Fragment() {
     override fun onDestroyView() {
         setup.listener = null
         holder.modifiers.listener = null
+        holder.failureListener = null
         holder.bind(null)
         super.onDestroyView()
     }

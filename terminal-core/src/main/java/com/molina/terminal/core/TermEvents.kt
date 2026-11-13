@@ -39,6 +39,16 @@ internal object TermEvents {
     fun close(logger: MolinaLogger, id: String, running: Boolean) =
         MolinaEvents.behavior(AREA, "close", fields = mapOf("running" to running.toString()), id = id, logger = logger)
 
+    /** Hanya PROOT_ASSERT yang mendapat peristiwa sendiri; EARLY_EXIT sudah tercatat sebagai exit-early. */
+    fun prootFailure(logger: MolinaLogger, id: String, failure: SessionFailure, code: Int?, uptimeMs: Long) {
+        if (failure != SessionFailure.PROOT_ASSERT) return
+        MolinaEvents.bug(
+            AREA, "proot-assert", "proot abort (assertion IS_IN_SYSENTER), kemungkinan seccomp/kernel lama",
+            fields = mapOf("code" to (code?.toString() ?: "unknown"), "uptime_ms" to uptimeMs.coerceAtLeast(0L).toString()),
+            id = id, logger = logger,
+        )
+    }
+
     fun spawnFailed(logger: MolinaLogger, id: String, t: Throwable?) {
         val linkage = t is LinkageError
         MolinaEvents.bug(

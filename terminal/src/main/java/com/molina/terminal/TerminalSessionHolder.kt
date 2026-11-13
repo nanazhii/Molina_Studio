@@ -3,6 +3,7 @@ package com.molina.terminal
 
 import androidx.lifecycle.ViewModel
 import com.molina.terminal.core.PtyTerminalSession
+import com.molina.terminal.core.SessionFailure
 import com.molina.terminal.view.TerminalView
 
 /**
@@ -12,7 +13,10 @@ import com.molina.terminal.view.TerminalView
 internal class TerminalSessionHolder : ViewModel() {
 
     private var finished = false
-    private val client = ForwardingSessionClient { finished = true }
+    private val client = ForwardingSessionClient {
+        finished = true
+        setFailure(session?.failure)
+    }
 
     var session: PtyTerminalSession? = null
         private set
@@ -23,11 +27,23 @@ internal class TerminalSessionHolder : ViewModel() {
     /** Modifier Ctrl/Alt virtual; bertahan antar-fragment. */
     val modifiers = TerminalModifiers()
 
+    /** Penyebab gagal start proot pada sesi terakhir; null bila tidak ada. */
+    var failure: SessionFailure? = null
+        private set
+
+    var failureListener: ((SessionFailure?) -> Unit)? = null
+
+    private fun setFailure(value: SessionFailure?) {
+        failure = value
+        failureListener?.invoke(value)
+    }
+
     fun ensureSession(factory: TerminalSessionFactory): PtyTerminalSession {
         val current = session
         if (current != null && !finished) return current
         current?.close()
         finished = false
+        setFailure(null)
         return factory.create(client).also { session = it }
     }
 
@@ -35,6 +51,7 @@ internal class TerminalSessionHolder : ViewModel() {
     fun restart(factory: TerminalSessionFactory): PtyTerminalSession {
         session?.close()
         finished = false
+        setFailure(null)
         return factory.create(client).also { session = it }
     }
 
