@@ -65,3 +65,7 @@
 - [ ] Verifikasi CI Patch 13a (mpv-native + core-log jvm-tests)
 - [ ] Pasang MpvNativeLog.attach/detach saat sesi mpv nyata dibuat; uji perangkat apakah libplayer mengirim log mpv
 - [ ] Patch 13b: term/proot (exit code, PTY putus, spawn gagal), lalu 13c: files (IOException/izin), lalu tombol crash debug-only
+- [x] Patch 13b (term): TermEvents + PtyTerminalSession mencatat term.pty-start/resize/close/exit dan BUG spawn-failed/native-missing/exit-early/killed/exit-unknown; id sesi sama dengan session.start; README bagian Log perilaku; belum dikompilasi di sandbox
+- [ ] Verifikasi CI Patch 13b (terminal-core jvm-tests, PtyTerminalSessionTest Fixture baru)
+- [ ] Uji perangkat: buka tab Terminal, ketik exit, cek urutan term.session.start, term.pty-start, term.exit di Log Viewer; kasus proot gagal harus muncul sebagai BUG term.exit-early
+- [ ] Patch 13c: files (IOException/izin ditolak jadi BUG dengan kelas errno), lalu tombol crash debug-only

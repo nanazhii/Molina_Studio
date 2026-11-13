@@ -12,7 +12,7 @@ class MpvLogScrubTest {
 
     @Test
     fun urlLosesHostAndQuery() {
-        assertEquals("Error: film.mkv failed", MpvLogScrub.scrub("Error: https://h.example/x/film.mkv?token=rahasia failed"))
+        assertEquals("Error: film.mkv failed", MpvLogScrub.scrub("Error: https://h.example/x/film.mkv?token=rahasia failed")) // gate:allow URL fiktif untuk uji scrub
     }
 
     @Test
