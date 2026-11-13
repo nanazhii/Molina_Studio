@@ -9,7 +9,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$ROOT/native/pins.env"
 # shellcheck source=/dev/null
 . "$ROOT/native/proot.pins.env"
-: "${PROOT_SHA:?}" "${TALLOC_SHA:?}" "${NDK_VERSION:?}" "${ANDROID_API:?}"
+: "${PROOT_SHA:?}" "${PROOT_VERSION:?}" "${TALLOC_SHA:?}" "${NDK_VERSION:?}" "${ANDROID_API:?}"
 
 WORK="$ROOT/_proot"; OUT="$ROOT/_proot_out"
 rm -rf "$WORK" "$OUT"; mkdir -p "$WORK" "$OUT"
@@ -72,7 +72,8 @@ cp "$WORK/talloc-src/lib/talloc/talloc.h" "$T/include/"
 
 # ---- proot statis (loader tertanam; env agar `+=` di GNUmakefile tetap berlaku) ----
 cd "$WORK/proot-src/src"
-export CPPFLAGS="-I$T/include" CFLAGS="-Wno-unused-parameter -Wno-implicit-function-declaration" \
+# Sama seperti resep paket proot Android upstream: ARG_MAX dan VERSION lewat CPPFLAGS.
+export CPPFLAGS="-I$T/include -DARG_MAX=131072 -DVERSION=\\\"$PROOT_VERSION\\\"" CFLAGS="-Wno-unused-parameter -Wno-implicit-function-declaration" \
        LDFLAGS="-L$T/lib"
 make -j"$(nproc)" CC="$CC" STRIP="$BIN/llvm-strip" OBJCOPY="$BIN/llvm-objcopy" OBJDUMP="$BIN/llvm-objdump" proot
 
@@ -88,7 +89,8 @@ BAD="$(echo "$NEEDED" | grep -Ev '\[(libc|libm|libdl)\.so\]' || true)"
 # ---- paket + hash ----
 cd "$OUT"
 {
-  echo "proot_repo=$PROOT_REPO"; echo "proot_sha=$PROOT_SHA"
+  echo "proot_repo=$PROOT_REPO"; echo "proot_sha=$PROOT_SHA"; echo "proot_version=$PROOT_VERSION"
+  echo "version_in_binary=$(grep -aq "$PROOT_VERSION" "$OUT/proot" && echo yes || echo no)"
   echo "talloc_tag=$TALLOC_TAG"; echo "talloc_sha=$TALLOC_SHA"
   echo "ndk=$NDK_VERSION ($NDK_REVISION)"; echo "android_api=$ANDROID_API"
   echo "built=$(date -u +%Y-%m-%dT%H:%M:%SZ)"

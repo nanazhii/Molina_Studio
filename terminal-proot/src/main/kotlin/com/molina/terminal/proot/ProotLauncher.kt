@@ -5,6 +5,7 @@ import com.molina.log.MolinaLog
 import com.molina.log.MolinaLogger
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.LinkOption
 
 class ProotLaunch(
     val command: List<String>,
@@ -23,14 +24,16 @@ object ProotLauncher {
         noSeccomp: Boolean = false,
         id: String? = null,
         logger: MolinaLogger = MolinaLog.logger,
+        lexists: (String) -> Boolean = { p -> hostLexists(p) },
     ): ProotLaunch {
         layout.prootTmp.mkdirs()
         val command = mutableListOf(
             layout.prootBin.path,
-            "--link2symlink", "-0", "--kill-on-exit",
+            "--link2symlink", "-0", "--kill-on-exit", "--sysvipc",
             "-r", layout.rootfsDir.path,
             "-b", "/dev", "-b", "/proc", "-b", "/sys",
             "-b", "$SDCARD:/sdcard",
+            *guestBinds(layout, lexists).toTypedArray(),
             "-w", "/root",
             "/usr/bin/env", "-i",
             "HOME=/root", "USER=root", "LOGNAME=root",
@@ -43,6 +46,7 @@ object ProotLauncher {
             "TMPDIR" to layout.prootTmp.path,
             "PATH" to "/system/bin:/system/xbin",
             "PROOT_TMP_DIR" to layout.prootTmp.path,
+            "PROOT_L2S_DIR" to l2sDir(layout),
         )
         val loader = File(layout.prootDir, "loader")
         if (loader.isFile) env["PROOT_LOADER"] = loader.path
@@ -52,6 +56,27 @@ object ProotLauncher {
         if (noSeccomp) env["PROOT_NO_SECCOMP"] = "1"
         ProotEvents.launch(logger, id, layout, noSeccomp, loader.isFile, env.containsKey("LD_LIBRARY_PATH"))
         return ProotLaunch(command, env, hostHome)
+    }
+
+    private fun hostLexists(path: String): Boolean = Files.exists(File(path).toPath(), LinkOption.NOFOLLOW_LINKS)
+
+    /** Folder tempat --link2symlink menaruh berkas pengganti hard link (mengikuti proot-distro). */
+    private fun l2sDir(layout: DebianLayout): String {
+        val d = File(layout.rootfsDir, ".l2s")
+        d.mkdirs()
+        return d.path
+    }
+
+    /** Bind tambahan ala proot-distro: /dev/random, /dev/fd, stdin/stdout/stderr, dan /dev/shm milik aplikasi. */
+    private fun guestBinds(layout: DebianLayout, lexists: (String) -> Boolean): List<String> {
+        val out = ArrayList<String>()
+        if (lexists("/dev/urandom")) out += listOf("-b", "/dev/urandom:/dev/random")
+        if (!lexists("/dev/fd") && lexists("/proc/self/fd")) out += listOf("-b", "/proc/self/fd:/dev/fd")
+        for ((i, name) in listOf("stdin", "stdout", "stderr").withIndex()) {
+            if (!lexists("/dev/$name") && lexists("/proc/self/fd/$i")) out += listOf("-b", "/proc/self/fd/$i:/dev/$name")
+        }
+        if (layout.prootShm.isDirectory || layout.prootShm.mkdirs()) out += listOf("-b", "${layout.prootShm.path}:/dev/shm")
+        return out
     }
 
     /** Berkas dasar rootfs (idempotent; tidak menimpa suntingan pengguna). */

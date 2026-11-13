@@ -61,6 +61,31 @@ class ProotLauncherTest {
     }
 
     @Test
+    fun buildAddsTermuxStyleBindsSysvipcAndL2sDir() {
+        val d = tmp()
+        try {
+            val layout = DebianLayout(d)
+            val l = ProotLauncher.build(
+                layout, d.path,
+                lexists = { p -> p == "/dev/urandom" || p == "/proc/self/fd" || p == "/proc/self/fd/0" || p == "/proc/self/fd/1" },
+            )
+            assertTrue(l.command.contains("--sysvipc"))
+            assertTrue(l.command.contains("/dev/urandom:/dev/random"))
+            assertTrue(l.command.contains("/proc/self/fd:/dev/fd"))
+            assertTrue(l.command.contains("/proc/self/fd/0:/dev/stdin"))
+            assertTrue(l.command.contains("/proc/self/fd/1:/dev/stdout"))
+            assertFalse(l.command.contains("/proc/self/fd/2:/dev/stderr"))
+            assertTrue(l.command.contains("${layout.prootShm.path}:/dev/shm"))
+            assertTrue(layout.prootShm.isDirectory)
+            assertEquals(File(layout.rootfsDir, ".l2s").path, l.env["PROOT_L2S_DIR"])
+            val none = ProotLauncher.build(layout, d.path, lexists = { true })
+            assertFalse(none.command.contains("/proc/self/fd:/dev/fd"))
+        } finally {
+            d.deleteRecursively()
+        }
+    }
+
+    @Test
     fun prepareGuestIsIdempotentAndKeepsUserEdits() {
         val d = tmp()
         try {

@@ -13,6 +13,7 @@ class DebianLayout(private val filesDir: File) {
     val prootDir = File(filesDir, "proot")
     val prootBin = File(prootDir, "proot")
     val prootTmp = File(filesDir, "proot-tmp")
+    val prootShm = File(filesDir, "proot-shm")
 
     fun installer(isCancelled: () -> Boolean = { false }) = RootfsInstaller(rootfsBase, isCancelled)
 
