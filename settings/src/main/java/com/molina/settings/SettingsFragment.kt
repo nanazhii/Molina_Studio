@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.molina.log.MolinaLogSetup
 
 class SettingsFragment : Fragment() {
@@ -42,6 +43,16 @@ class SettingsFragment : Fragment() {
             addView(title)
             addView(info)
             addView(logButton)
+            addView(TextView(ctx).apply { text = "Terminal"; textSize = 18f; setPadding(0, pad, 0, 0) })
+            addView(MaterialSwitch(ctx).apply {
+                text = "Tampilkan nama root di prompt (bawaan: user)"
+                isChecked = TerminalPrefs.showRoot(ctx)
+                setOnCheckedChangeListener { _, on -> TerminalPrefs.setShowRoot(ctx, on) }
+            })
+            addView(TextView(ctx).apply {
+                text = "Berlaku di sesi terminal baru. Hanya mengubah tampilan prompt; hak akses di Debian tidak berubah."
+                textSize = 12f
+            })
             addView(IconPicker.build(ctx))
             addView(aboutButton)
             if (BuildConfig.DEBUG) {
