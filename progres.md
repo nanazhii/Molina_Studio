@@ -74,3 +74,10 @@
 - [ ] Uji perangkat: buka tab Berkas (files.list), tolak izin lalu Beri izin (permission-*), buka Terminal Debian lalu exit, cek Log Viewer Sesi tN menampilkan term + proot berurutan, tekan Salin tampilan dan tempel
 - [ ] Opsional: tambahkan :terminal-proot dan :settings ke jvm-tests.yml
 - [ ] Patch 13d: tombol crash debug-only, lalu BEHAV navigasi 4 tab
+- [x] Patch 13c diverifikasi CI (files, proot, Log Viewer sesi)
+- [x] Patch 13d: DebugCrash (tombol [DEBUG] BUG/CRASH, hanya BuildConfig.DEBUG), BEHAV app.nav per tab, chip sesi Term t* teal / Cinema p* amber (LogFilter.sessionKind/sessionLabel); docs/log-contract.md diperbarui; belum dikompilasi di sandbox
+- [ ] Verifikasi CI Patch 13d (jvm-tests settings jika sudah ditambahkan, kompilasi LogViewerFragment, SettingsFragment, MainActivity)
+- [ ] Uji perangkat debug: Setelan > Picu CRASH, buka lagi, cek chip CRASH, Salin laporan masalah (Crash terbaru + Urutan perilaku berakhir di debug.crash-trigger); pindah 4 tab cek app.nav tab/from
+- [ ] Uji APK release: tombol [DEBUG] tidak boleh muncul di Setelan
+- [ ] Uji Log Viewer: chip Term t1 teal dan Cinema p1 amber (p1 muncul setelah sesi mpv nyata)
+- [ ] Berikutnya: pasang MpvNativeLog.attach/detach pada sesi mpv nyata (sisa 13a), lalu BEHAV di Cinema (open/play/stop)

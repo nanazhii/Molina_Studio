@@ -83,6 +83,11 @@ Baris chip kedua memuat `Semua sesi | Term t1 | Cinema p1 | ...` (teal untuk ses
 | `mpv.error` | BUG | kegagalan dari lapisan pemutar | `code` |
 | `mpv.native` | BUG | log internal libmpv level FATAL/ERROR (rate-limit) | `prefix`, `level` |
 | `mpv.native-suppressed` | BUG (W) | jumlah log libmpv yang dibuang pembatas | `count` |
+| `mpv.session-start` | BEHAV | sesi pemutar dibuat (id p1, p2, ...; libmpv dimuat, observer log terpasang) | - |
+| `mpv.surface-attach` / `mpv.surface-detach` | BEHAV | Surface video dipasang / dilepas | - |
+| `mpv.native-missing` | BUG | libmpv/libplayer tidak termuat saat sesi dibuka | - |
+| `mpv.init-failed` | BUG | MPVLib.create/init melempar exception | - |
+| `mpv.release-failed` | BUG | MPVLib.destroy melempar exception | - |
 
 Path dan URL media tidak pernah dicatat; hanya nama berkas.
 
