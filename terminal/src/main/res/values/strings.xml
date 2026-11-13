@@ -1,7 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- molina-patch9 -->
+<!-- molina-patch10b -->
 <resources>
     <string name="terminal_copy_done">Seluruh teks terminal disalin</string>
     <string name="terminal_copy_empty">Tidak ada teks untuk disalin</string>
     <string name="terminal_restart_session">Mulai ulang sesi</string>
+
+    <string name="terminal_setup_offer_title">Pasang Debian %1$s</string>
+    <string name="terminal_setup_offer_body">Lingkungan Linux arm64 untuk terminal Molina. Unduhan ±%1$d MB, memakai ±100 MB ruang penyimpanan. Perlu koneksi internet; berkas diverifikasi dengan SHA-256.</string>
+    <string name="terminal_setup_install">Pasang</string>
+    <string name="terminal_setup_later">Nanti</string>
+    <string name="terminal_setup_cancel">Batal</string>
+    <string name="terminal_setup_retry">Coba lagi</string>
+    <string name="terminal_setup_close">Tutup</string>
+    <string name="terminal_setup_recheck">Periksa ulang</string>
+    <string name="terminal_setup_installing_title">Menyiapkan Debian %1$s</string>
+    <string name="terminal_setup_stage_download">Mengunduh · %1$d / %2$d MB</string>
+    <string name="terminal_setup_stage_verify">Memverifikasi SHA-256…</string>
+    <string name="terminal_setup_stage_extract">Mengekstrak · %1$d / %2$d berkas</string>
+    <string name="terminal_setup_failed_title">Pemasangan gagal</string>
+    <string name="terminal_setup_failed_hint">Unduhan yang terputus akan dilanjutkan saat Anda mencoba lagi.</string>
+    <string name="terminal_setup_proot_title">Debian terpasang, proot belum siap</string>
+    <string name="terminal_setup_proot_hint">Taruh binary proot arm64 (beserta pustaka .so atau loader bila ada) di folder:\n%1$s</string>
+    <string name="terminal_setup_banner_install">Debian belum terpasang · ketuk untuk memasang</string>
+    <string name="terminal_setup_banner_proot">Debian: proot belum siap · ketuk untuk memeriksa</string>
+    <string name="terminal_setup_ready">Debian %1$s siap · arm64</string>
 </resources>

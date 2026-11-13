@@ -16,7 +16,7 @@ ENGINE = {"mpv-native", "terminal-core", "terminal-emulator", "terminal-view", "
 OWN_API = {"cinema": {"player-api"}, "terminal": {"terminal-api"},
            "mpv-native": {"player-api"}, "terminal-core": {"terminal-api"}}
 OWN_ENGINE = {"cinema": {"mpv-native"},
-              "terminal": {"terminal-core", "terminal-view"},
+              "terminal": {"terminal-core", "terminal-view", "terminal-proot"},
               "terminal-core": {"terminal-emulator", "terminal-pty"},
               "terminal-view": {"terminal-emulator"}}
 PAT = re.compile(r'(?:api|implementation|compileOnly|runtimeOnly)\(project\(":([\w-]+)"\)\)')

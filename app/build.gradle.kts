@@ -50,5 +50,6 @@ dependencies {
     implementation(project(":files"))
     implementation(project(":terminal"))
     implementation(project(":terminal-core"))
+    implementation(project(":terminal-proot"))
     implementation(project(":settings"))
 }
