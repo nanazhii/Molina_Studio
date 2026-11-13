@@ -85,3 +85,6 @@
 - [ ] Verifikasi CI Patch 19 (kompilasi terminal, module gate, jvm-tests)
 - [ ] Uji perangkat Android 8: ketuk ≡ buka drawer; ⋮ per baris; cd/nano di sesi Debian dan shell; ganti nama, folder baru, hapus; geser kiri/Back menutup; tahan ≡ masih membuka menu simbol
 - [ ] Tambahkan term.drawer.* ke docs/log-contract.md
+- [x] Patch 20: Header Terminal bergaya Molina-Studio (bingkai hijau, ikon folder buka drawer, kotak path bobot 1 sampai ⋮, titik status sesi hijau/merah); header drawer disamakan (path melebar, ⋮: Segarkan/Folder baru/Berkas baru); showTerminalMenu(below=true). Belum dikompilasi di sandbox
+- [ ] Verifikasi CI Patch 20 (kompilasi terminal)
+- [ ] Uji perangkat: kotak path memenuhi lebar sampai ⋮ (portrait dan landscape); ⋮ header membuka menu di bawah header; titik status merah saat proot gagal; path header ikut berubah saat Jadikan folder utama
