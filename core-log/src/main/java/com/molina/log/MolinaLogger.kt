@@ -14,6 +14,9 @@ class MolinaLogger(
     fun e(tag: String, msg: String, t: Throwable? = null) = log(LogLevel.ERROR, tag, msg, t)
     fun close() = sinks.forEach { runCatching { it.close() } }
 
+    /** Tunggu semua sink menuntaskan antreannya (dipanggil sebelum proses mati). */
+    fun flush() = sinks.forEach { runCatching { it.flush() } }
+
     companion object {
         /** Konvensi tag: Molina/<area>[/<id>], mis. Molina/term/s1, Molina/mpv/p1. */
         fun tag(area: String, id: String? = null): String =

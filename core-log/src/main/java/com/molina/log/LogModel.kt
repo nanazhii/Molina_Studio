@@ -19,6 +19,9 @@ data class LogEntry(
 interface LogSink {
     fun write(entry: LogEntry)
     fun close() {}
+
+    /** Pastikan entri yang sudah ditulis benar-benar sampai ke tujuan (mis. sebelum proses mati). */
+    fun flush() {}
 }
 
 object LogFormat {

@@ -5,6 +5,7 @@ import android.app.Application
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
+import com.molina.log.MolinaEvents
 import com.molina.terminal.proot.DebianLayout
 import com.molina.terminal.proot.InstallCancelledException
 import com.molina.terminal.proot.InstallProgress
@@ -58,13 +59,17 @@ internal class DebianSetupViewModel(app: Application) : AndroidViewModel(app) {
         if (installing) return
         installing = true
         cancelRequested = false
+        MolinaEvents.behavior("proot", "install.start")
         scope.launch {
             try {
                 layout.installer { cancelRequested }.install { p -> post(progressState(p)) }
+                MolinaEvents.behavior("proot", "install.done")
                 post(evaluate())
             } catch (e: InstallCancelledException) {
+                MolinaEvents.behavior("proot", "install.cancelled")
                 post(evaluate())
             } catch (e: Exception) {
+                MolinaEvents.bug("proot", "install-failed", e.message ?: e.javaClass.simpleName, e)
                 post(SetupState.Failed(e.message ?: e.javaClass.simpleName))
             } finally {
                 installing = false

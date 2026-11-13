@@ -46,8 +46,8 @@ class FileLogSink(
         current.renameTo(File(dir, "$baseName.1.log"))
     }
 
-    /** Tunggu antrean tulis selesai (untuk test dan shutdown). */
-    fun flush() {
+    /** Tunggu antrean tulis selesai (untuk test, shutdown, dan sebelum crash mematikan proses). */
+    override fun flush() {
         try { executor.submit {}.get(5, TimeUnit.SECONDS) } catch (_: Exception) {}
     }
 

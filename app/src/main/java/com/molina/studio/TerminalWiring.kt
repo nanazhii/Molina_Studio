@@ -2,6 +2,7 @@
 package com.molina.studio
 
 import android.content.Context
+import com.molina.log.MolinaEvents
 import com.molina.terminal.TerminalSessionFactory
 import com.molina.terminal.core.PtyTerminalSession
 import com.molina.terminal.core.SessionConfig
@@ -26,6 +27,7 @@ internal fun createTerminalSessionFactory(context: Context): TerminalSessionFact
                 ProotLauncher.prepareGuest(layout.rootfsDir)
                 ProotLauncher.build(layout, home)
             } catch (e: Exception) {
+                MolinaEvents.bug("proot", "prepare-failed", e.message ?: e.javaClass.simpleName, e)
                 null
             }
         } else {
@@ -47,6 +49,7 @@ internal fun createTerminalSessionFactory(context: Context): TerminalSessionFact
                 ),
             )
         }
+        MolinaEvents.behavior("term", "session.start", fields = mapOf("kind" to if (debian != null) "debian" else "android-shell"))
         PtyTerminalSession(config = config, client = client)
     }
 }

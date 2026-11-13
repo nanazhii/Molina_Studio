@@ -18,5 +18,6 @@ dependencies {
     implementation(project(":terminal-view"))
     implementation(project(":terminal-api"))
     implementation(project(":terminal-proot"))
+    implementation(project(":core-log"))
     implementation(libs.kotlinx.coroutines.android)
 }
