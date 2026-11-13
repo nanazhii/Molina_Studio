@@ -21,7 +21,8 @@ class DebianLayout(private val filesDir: File) {
     fun isRootfsInstalled(): Boolean = RootfsInstaller(rootfsBase).isInstalled()
 
     fun isProotReady(): Boolean =
-        prootBin.isFile && prootBin.canExecute() && ElfReader.parseFile(prootBin)?.isArm64 == true
+        prootBin.isFile && prootBin.canExecute() && ElfReader.parseFile(prootBin)?.isArm64 == true &&
+            !prootInstaller().isStale()
 
     fun isReady(): Boolean = isRootfsInstalled() && isProotReady()
 

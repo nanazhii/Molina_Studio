@@ -100,8 +100,8 @@ jobs:
           grep -q "$SUM  molina-proot-arm64.tgz" SHA256SUMS
           gh release create "$TAG" molina-proot-arm64.tgz proot SHA256SUMS BUILD-INFO.txt \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
-            --title "proot statis arm64 $TAG" \
-            --notes "proot arm64 statis hasil build pipeline Molina (sumber dan commit tercatat di BUILD-INFO.txt). SHA-256 tgz: $SUM"
+            --title "proot arm64 $TAG" \
+            --notes "proot arm64 (libc sistem, talloc statis) hasil build pipeline Molina (sumber dan commit tercatat di BUILD-INFO.txt). SHA-256 tgz: $SUM"
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           {
             echo '### Release proot'

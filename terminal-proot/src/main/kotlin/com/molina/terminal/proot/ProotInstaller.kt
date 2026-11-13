@@ -34,6 +34,9 @@ class ProotInstaller(
     private val archive = File(work, "proot.tgz")
     private val staging = File(work, "stage")
 
+    /** Terpasang oleh pemasang ini tetapi dari pin yang lebih lama: harus diganti. */
+    fun isStale(): Boolean = marker.isFile && marker.readText().trim() != ProotPin.BIN_SHA256
+
     fun isInstalled(): Boolean =
         ProotPin.CONFIGURED && bin.isFile && bin.canExecute() &&
             marker.isFile && marker.readText().trim() == ProotPin.BIN_SHA256
@@ -61,9 +64,10 @@ class ProotInstaller(
         if (!extracted.isFile) throw IOException("Arsip proot tidak berisi berkas proot")
         if (Hashing.sha256Hex(extracted) != ProotPin.BIN_SHA256) throw IOException("SHA-256 binary proot tidak cocok")
         val elf = ElfReader.parseFile(extracted)
-        if (elf == null || !elf.isArm64 || !elf.isStatic) throw IOException("proot bukan ELF arm64 statis")
+        if (elf == null || !elf.isArm64) throw IOException("proot bukan ELF arm64")
         prootDir.mkdirs()
         marker.delete()
+        bin.delete()
         Files.move(extracted.toPath(), bin.toPath(), StandardCopyOption.REPLACE_EXISTING)
         bin.setReadable(true, true)
         bin.setExecutable(true, true)

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Bangun proot arm64 STATIS (talloc statis, loader tertanam) dengan NDK dipin. Hasil: _proot_out/.
+# Bangun proot arm64 DINAMIS terhadap libc sistem Android (talloc statis, loader tertanam), NDK dipin.
+# Tidak -static: libc statis NDK r30 abort di kernel lama (arc4random MADV_WIPEONFORK, kernel < 4.14).
+# Hasil: _proot_out/.
 #   bash scripts/native_proot.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -71,17 +73,17 @@ cp "$WORK/talloc-src/lib/talloc/talloc.h" "$T/include/"
 # ---- proot statis (loader tertanam; env agar `+=` di GNUmakefile tetap berlaku) ----
 cd "$WORK/proot-src/src"
 export CPPFLAGS="-I$T/include" CFLAGS="-Wno-unused-parameter -Wno-implicit-function-declaration" \
-       LDFLAGS="-static -L$T/lib"
+       LDFLAGS="-L$T/lib"
 make -j"$(nproc)" CC="$CC" STRIP="$BIN/llvm-strip" OBJCOPY="$BIN/llvm-objcopy" OBJDUMP="$BIN/llvm-objdump" proot
 
 [ -s proot ] || { echo "binary proot tidak terbentuk" >&2; exit 1; }
 "$BIN/llvm-strip" -o "$OUT/proot" proot
-# Verifikasi: ELF aarch64, tanpa pustaka dinamis (NEEDED kosong).
+# Verifikasi: ELF aarch64; hanya libc/libm/libdl sistem yang boleh dibutuhkan, dan libc wajib ada.
 "$BIN/llvm-readelf" -h "$OUT/proot" | grep -q 'AArch64' || { echo "bukan ELF AArch64" >&2; exit 1; }
-if "$BIN/llvm-readelf" -d "$OUT/proot" 2>/dev/null | grep -q 'NEEDED'; then
-  echo "proot masih memerlukan pustaka dinamis (bukan statis)" >&2
-  "$BIN/llvm-readelf" -d "$OUT/proot" >&2; exit 1
-fi
+NEEDED="$("$BIN/llvm-readelf" -d "$OUT/proot" | grep 'NEEDED' || true)"
+echo "$NEEDED" | grep -q '\[libc\.so\]' || { echo "proot tidak terhubung ke libc.so (kemungkinan statis)" >&2; echo "$NEEDED" >&2; exit 1; }
+BAD="$(echo "$NEEDED" | grep -Ev '\[(libc|libm|libdl)\.so\]' || true)"
+[ -z "$BAD" ] || { echo "proot butuh pustaka non-sistem:" >&2; echo "$BAD" >&2; exit 1; }
 
 # ---- paket + hash ----
 cd "$OUT"
