@@ -44,3 +44,25 @@ API: `MolinaEvents.crash/bug/behavior` (core-log). Jangan menulis awalan `[BUG:.
   `crash` logcat (`logcat -b crash`), yang bisa dibaca bila izin READ_LOGS diberikan.
 - Bila logger belum diinisialisasi (crash sangat awal sebelum `Application.onCreate`), peristiwa
   hanya ada di logcat bawaan sistem.
+
+<!-- molina-patch12 -->
+## Laporan masalah dan filter Log Viewer
+
+Urutan bagian laporan masalah (Pengaturan > Tentang > Salin laporan masalah):
+
+1. Info build.
+2. `Crash terbaru`: sampai 3 crash, terbaru dulu, lengkap dengan stack trace (dipangkas 12 baris).
+3. `Bug`: dikelompokkan per kode, urut dari yang terakhir muncul; menampilkan jumlah, jam,
+   ringkasan, kolom, dan exception baris pertama dari kejadian terbaru.
+4. `Urutan perilaku sebelum crash`: sampai 15 peristiwa `BEHAV`/`BUG` sebelum crash terakhir,
+   kronologis, ditutup baris `CRASH ... <-- proses berhenti`. Tanpa crash, bagian ini menjadi
+   `Perilaku terakhir (tanpa crash)`.
+5. `Error terbaru per area` dan `Log terakhir` (50 entri) seperti sebelumnya.
+
+Bila bagian 4 menulis "tidak ada peristiwa BEHAV/BUG tercatat sebelum crash", titik keputusan di
+alur itu belum memanggil `MolinaEvents.behavior`; tambahkan di sana.
+
+Log Viewer: chip `Semua | CRASH | BUG | BEHAV` (dengan jumlah peristiwa) menyaring berdasarkan
+penanda. Penanda hanya dikenali pada tag `Molina/...`. Baris stack trace yang mengikuti CRASH/BUG
+(pid, tid, dan tag sama) ikut tersaring masuk. Warna: CRASH merah (`molina_error`), BUG amber
+(`molina_cinema_accent`), BEHAV teal (`molina_terminal_accent`); baris lain warna bawaan.
