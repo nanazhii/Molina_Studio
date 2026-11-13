@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(com.molina.core.ui.R.style.Theme_Molina_App)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val nav = findViewById<BottomNavigationView>(R.id.bottom_nav)

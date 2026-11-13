@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Molina.Splash" parent="Theme.Molina.App">
+        <item name="android:windowBackground">@drawable/molina_splash</item>
+    </style>
+</resources>

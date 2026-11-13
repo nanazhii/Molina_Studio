@@ -18,6 +18,7 @@
         android:theme="@style/Theme.Molina.App"
         android:allowBackup="false">
         <activity android:name=".MainActivity" android:exported="true"
+            android:theme="@style/Theme.Molina.Splash"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

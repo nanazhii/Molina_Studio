@@ -44,3 +44,5 @@
 - [ ] Verifikasi: pasang debug di atas debug tanpa uninstall
 - [x] Logo Molina: ikon adaptive terminal hijau gradient (vector, tema monokrom Android 13, manifest icon/roundIcon)
 - [ ] Verifikasi ikon di launcher perangkat Android 8 (bulat dan kotak)
+- [x] Branding lanjutan: ikon Cinema amber, wordmark MOLINA_ + splash (Theme.Molina.Splash), ikon notifikasi ic_stat_molina_terminal, docs/branding.md
+- [ ] Verifikasi splash dan ikon di perangkat Android 8; pasang ic_stat_molina_terminal saat layanan terminal latar belakang dibuat
