@@ -2,6 +2,8 @@
 package com.molina.terminal
 
 import android.app.AlertDialog
+import androidx.activity.OnBackPressedCallback
+import androidx.lifecycle.lifecycleScope
 import android.graphics.Outline
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -30,6 +32,12 @@ class TerminalFragment : Fragment() {
     private lateinit var tabBar: SessionTabBar
     private lateinit var compatPanel: CompatPanelView
     private var closeDialog: AlertDialog? = null
+    private var fileDrawer: FileDrawerView? = null
+
+    /** Back menutup drawer berkas lebih dulu; aktif hanya saat drawer terbuka. */
+    private val drawerBack = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() { fileDrawer?.close() }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val ctx = requireContext()
@@ -56,7 +64,7 @@ class TerminalFragment : Fragment() {
         terminalView.requestFocus()
 
         val actions = TerminalKeyActions(holder, ctx) { terminalView.onScreenUpdated() }
-        val extraKeys = ExtraKeysView(ctx, holder.modifiers, actions) { anchor ->
+        val extraKeys = ExtraKeysView(ctx, holder.modifiers, actions, onDrawer = { fileDrawer?.toggle() }) { anchor ->
             showTerminalMenu(anchor, actions) { restartActive() }
         }
         holder.modifiers.listener = { extraKeys.refresh() }
@@ -93,6 +101,21 @@ class TerminalFragment : Fragment() {
             addView(overlay, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         }
 
+        val drawerView = FileDrawerView(
+            ctx, holder.drawerState, viewLifecycleOwner.lifecycleScope,
+            object : FileDrawerView.Host {
+                override fun send(text: String) { holder.session?.write(text) }
+                override fun hasSession(): Boolean = holder.session != null
+                override fun isProotSession(): Boolean = holder.isProot(holder.currentIndex)
+                override fun isFullScreenProgram(): Boolean = holder.session?.getEmulator()?.isAlternateBufferActive == true
+                override fun onOpenChanged(open: Boolean) {
+                    drawerBack.isEnabled = open
+                    if (!open) terminalView.requestFocus()
+                }
+            },
+        )
+        fileDrawer = drawerView
+
         val column = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             addView(tabBar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(ctx, SessionTabBar.HEIGHT_DP)))
@@ -107,7 +130,13 @@ class TerminalFragment : Fragment() {
         }
         return FrameLayout(ctx).apply {
             addView(column, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+            addView(drawerView, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, drawerBack)
     }
 
     /** Samakan bilah tab, sesi yang tampil di view, dan panel kompatibilitas dengan holder. */
@@ -185,6 +214,8 @@ class TerminalFragment : Fragment() {
     override fun onDestroyView() {
         closeDialog?.dismiss()
         closeDialog = null
+        fileDrawer = null
+        drawerBack.isEnabled = false
         setup.listener = null
         holder.modifiers.listener = null
         holder.tabsListener = null

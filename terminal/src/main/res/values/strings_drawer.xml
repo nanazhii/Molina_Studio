@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-patch19 -->
+<resources>
+    <string name="drawer_up">Naik satu folder</string>
+    <string name="drawer_more">Opsi</string>
+    <string name="drawer_cd">cd ke folder ini</string>
+    <string name="drawer_set_root">Jadikan folder utama</string>
+    <string name="drawer_new_dir_here">Folder baru di sini</string>
+    <string name="drawer_new_file_here">Berkas baru di sini</string>
+    <string name="drawer_nano">Edit di nano</string>
+    <string name="drawer_rename">Ganti nama</string>
+    <string name="drawer_copy_path">Salin path</string>
+    <string name="drawer_info">Properti</string>
+    <string name="drawer_delete">Hapus</string>
+    <string name="drawer_new_dir">Folder baru</string>
+    <string name="drawer_new_file">Berkas baru</string>
+    <string name="drawer_empty">Folder kosong atau tidak bisa dibaca.</string>
+    <string name="drawer_ok">OK</string>
+    <string name="drawer_create">Buat</string>
+    <string name="drawer_create_nano">Buat dan buka di nano</string>
+    <string name="drawer_rename_dir_title">Ubah nama folder</string>
+    <string name="drawer_rename_file_title">Ubah nama berkas</string>
+    <string name="drawer_in_folder">Di: %1$s</string>
+    <string name="drawer_delete_title">Hapus permanen?</string>
+    <string name="drawer_delete_body">%1$s akan dihapus permanen. Belum ada Recycle Bin.</string>
+    <string name="drawer_path_copied">Path disalin</string>
+    <string name="drawer_done_rename">Nama diubah</string>
+    <string name="drawer_done_dir">Folder dibuat</string>
+    <string name="drawer_done_file">Berkas dibuat</string>
+    <string name="drawer_done_delete">Dihapus</string>
+    <string name="drawer_err_generic">Operasi gagal</string>
+    <string name="drawer_err_name">Nama tidak valid</string>
+    <string name="drawer_err_exists">Nama sudah dipakai</string>
+    <string name="drawer_err_protected">Folder ini dilindungi dari penghapusan</string>
+    <string name="drawer_no_session">Belum ada sesi terminal aktif.</string>
+    <string name="drawer_fullscreen">Terminal sedang menjalankan program layar penuh. Keluar dulu.</string>
+    <string name="drawer_not_visible">Folder ini tidak terlihat di Debian.</string>
+    <string name="drawer_ctrl_chars">Nama mengandung karakter kontrol.</string>
+    <string name="drawer_kind_dir">Folder</string>
+    <string name="drawer_kind_file">Berkas</string>
+    <string name="drawer_yes">ya</string>
+    <string name="drawer_no">tidak</string>
+    <string name="drawer_info_items">%1$d item</string>
+    <string name="drawer_info_not_visible">tidak terlihat di Debian</string>
+    <string name="drawer_info_body">Nama: %1$s\nJenis: %2$s\nPath: %3$s\nUkuran: %4$s\nDiubah: %5$s\nDi shell: %6$s\nBisa ditulis: %7$s</string>
+</resources>

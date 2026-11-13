@@ -26,12 +26,13 @@ import com.molina.core.ui.R as UiR
 /**
  * Baris tombol ekstra dua lapis. Panel berlatar molina_terminal_container dengan aksen teal;
  * CTRL/ALT menyala saat aktif (ketuk) atau terkunci (tekan lama). Panah menahan = ulang otomatis.
- * Tombol ≡ memanggil [onMenu] (menu simbol + mulai ulang sesi).
+ * Tombol ≡: ketuk = [onDrawer] (drawer berkas), tahan = [onMenu] (menu simbol + mulai ulang sesi).
  */
 internal class ExtraKeysView(
     context: Context,
     private val mods: TerminalModifiers,
     private val actions: TerminalKeyActions,
+    private val onDrawer: () -> Unit,
     private val onMenu: (View) -> Unit,
 ) : LinearLayout(context) {
 
@@ -58,10 +59,10 @@ internal class ExtraKeysView(
         addView(
             row(
                 key("ESC", "Escape", danger) { actions.send("\u001b") },
-                key("\u2261", "Menu simbol", accent) { }.also { menuKey ->
+                key("\u2261", "Drawer berkas (tahan: menu simbol)", accent) { }.also { menuKey ->
                     menuKey.setOnClickListener {
                         menuKey.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                        onMenu(menuKey)
+                        onDrawer()
                     }
                     menuKey.setOnLongClickListener {
                         menuKey.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)

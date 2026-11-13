@@ -45,6 +45,9 @@ internal class TerminalSessionHolder : ViewModel() {
     /** Modifier Ctrl/Alt virtual; bertahan antar-fragment. */
     val modifiers = TerminalModifiers()
 
+    /** Keadaan tree drawer berkas (folder utama dan folder terbuka); bertahan antar-fragment. */
+    val drawerState = FileDrawerState()
+
     /** Dipanggil saat daftar, pilihan, judul, atau status sesi berubah. */
     var tabsListener: (() -> Unit)? = null
 
