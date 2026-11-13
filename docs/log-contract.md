@@ -100,6 +100,7 @@ Tag `Molina/term/<id>`; id sesi (`t1`, `t2`, ...) sama untuk semua peristiwa sat
 | `term.pty-start` | BEHAV | proses berhasil dijalankan di PTY | `pid`, `cmd`, `cols`, `rows` |
 | `term.resize` | BEHAV | ukuran berubah (hanya bila berbeda) | `cols`, `rows` |
 | `term.close` | BEHAV | sesi ditutup pengguna/aplikasi | `running` |
+| `term.tab` | BEHAV | bilah tab sesi (Patch 18): `action` = `new`, `select`, `close` (tombol x), `auto-close` (sesi exit normal) | `action`, `index`, `count` |
 | `term.exit` | BEHAV | keluar normal (0), atau non-nol setelah 5 detik | `code`, `uptime_ms` |
 | `term.spawn-failed` | BUG | proses gagal dijalankan (exec/PTY) | `error` |
 | `term.native-missing` | BUG | pustaka native PTY tidak termuat | `error` |

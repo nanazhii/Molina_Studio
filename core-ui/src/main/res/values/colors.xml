@@ -18,4 +18,13 @@
     <color name="molina_key_red">#FF5252</color>
     <color name="molina_key_green">#00E676</color>
     <color name="molina_key_blue">#448AFF</color>
+    <!-- molina-patch18: bilah tab sesi (selaras Molina-Studio) dan extrakey hitam pekat -->
+    <color name="molina_extrakey_bg">#000000</color>
+    <color name="molina_tab_bar_bg">#0A0A0F</color>
+    <color name="molina_tab_idle_bg">#14161B</color>
+    <color name="molina_tab_line">#2A2D35</color>
+    <color name="molina_tab_muted">#9AA0A6</color>
+    <color name="molina_tab_brand">#2ECC71</color>
+    <color name="molina_tab_dot">#9BE564</color>
+    <color name="molina_tab_close">#FF8A80</color>
 </resources>

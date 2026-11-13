@@ -11,7 +11,10 @@ import com.molina.terminal.view.TerminalView
  * Klien sesi yang hidup selama sesi (di ViewModel), sedangkan [view] berganti tiap fragment
  * dibuat ulang. Hanya diakses dari main thread (PtyTerminalSession memanggil lewat main executor).
  */
-internal class ForwardingSessionClient(private val onFinished: () -> Unit) : TerminalSessionClient {
+internal class ForwardingSessionClient(
+    private val onFinished: () -> Unit,
+    private val onTitle: () -> Unit = {},
+) : TerminalSessionClient {
 
     var view: TerminalView? = null
 
@@ -19,7 +22,7 @@ internal class ForwardingSessionClient(private val onFinished: () -> Unit) : Ter
         view?.onScreenUpdated()
     }
 
-    override fun onTitleChanged(changedSession: TerminalOutput) = Unit
+    override fun onTitleChanged(changedSession: TerminalOutput) = onTitle()
 
     override fun onSessionFinished(finishedSession: TerminalOutput) = onFinished()
 

@@ -28,4 +28,15 @@
     <string name="terminal_compat_msg_assert">Proot berhenti: ketidakcocokan kernel (seccomp).</string>
     <string name="terminal_compat_msg_early">Proot gagal start.</string>
     <string name="terminal_compat_msg_still">Proot masih gagal di mode kompatibilitas. Buka Log untuk detail.</string>
+
+    <!-- molina-patch18 -->
+    <string name="terminal_tab_add">Sesi baru</string>
+    <string name="terminal_tab_close_desc">Tutup sesi</string>
+    <string name="terminal_tab_close_title">Tutup sesi %1$d?</string>
+    <string name="terminal_tab_close_body">Proses di sesi ini dihentikan (kill) lalu tabnya ditutup.</string>
+    <string name="terminal_tab_close_confirm">Tutup</string>
+    <string name="terminal_tab_cancel">Batal</string>
+    <string name="terminal_tab_max">Maksimal %1$d sesi</string>
+    <string name="terminal_tab_default_debian">Debian</string>
+    <string name="terminal_tab_default_shell">Shell</string>
 </resources>

@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.InsetDrawable
 import android.graphics.drawable.RippleDrawable
@@ -34,7 +36,7 @@ internal class ExtraKeysView(
 ) : LinearLayout(context) {
 
     private val accent = color(UiR.color.molina_terminal_accent)
-    private val container = color(UiR.color.molina_terminal_container)
+    private val container = color(UiR.color.molina_extrakey_bg)
     private val outline = color(UiR.color.molina_outline)
     private val plain = color(UiR.color.molina_on_surface)
     private val danger = color(UiR.color.molina_key_red)
@@ -210,7 +212,8 @@ internal class ExtraKeysView(
         shape.setColor(container)
         shape.cornerRadius = dp(12).toFloat()
         shape.setStroke(dp(2), if (lit) accent else outline)
-        return InsetDrawable(shape, dp(5), dp(1), dp(5), dp(1))
+        val inset = InsetDrawable(shape, dp(5), dp(1), dp(5), dp(1))
+        return LayerDrawable(arrayOf(ColorDrawable(container), inset)) // [EXTRAKEY-BLACK] seluruh strip hitam pekat
     }
 
     private fun color(id: Int): Int = ContextCompat.getColor(context, id)
