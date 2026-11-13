@@ -13,6 +13,7 @@
         <item name="backgroundTint">@color/molina_surface</item>
         <item name="android:minHeight">56dp</item>
         <item name="itemIconTint">@null</item>
+        <item name="itemTextColor">@color/molina_nav_label</item>
         <item name="itemIconSize">22dp</item>
         <item name="itemPaddingTop">6dp</item>
         <item name="itemPaddingBottom">4dp</item>
