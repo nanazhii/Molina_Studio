@@ -7,7 +7,7 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
 /** Letak seluruh berkas Debian PRoot di dalam filesDir aplikasi. */
-class DebianLayout(filesDir: File) {
+class DebianLayout(private val filesDir: File) {
     val rootfsBase = File(filesDir, "rootfs")
     val rootfsDir = File(rootfsBase, "debian")
     val prootDir = File(filesDir, "proot")
@@ -15,6 +15,8 @@ class DebianLayout(filesDir: File) {
     val prootTmp = File(filesDir, "proot-tmp")
 
     fun installer(isCancelled: () -> Boolean = { false }) = RootfsInstaller(rootfsBase, isCancelled)
+
+    fun prootInstaller(isCancelled: () -> Boolean = { false }) = ProotInstaller(filesDir, isCancelled)
 
     fun isRootfsInstalled(): Boolean = RootfsInstaller(rootfsBase).isInstalled()
 

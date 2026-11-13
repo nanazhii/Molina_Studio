@@ -9,6 +9,7 @@ import com.molina.log.MolinaEvents
 import com.molina.terminal.proot.DebianLayout
 import com.molina.terminal.proot.InstallCancelledException
 import com.molina.terminal.proot.InstallProgress
+import com.molina.terminal.proot.ProotPin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -63,6 +64,7 @@ internal class DebianSetupViewModel(app: Application) : AndroidViewModel(app) {
         scope.launch {
             try {
                 layout.installer { cancelRequested }.install { p -> post(progressState(p)) }
+                ensureProot()
                 MolinaEvents.behavior("proot", "install.done")
                 post(evaluate())
             } catch (e: InstallCancelledException) {
@@ -75,6 +77,16 @@ internal class DebianSetupViewModel(app: Application) : AndroidViewModel(app) {
                 installing = false
             }
         }
+    }
+
+    /** Pastikan proot siap: impor manual bila ada, kalau tidak unduh dari Release yang dipin. */
+    private fun ensureProot() {
+        if (layout.isProotReady()) return
+        runCatching { layout.importProot() }
+        if (layout.isProotReady() || !ProotPin.CONFIGURED) return
+        post(SetupState.Installing(SetupStage.VERIFY, 0, 0))
+        layout.prootInstaller { cancelRequested }.install()
+        MolinaEvents.behavior("proot", "proot.downloaded")
     }
 
     fun cancel() {
@@ -102,7 +114,9 @@ internal class DebianSetupViewModel(app: Application) : AndroidViewModel(app) {
             listOf(e.message ?: "gagal menyalin proot")
         }
         if (layout.isReady()) return SetupState.Hidden
-        return if (dismissed) SetupState.Dismissed(false) else SetupState.NeedsProot(problems)
+        if (dismissed) return SetupState.Dismissed(false)
+        // Pin Release terisi: tawarkan unduhan otomatis; kartu manual hanya bila pin belum ada.
+        return if (ProotPin.CONFIGURED) SetupState.Offer else SetupState.NeedsProot(problems)
     }
 
     private fun progressState(p: InstallProgress): SetupState = when (p) {

@@ -1,0 +1,143 @@
+name: Native proot (arm64)
+
+on:
+  workflow_dispatch:
+    inputs:
+      fresh:
+        description: "Abaikan cache dan bangun ulang dari nol"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Prasyarat skrip dan pin
+        run: |
+          set -euo pipefail
+          for f in scripts/native_proot.sh scripts/native_wget.sh scripts/ensure_ndk.sh \
+                   native/pins.env native/pins.sha256 native/proot.pins.env; do
+            [ -s "$f" ] || { echo "::error::$f tidak ada atau kosong"; exit 1; }
+          done
+          grep -E '^(PROOT|TALLOC)_SHA=' native/proot.pins.env | grep -Ev '=[0-9a-f]{40}$' \
+            && { echo "::error::SHA git di proot.pins.env tidak valid"; exit 1; } || true
+          grep -Ev '^[0-9a-f]{64}  https:[/][/][^ ]+$' native/pins.sha256 \
+            && { echo "::error::format pins.sha256 tidak valid"; exit 1; } || true
+      - name: Cache hasil build (kunci = hash pin + skrip build)
+        id: cache
+        if: ${{ !inputs.fresh }}
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: _proot_out
+          key: native-proot-arm64-v1-${{ runner.os }}-${{ hashFiles('native/pins.env', 'native/pins.sha256', 'native/proot.pins.env', 'scripts/native_proot.sh', 'scripts/native_wget.sh', 'scripts/ensure_ndk.sh') }}
+      - name: Verifikasi hasil cache
+        id: verify
+        env:
+          CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
+        run: |
+          ok=false
+          if [ "$CACHE_HIT" = "true" ]; then
+            if ( cd _proot_out && test -s molina-proot-arm64.tgz && test -s proot && test -s BUILD-INFO.txt && sha256sum -c SHA256SUMS ); then
+              ok=true
+              echo "Cache cocok dan utuh: build dilewati."
+            else
+              echo "::warning::Cache rusak atau tidak lengkap; build ulang."
+              rm -rf _proot_out
+            fi
+          fi
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+      - name: Bangun proot statis (arm64)
+        if: steps.verify.outputs.ok != 'true'
+        run: bash scripts/native_proot.sh
+      - name: Ringkasan hash
+        if: success()
+        run: |
+          {
+            echo '### SHA256SUMS'; echo '```'; cat _proot_out/SHA256SUMS; echo '```'
+            echo '### BUILD-INFO'; echo '```'; cat _proot_out/BUILD-INFO.txt; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: success()
+        with:
+          name: molina-proot-arm64
+          path: |
+            _proot_out/molina-proot-arm64.tgz
+            _proot_out/proot
+            _proot_out/SHA256SUMS
+            _proot_out/BUILD-INFO.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: native
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.ref_name }}
+          persist-credentials: true
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: molina-proot-arm64
+          path: _dl
+      - name: Terbitkan ke GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd _dl
+          TAG="native-proot-${GITHUB_SHA:0:7}-run${GITHUB_RUN_NUMBER}"
+          SUM="$(sha256sum molina-proot-arm64.tgz | cut -d' ' -f1)"
+          grep -q "$SUM  molina-proot-arm64.tgz" SHA256SUMS
+          gh release create "$TAG" molina-proot-arm64.tgz proot SHA256SUMS BUILD-INFO.txt \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            --title "proot statis arm64 $TAG" \
+            --notes "proot arm64 statis hasil build pipeline Molina (sumber dan commit tercatat di BUILD-INFO.txt). SHA-256 tgz: $SUM"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          {
+            echo '### Release proot'
+            echo "- tag: \`$TAG\`"
+            echo "- sha256 tgz: \`$SUM\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Pin Release ke ProotPin.kt (aplikasi mengunduh sendiri)
+        run: |
+          set -euo pipefail
+          SUM="$(sha256sum _dl/molina-proot-arm64.tgz | cut -d' ' -f1)"
+          BIN="$(sha256sum _dl/proot | cut -d' ' -f1)"
+          SIZE="$(stat -c%s _dl/molina-proot-arm64.tgz)"
+          F=terminal-proot/src/main/kotlin/com/molina/terminal/proot/ProotPin.kt
+          cat > "$F" <<EOF
+          // molina-patch11 (dihasilkan workflow "Native proot (arm64)"; jangan edit manual)
+          package com.molina.terminal.proot
+
+          /** Pin Release proot arm64 statis. Aplikasi mengunduh, memverifikasi SHA-256, lalu memasang ke filesDir. */
+          object ProotPin {
+              const val CONFIGURED = true
+              const val TAG = "$TAG"
+              const val URL = "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/molina-proot-arm64.tgz" // gate:allow Release repo sendiri, dipin SHA-256
+              const val TGZ_SHA256 = "$SUM"
+              const val BIN_SHA256 = "$BIN"
+              const val SIZE_BYTES = ${SIZE}L
+          }
+          EOF
+          python3 scripts/telemetry_gate.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$F"
+          git commit -m "chore(proot): pin Release $TAG [skip ci]"
+          git pull --rebase --autostash origin "${{ github.ref_name }}"
+          if git push origin "HEAD:${{ github.ref_name }}"; then
+            echo "- ProotPin.kt di-commit otomatis ke ${{ github.ref_name }}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::Push ditolak (branch terlindungi?). Salin isi ProotPin.kt dari log ke repo secara manual."
+            cat "$F"
+          fi
