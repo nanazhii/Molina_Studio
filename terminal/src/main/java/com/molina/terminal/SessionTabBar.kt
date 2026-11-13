@@ -89,8 +89,10 @@ internal class SessionTabBar(
         private val shell: Boolean,
     ) : LinearLayout(this@SessionTabBar.context) {
 
+        private val accent = if (shell) shellDotColor else brand
+
         private val underline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = brand
+            color = accent
             strokeWidth = dp(2).toFloat()
             strokeCap = Paint.Cap.ROUND
         }
@@ -102,8 +104,8 @@ internal class SessionTabBar(
             setPadding(dp(10), 0, if (selected) dp(3) else dp(10), 0)
             background = GradientDrawable().apply {
                 cornerRadius = dp(PILL_DP).toFloat()
-                setColor(if (selected) ColorUtils.setAlphaComponent(brand, 0x1F) else idleBg)
-                setStroke(dp(1), if (selected) ColorUtils.setAlphaComponent(brand, 0x80) else line)
+                setColor(if (selected) ColorUtils.setAlphaComponent(accent, 0x1F) else idleBg)
+                setStroke(dp(1), if (selected) ColorUtils.setAlphaComponent(accent, 0x80) else line)
             }
             if (selected) {
                 val dot = View(context)

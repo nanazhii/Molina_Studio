@@ -87,11 +87,17 @@ class TerminalFragment : Fragment() {
         holder.tabsListener = { syncTabs() }
         syncTabs()
 
+        // [SETUP-IN-FRAME] overlay Debian hanya menutupi area terminal, bukan bilah tab
+        val terminalArea = FrameLayout(ctx).apply {
+            addView(terminalView, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+            addView(overlay, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        }
+
         val column = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             addView(tabBar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(ctx, SessionTabBar.HEIGHT_DP)))
             addView(
-                framed(ctx, terminalView),
+                framed(ctx, terminalArea),
                 LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
                     setMargins(dp(ctx, 6), dp(ctx, 6), dp(ctx, 6), dp(ctx, 4))
                 },
@@ -101,7 +107,6 @@ class TerminalFragment : Fragment() {
         }
         return FrameLayout(ctx).apply {
             addView(column, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-            addView(overlay, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         }
     }
 

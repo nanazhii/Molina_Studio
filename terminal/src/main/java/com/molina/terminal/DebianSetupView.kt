@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -184,8 +185,15 @@ internal class DebianSetupView(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             Gravity.CENTER,
         )
-        lp.setMargins(dp(24), dp(24), dp(24), dp(24))
-        addView(box, lp)
+        lp.setMargins(dp(12), dp(12), dp(12), dp(12))
+        // [SETUP-SCROLL] area terminal sempit (keyboard terbuka): kartu bisa digulir, tombol tetap terjangkau
+        val centered = FrameLayout(context)
+        centered.addView(box, lp)
+        val scroll = ScrollView(context)
+        scroll.isFillViewport = true
+        scroll.overScrollMode = OVER_SCROLL_NEVER
+        scroll.addView(centered, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        addView(scroll, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         visibility = VISIBLE
     }
 
