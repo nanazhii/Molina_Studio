@@ -54,3 +54,5 @@
 - [ ] Verifikasi: baris 'Molina 0.1.0 (1) · <commit> · API 26' muncul di molina.log setelah start
 - [x] Tombol Salin info build di Tentang (BuildLine sumber tunggal, dipakai juga oleh BuildInfo)
 - [ ] Verifikasi: tombol menyalin baris yang sama dengan molina.log
+- [x] Tombol Salin laporan masalah di Tentang (LogReport + LogReportSource + LogReportTest; ringkasan error per area mpv/term/proot/files)
+- [ ] Verifikasi: tempel hasil salin, cek ringkasan error per area dan 50 entri terakhir

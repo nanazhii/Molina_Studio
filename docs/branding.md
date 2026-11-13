@@ -32,3 +32,8 @@ Saat Player menjadi aplikasi sendiri (`com.molina.player`):
 ## Salin info build
 - Setelan -> Tentang -> "Salin info build" menyalin baris yang sama dengan log (`Molina <versi> (<kode>) · <commit> · API <level>`) ke clipboard, siap ditempel di laporan masalah.
 - Logika baris ada di satu tempat: `BuildLine.describe` (modul settings); `BuildInfo` (app) hanya memanggilnya untuk log.
+
+## Salin laporan masalah
+- Setelan -> Tentang -> "Salin laporan masalah" menyalin: baris info build, ringkasan "Error terbaru per area" (mpv, term, proot, files, dst., dikelompokkan dari tag `Molina/<area>`), dan 50 entri log terakhir dari `molina.log` (termasuk stack trace, dipotong 12 baris per entri, maksimal 60.000 karakter).
+- Sumber: `molina.log` di folder log yang aktif (publik atau privat aplikasi) ditambah `molina.1.log`; logika ada di `LogReport` (murni, diuji `LogReportTest`) dan `LogReportSource` (baca berkas).
+- Batas: crash yang mematikan proses tanpa sempat tercatat lewat `MolinaLog` tidak ada di `molina.log`; untuk itu lihat layar Logcat.

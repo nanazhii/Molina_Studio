@@ -17,8 +17,12 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.molina.core.ui.R as UiR
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Layar Tentang: wordmark Molina, nomor versi, dan nama paket. */
 class AboutFragment : Fragment() {
@@ -55,6 +59,10 @@ class AboutFragment : Fragment() {
             text = "Salin info build"
             setOnClickListener { copyBuildInfo(ctx) }
         }
+        val report = MaterialButton(ctx).apply {
+            text = "Salin laporan masalah"
+            setOnClickListener { copyReport(ctx) }
+        }
         return LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -64,14 +72,26 @@ class AboutFragment : Fragment() {
             addView(tagline)
             addView(pkg)
             addView(copy)
+            addView(report)
         }
     }
 
-    private fun copyBuildInfo(ctx: Context) {
+    private fun copyBuildInfo(ctx: Context) =
+        putClip(ctx, "Molina build", BuildLine.describe(ctx), "Info build disalin")
+
+    /** Info build + ringkasan error per area + 50 entri log terakhir, dibaca di thread IO. */
+    private fun copyReport(ctx: Context) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val text = withContext(Dispatchers.IO) { LogReportSource.create(ctx) }
+            putClip(ctx, "Molina laporan", text, "Laporan masalah disalin")
+        }
+    }
+
+    private fun putClip(ctx: Context, label: String, text: String, notice: String) {
         val clipboard = ctx.getSystemService(ClipboardManager::class.java)
-        clipboard.setPrimaryClip(ClipData.newPlainText("Molina build", BuildLine.describe(ctx)))
+        clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
         if (Build.VERSION.SDK_INT < 33) {
-            Toast.makeText(ctx, "Info build disalin", Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, notice, Toast.LENGTH_SHORT).show()
         }
     }
 
