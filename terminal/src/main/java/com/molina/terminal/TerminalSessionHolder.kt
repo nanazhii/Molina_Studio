@@ -52,6 +52,9 @@ internal class TerminalSessionHolder : ViewModel() {
     fun titleOf(index: Int): String? =
         entries.getOrNull(index)?.session?.getEmulator()?.title?.trim()?.takeIf { it.isNotEmpty() }
 
+    /** true bila sesi di [index] berjalan lewat proot (Debian). */
+    fun isProot(index: Int): Boolean = entries.getOrNull(index)?.session?.isProot == true
+
     fun ensureSession(factory: TerminalSessionFactory): PtyTerminalSession {
         val current = entries.getOrNull(currentIndex)
         if (current != null && !current.finished) return current.session

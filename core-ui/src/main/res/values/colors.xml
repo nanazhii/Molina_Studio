@@ -27,4 +27,7 @@
     <color name="molina_tab_brand">#2ECC71</color>
     <color name="molina_tab_dot">#9BE564</color>
     <color name="molina_tab_close">#FF8A80</color>
+    <!-- molina-patch19 -->
+    <color name="molina_tab_dot_shell">#FFB300</color>
+    <color name="molina_terminal_frame">#3C3F47</color>
 </resources>

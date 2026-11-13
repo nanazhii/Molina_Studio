@@ -35,6 +35,7 @@ internal class SessionTabBar(
 
     private val brand = color(UiR.color.molina_tab_brand)
     private val dotColor = color(UiR.color.molina_tab_dot)
+    private val shellDotColor = color(UiR.color.molina_tab_dot_shell)
     private val closeColor = color(UiR.color.molina_tab_close)
     private val idleBg = color(UiR.color.molina_tab_idle_bg)
     private val line = color(UiR.color.molina_tab_line)
@@ -62,14 +63,14 @@ internal class SessionTabBar(
     }
 
     /** Gambar ulang hanya bila isi berubah (judul shell bisa berubah tiap prompt). */
-    fun render(titles: List<String>, current: Int, canAdd: Boolean) {
-        val key = listOf<Any>(titles, current, canAdd)
+    fun render(titles: List<String>, shells: List<Boolean>, current: Int, canAdd: Boolean) {
+        val key = listOf<Any>(titles, shells, current, canAdd)
         if (key == lastKey) return
         lastKey = key
         row.removeAllViews()
         var selected: View? = null
         titles.forEachIndexed { i, title ->
-            val pill = Pill(i, title, i == current)
+            val pill = Pill(i, title, i == current, shells.getOrElse(i) { false })
             row.addView(pill, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(PILL_DP)).apply { marginEnd = dp(6) })
             if (i == current) selected = pill
         }
@@ -85,6 +86,7 @@ internal class SessionTabBar(
         private val index: Int,
         title: String,
         private val selected: Boolean,
+        private val shell: Boolean,
     ) : LinearLayout(this@SessionTabBar.context) {
 
         private val underline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -107,7 +109,7 @@ internal class SessionTabBar(
                 val dot = View(context)
                 dot.background = GradientDrawable().apply {
                     shape = GradientDrawable.OVAL
-                    setColor(dotColor)
+                    setColor(if (shell) shellDotColor else dotColor)
                 }
                 addView(dot, LinearLayout.LayoutParams(dp(6), dp(6)).apply { marginEnd = dp(6) })
             }

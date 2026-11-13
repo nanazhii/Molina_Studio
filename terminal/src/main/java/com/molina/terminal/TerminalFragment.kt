@@ -2,10 +2,13 @@
 package com.molina.terminal
 
 import android.app.AlertDialog
+import android.graphics.Outline
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewOutlineProvider
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -87,7 +90,12 @@ class TerminalFragment : Fragment() {
         val column = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             addView(tabBar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(ctx, SessionTabBar.HEIGHT_DP)))
-            addView(terminalView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+            addView(
+                framed(ctx, terminalView),
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
+                    setMargins(dp(ctx, 6), dp(ctx, 6), dp(ctx, 6), dp(ctx, 4))
+                },
+            )
             addView(compatPanel, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
             addView(extraKeys, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         }
@@ -100,10 +108,11 @@ class TerminalFragment : Fragment() {
     /** Samakan bilah tab, sesi yang tampil di view, dan panel kompatibilitas dengan holder. */
     private fun syncTabs() {
         val current = holder.session ?: return
-        val fallback = getString(
-            if (setup.isReady()) R.string.terminal_tab_default_debian else R.string.terminal_tab_default_shell,
-        )
-        tabBar.render(List(holder.count) { holder.titleOf(it) ?: fallback }, holder.currentIndex, holder.canAdd)
+        val debianLabel = getString(R.string.terminal_tab_default_debian)
+        val shellLabel = getString(R.string.terminal_tab_default_shell)
+        val titles = List(holder.count) { holder.titleOf(it) ?: if (holder.isProot(it)) debianLabel else shellLabel }
+        val shells = List(holder.count) { !holder.isProot(it) }
+        tabBar.render(titles, shells, holder.currentIndex, holder.canAdd)
         if (terminalView.currentSession !== current) {
             terminalView.attachSession(current)
             terminalView.requestFocus()
@@ -140,6 +149,29 @@ class TerminalFragment : Fragment() {
             }
             .setNegativeButton(R.string.terminal_tab_cancel, null)
             .show()
+    }
+
+    /** [TERMINAL-FRAME] Bingkai abu-abu membulat di sekeliling layar terminal (desain Molina-Studio). */
+    private fun framed(ctx: android.content.Context, content: View): FrameLayout {
+        val radius = dp(ctx, 12).toFloat()
+        return FrameLayout(ctx).apply {
+            setPadding(dp(ctx, 4), dp(ctx, 4), dp(ctx, 4), dp(ctx, 4))
+            background = GradientDrawable().apply {
+                cornerRadius = radius
+                setColor(ContextCompat.getColor(ctx, UiR.color.molina_bg))
+            }
+            foreground = GradientDrawable().apply {
+                cornerRadius = radius
+                setStroke(dp(ctx, 2), ContextCompat.getColor(ctx, UiR.color.molina_terminal_frame))
+            }
+            outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: Outline) {
+                    outline.setRoundRect(0, 0, view.width, view.height, radius)
+                }
+            }
+            clipToOutline = true
+            addView(content, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        }
     }
 
     private fun dp(ctx: android.content.Context, value: Int): Int =

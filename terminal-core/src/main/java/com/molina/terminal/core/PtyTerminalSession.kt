@@ -75,6 +75,9 @@ class PtyTerminalSession(
 
     val isRunning: Boolean get() = channel != null && !finished.get() && !closed.get()
 
+    /** true bila sesi menjalankan proot (Debian); false untuk shell Android. */
+    val isProot: Boolean get() = trackTail
+
     override fun getEmulator(): TerminalEmulator? = term
 
     override fun updateSize(columns: Int, rows: Int, cellWidthPixels: Int, cellHeightPixels: Int) {
