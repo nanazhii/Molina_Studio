@@ -1,7 +1,11 @@
 package com.molina.settings
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Typeface
+import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -10,8 +14,10 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.fragment.app.Fragment
+import com.google.android.material.button.MaterialButton
 import com.molina.core.ui.R as UiR
 
 /** Layar Tentang: wordmark Molina, nomor versi, dan nama paket. */
@@ -45,6 +51,10 @@ class AboutFragment : Fragment() {
             alpha = 0.5f
             setPadding(0, (24 * d).toInt(), 0, 0)
         }
+        val copy = MaterialButton(ctx).apply {
+            text = "Salin info build"
+            setOnClickListener { copyBuildInfo(ctx) }
+        }
         return LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -53,6 +63,15 @@ class AboutFragment : Fragment() {
             addView(version)
             addView(tagline)
             addView(pkg)
+            addView(copy)
+        }
+    }
+
+    private fun copyBuildInfo(ctx: Context) {
+        val clipboard = ctx.getSystemService(ClipboardManager::class.java)
+        clipboard.setPrimaryClip(ClipData.newPlainText("Molina build", BuildLine.describe(ctx)))
+        if (Build.VERSION.SDK_INT < 33) {
+            Toast.makeText(ctx, "Info build disalin", Toast.LENGTH_SHORT).show()
         }
     }
 

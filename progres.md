@@ -52,3 +52,5 @@
 - [ ] Verifikasi: Tentang menampilkan 7 karakter commit sama dengan commit build CI
 - [x] Baris versi+commit di molina.log (BuildInfo, dipanggil di MolinaApplication dan setelah reinit log di MainActivity)
 - [ ] Verifikasi: baris 'Molina 0.1.0 (1) · <commit> · API 26' muncul di molina.log setelah start
+- [x] Tombol Salin info build di Tentang (BuildLine sumber tunggal, dipakai juga oleh BuildInfo)
+- [ ] Verifikasi: tombol menyalin baris yang sama dengan molina.log

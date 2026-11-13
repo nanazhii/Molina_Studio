@@ -28,3 +28,7 @@ Saat Player menjadi aplikasi sendiri (`com.molina.player`):
 ## Baris versi di log
 - Saat start (dan sekali lagi setelah izin penyimpanan diberikan, ketika log pindah ke folder publik) aplikasi menulis satu baris `Molina <versi> (<kode>) · <commit> · API <level>` dengan tag `Molina/core`.
 - Cari dengan: `grep "Molina 0\." /sdcard/Molina/logs/molina.log | tail -1` (sesuaikan nama berkas dengan konfigurasi log).
+
+## Salin info build
+- Setelan -> Tentang -> "Salin info build" menyalin baris yang sama dengan log (`Molina <versi> (<kode>) · <commit> · API <level>`) ke clipboard, siap ditempel di laporan masalah.
+- Logika baris ada di satu tempat: `BuildLine.describe` (modul settings); `BuildInfo` (app) hanya memanggilnya untuk log.
