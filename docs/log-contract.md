@@ -128,6 +128,8 @@ terbaca berurutan: `term.session.start`, `proot.rootfs-checked`, `proot.guest-fi
 | `proot.rootfs-unreadable` | BUG | folder rootfs tidak terbaca | `readable`, `bash`, `env` |
 | `proot.rootfs-no-shell` | BUG | bash tidak ada di rootfs (sesi akan keluar cepat) | `readable`, `bash`, `env` |
 | `proot.prompt-failed` | BUG | gagal menulis skrip/pengaturan prompt (sesi tetap jalan, prompt bawaan Debian) | - |
+| `proot.nano-install` | BEHAV | pembungkus nano, molina-run, dan nanorc ditulis ke rootfs (hanya bila ada yang berubah) | `written` |
+| `proot.nano-install-failed` | BUG | gagal menulis pembungkus nano/molina-run (nano biasa tetap bisa dipakai tanpa baris tombol) | - |
 | `proot.rootfs-no-env` | BUG | usr/bin/env tidak ada di rootfs | `readable`, `bash`, `env` |
 | `proot.binary-missing` | BUG | binary proot tidak ditemukan | - |
 | `proot.binary-not-executable` | BUG | binary proot tidak punya izin eksekusi | - |

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="terminal_nano_handle">Tombol nano: ketuk untuk membuka atau melipat</string>
+    <string name="terminal_nano_save">Simpan (Ctrl+S)</string>
+    <string name="terminal_nano_run">Jalankan skrip (Alt+R)</string>
+    <string name="terminal_nano_undo">Urungkan (Ctrl+Z)</string>
+    <string name="terminal_nano_redo">Ulangi (Ctrl+Y)</string>
+    <string name="terminal_nano_find">Cari (Ctrl+F)</string>
+    <string name="terminal_nano_replace">Ganti (Ctrl+R)</string>
+    <string name="terminal_nano_select_all">Pilih semua (Ctrl+A)</string>
+    <string name="terminal_nano_goto">Ke baris (Ctrl+G)</string>
+    <string name="terminal_nano_fix">Periksa dan perbaiki header/penutup skrip (Alt+F)</string>
+    <string name="terminal_nano_quit">Keluar (Ctrl+Q)</string>
+    <string name="terminal_nano_yes">YA</string>
+    <string name="terminal_nano_no">TIDAK</string>
+    <string name="terminal_nano_cancel">BATAL</string>
+    <string name="terminal_nano_enter">ENTER</string>
+    <string name="terminal_nano_title_save">simpan perubahan?</string>
+    <string name="terminal_nano_title_name">nama berkas</string>
+    <string name="terminal_nano_title_run">periksa skrip</string>
+</resources>

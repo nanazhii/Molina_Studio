@@ -34,6 +34,7 @@ class TerminalFragment : Fragment() {
     private var closeDialog: AlertDialog? = null
     private var fileDrawer: FileDrawerView? = null
     private var terminalHeader: TerminalHeaderView? = null
+    private var nanoKeys: NanoKeysView? = null
 
     /** Back menutup drawer berkas lebih dulu; aktif hanya saat drawer terbuka. */
     private val drawerBack = object : OnBackPressedCallback(false) {
@@ -69,6 +70,25 @@ class TerminalFragment : Fragment() {
             showTerminalMenu(anchor, actions) { restartActive() }
         }
         holder.modifiers.listener = { extraKeys.refresh() }
+
+        val nano = NanoKeysView(
+            ctx,
+            send = { holder.session?.write(it) },
+            title = { holder.titleOf(holder.currentIndex) },
+            readRows = { bottom ->
+                val em = holder.session?.getEmulator()
+                val scr = em?.screen
+                if (em == null || scr == null) {
+                    null
+                } else {
+                    val first = if (bottom <= 0) 0 else maxOf(0, em.mRows - bottom)
+                    (first until em.mRows).map { r -> scr.getSelectedText(0, r, em.mColumns, r) }
+                }
+            },
+            isOpen = { holder.nanoKeysOpen },
+            setOpen = { holder.nanoKeysOpen = it },
+        )
+        nanoKeys = nano
 
         val overlay = DebianSetupView(ctx, object : DebianSetupView.Actions {
             override fun onInstall() = setup.install()
@@ -143,6 +163,7 @@ class TerminalFragment : Fragment() {
                 },
             )
             addView(compatPanel, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            addView(nano, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
             addView(extraKeys, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         }
         return FrameLayout(ctx).apply {
@@ -169,6 +190,7 @@ class TerminalFragment : Fragment() {
             terminalView.requestFocus()
         }
         compatPanel.render(holder.failure, ProotCompat.enabled)
+        nanoKeys?.refresh()
         terminalHeader?.setStatus(
             ContextCompat.getColor(requireContext(), if (holder.failure != null) UiR.color.molina_key_red else UiR.color.molina_key_green),
         )
@@ -235,6 +257,7 @@ class TerminalFragment : Fragment() {
         closeDialog?.dismiss()
         closeDialog = null
         fileDrawer = null
+        nanoKeys = null
         terminalHeader = null
         drawerBack.isEnabled = false
         setup.listener = null
