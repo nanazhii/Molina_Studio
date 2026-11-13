@@ -41,6 +41,13 @@ object LogEvents {
         return s.ifEmpty { "unknown" }
     }
 
+    /** Awali kode dengan area bila belum ada: (proot, install-failed) -> proot.install-failed. */
+    fun qualify(area: String, code: String): String {
+        val a = normalizeCode(area)
+        val c = normalizeCode(code)
+        return if (c == a || c.startsWith("$a.")) c else "$a.$c"
+    }
+
     fun format(
         kind: EventKind,
         code: String,
@@ -119,7 +126,7 @@ object MolinaEvents {
         level: LogLevel = EventKind.BUG.defaultLevel,
         logger: MolinaLogger = MolinaLog.logger,
     ) {
-        logger.log(level, MolinaLogger.tag(area, id), LogEvents.format(EventKind.BUG, code, summary, fields), t)
+        logger.log(level, MolinaLogger.tag(area, id), LogEvents.format(EventKind.BUG, LogEvents.qualify(area, code), summary, fields), t)
     }
 
     fun behavior(
@@ -133,7 +140,7 @@ object MolinaEvents {
         logger.log(
             EventKind.BEHAVIOR.defaultLevel,
             MolinaLogger.tag(area, id),
-            LogEvents.format(EventKind.BEHAVIOR, code, summary, fields),
+            LogEvents.format(EventKind.BEHAVIOR, LogEvents.qualify(area, code), summary, fields),
         )
     }
 }

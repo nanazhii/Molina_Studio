@@ -56,3 +56,7 @@
 - [ ] Verifikasi: tombol menyalin baris yang sama dengan molina.log
 - [x] Tombol Salin laporan masalah di Tentang (LogReport + LogReportSource + LogReportTest; ringkasan error per area mpv/term/proot/files)
 - [ ] Verifikasi: tempel hasil salin, cek ringkasan error per area dan 50 entri terakhir
+- [x] Patch 12: LogReport memisah Crash terbaru / Bug / Urutan perilaku sebelum crash; chip filter CRASH/BUG/BEHAV + warna di Log Viewer (LogFilter); docs/log-contract.md diperbarui; 22 tes JVM lulus di sandbox, UI Fragment belum dikompilasi
+- [ ] Verifikasi CI Patch 12 (kompilasi LogViewerFragment, jvm-tests settings)
+- [ ] Uji perangkat: chip filter di Log Viewer, jumlah di chip, warna, laporan masalah 3 bagian setelah crash terkontrol
+- [ ] Usul Patch 13: BEHAV di navigasi 4 tab, cinema/mpv (open/play/stop), files; tombol crash debug-only

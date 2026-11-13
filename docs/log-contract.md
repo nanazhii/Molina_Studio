@@ -66,3 +66,21 @@ Log Viewer: chip `Semua | CRASH | BUG | BEHAV` (dengan jumlah peristiwa) menyari
 penanda. Penanda hanya dikenali pada tag `Molina/...`. Baris stack trace yang mengikuti CRASH/BUG
 (pid, tid, dan tag sama) ikut tersaring masuk. Warna: CRASH merah (`molina_error`), BUG amber
 (`molina_cinema_accent`), BEHAV teal (`molina_terminal_accent`); baris lain warna bawaan.
+
+## Penamaan kode
+`MolinaEvents.bug/behavior` otomatis mengawali kode dengan area bila belum ada
+(`MolinaEvents.bug("proot", "install-failed", ...)` -> `[BUG:proot.install-failed]`).
+
+## Kode baku: mpv
+| Kode | Jenis | Arti | Kolom |
+|---|---|---|---|
+| `mpv.load` / `mpv.loaded` | BEHAV | perintah load / berkas berhasil dimuat | `file` (nama saja) |
+| `mpv.state` | BEHAV | perubahan status pemutar | `state` |
+| `mpv.play` / `mpv.pause` / `mpv.release` | BEHAV | perintah pengguna / sesi dilepas | - |
+| `mpv.ended` | BEHAV | pemutaran selesai | - |
+| `mpv.error` | BUG | kegagalan dari lapisan pemutar | `code` |
+| `mpv.native` | BUG | log internal libmpv level FATAL/ERROR (rate-limit) | `prefix`, `level` |
+| `mpv.native-suppressed` | BUG (W) | jumlah log libmpv yang dibuang pembatas | `count` |
+
+Path dan URL media tidak pernah dicatat; hanya nama berkas.
+

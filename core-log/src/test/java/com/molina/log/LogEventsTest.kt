@@ -87,4 +87,12 @@ class LogEventsTest {
         val e = LogEntry(0L, LogLevel.ERROR, "Molina/term", LogEvents.format(EventKind.CRASH, "uncaught", "x"))
         assertTrue(Regex("""^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} E/Molina/term: \[CRASH:uncaught] x$""").matches(LogFormat.line(e)))
     }
+
+    @Test
+    fun qualifyPrefixesAreaOnce() {
+        assertEquals("proot.install-failed", LogEvents.qualify("proot", "install-failed"))
+        assertEquals("proot.install-failed", LogEvents.qualify("proot", "proot.install-failed"))
+        assertEquals("mpv.error", LogEvents.qualify("mpv", "Error"))
+        assertEquals("term.session.start", LogEvents.qualify("term", "session.start"))
+    }
 }
