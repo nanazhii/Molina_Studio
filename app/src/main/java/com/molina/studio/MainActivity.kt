@@ -2,6 +2,7 @@ package com.molina.studio
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -41,6 +42,9 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner {
             }
         }
 
+    private val notificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(com.molina.core.ui.R.style.Theme_Molina_App)
         super.onCreate(savedInstanceState)
@@ -68,6 +72,12 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner {
         }
         if (savedInstanceState == null) {
             nav.selectedItemId = R.id.nav_cinema
+            MolinaSessionService.start(this)
+            if (Build.VERSION.SDK_INT >= 33 &&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
             if (hasStoragePermission()) {
                 onStorageReady(reinitLog = false)
             } else {

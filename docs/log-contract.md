@@ -152,6 +152,10 @@ di luar dialog izin (mis. path bukan milik Molina atau volume dicabut); lihat `e
 | Kode | Jenis | Arti | Kolom |
 |---|---|---|---|
 | `app.nav` | BEHAV | pengguna pindah tab (cinema, files, terminal, settings) | `tab`, `from` (`start` bila belum ada tab sebelumnya) |
+| `app.exit.requested` | BEHAV | pengguna menekan Keluar di notifikasi; semua sesi ditutup lalu proses dimatikan | `via` |
+| `app.exit.swept` | BEHAV | sisa proses milik aplikasi dimatikan sebelum keluar | `killed` |
+| `app.exit-failed` | BUG | langkah keluar gagal (proses aplikasi tetap dimatikan) | - |
+| `app.session-service-failed` | BUG | layanan notifikasi gagal dijalankan | - |
 
 ## Kode baku: debug (hanya build debug)
 Tag `Molina/debug`. Dipicu dari Setelan > tombol `[DEBUG]`, yang hanya dibuat bila `BuildConfig.DEBUG`.

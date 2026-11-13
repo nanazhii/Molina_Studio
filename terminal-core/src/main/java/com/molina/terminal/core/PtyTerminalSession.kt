@@ -123,6 +123,7 @@ class PtyTerminalSession(
     /** Hentikan proses (SIGKILL) dan lepaskan sumber daya. Tidak ada callback ke client sesudahnya. */
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
+        SessionRegistry.remove(this)
         TermEvents.close(logger, sessionId, channel != null && !finished.get())
         writeQueue.offer(STOP)
         channel?.let {
@@ -151,6 +152,7 @@ class PtyTerminalSession(
             return
         }
         startedAt = clock()
+        SessionRegistry.add(this)
         lastCols = columns
         lastRows = rows
         TermEvents.start(logger, sessionId, chan.pid, config.command.firstOrNull(), columns, rows)
