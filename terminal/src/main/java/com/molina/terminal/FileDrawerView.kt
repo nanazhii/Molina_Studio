@@ -588,12 +588,12 @@ internal class FileDrawerView(
                 if (openAfter && editInNano(target)) close()
             }
         }
-        val initial = "berkas.txt"
-        nameDialog(
-            R.string.drawer_new_file, initial, initial.lastIndexOf('.'), R.string.drawer_create,
-            context.getString(R.string.drawer_in_folder, parent.path), R.string.drawer_create_nano,
-            { name -> create(name, true) },
-        ) { name -> create(name, false) }
+        showNewFileDialog(
+            context,
+            DrawerFs.shellPath(parent, host.isProotSession()) ?: parent.path,
+            onCreate = { name -> create(name, false) },
+            onNano = { name -> create(name, true) },
+        )
     }
 
     private fun deleteDialog(f: File) {
