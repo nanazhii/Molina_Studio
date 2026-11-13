@@ -8,7 +8,19 @@
         <item name="android:fontFamily">monospace</item>
     </style>
 
+    <!-- molina-patch20: nav ringkas (56dp), ikon gradien RGB membawa warna sendiri -->
     <style name="Widget.Molina.BottomNav" parent="Widget.Material3.BottomNavigationView">
         <item name="backgroundTint">@color/molina_surface</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="itemIconTint">@null</item>
+        <item name="itemIconSize">22dp</item>
+        <item name="itemPaddingTop">6dp</item>
+        <item name="itemPaddingBottom">4dp</item>
+        <item name="labelVisibilityMode">labeled</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.Molina.BottomNav.Indicator</item>
+    </style>
+
+    <style name="Widget.Molina.BottomNav.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:height">28dp</item>
     </style>
 </resources>
