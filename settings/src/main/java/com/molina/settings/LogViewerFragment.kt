@@ -3,6 +3,8 @@ package com.molina.settings
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
@@ -18,6 +20,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -180,18 +183,37 @@ class LogViewerFragment : Fragment() {
         sessionRow.visibility = if (ids.isEmpty()) View.GONE else View.VISIBLE
         if (ids.isEmpty()) return
         sessionGroup.addView(sessionChip("Semua sesi", null))
-        for (id in ids) sessionGroup.addView(sessionChip("Sesi $id", id))
+        for (id in ids) sessionGroup.addView(sessionChip(LogFilter.sessionLabel(id), id))
     }
 
     private fun sessionChip(label: String, target: String?): Chip = Chip(requireContext()).apply {
         text = label
         isCheckable = true
         isChecked = target == session
+        accentOf(target)?.let { tintChip(this, it) }
         setOnClickListener {
             session = target
             shownSession = target
             dirty = true
         }
+    }
+
+    /** Teal untuk sesi Terminal (t*), amber untuk Cinema (p*); null = gaya bawaan. */
+    private fun accentOf(id: String?): Int? {
+        val res = when (LogFilter.sessionKind(id)) {
+            SessionKind.TERMINAL -> UiR.color.molina_terminal_accent
+            SessionKind.CINEMA -> UiR.color.molina_cinema_accent
+            SessionKind.OTHER -> return null
+        }
+        return ContextCompat.getColor(requireContext(), res)
+    }
+
+    private fun tintChip(chip: Chip, color: Int) {
+        val checked = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
+        chip.chipBackgroundColor = ColorStateList(checked, intArrayOf(ColorUtils.setAlphaComponent(color, 0x55), Color.TRANSPARENT))
+        chip.chipStrokeColor = ColorStateList.valueOf(color)
+        chip.chipStrokeWidth = resources.displayMetrics.density
+        chip.setTextColor(color)
     }
 
     /** Salin tampilan saat ini (sesuai filter dan sesi) agar bisa ditempel ke chat saat melapor bug. */

@@ -67,7 +67,7 @@ penanda. Penanda hanya dikenali pada tag `Molina/...`. Baris stack trace yang me
 (pid, tid, dan tag sama) ikut tersaring masuk. Warna: CRASH merah (`molina_error`), BUG amber
 (`molina_cinema_accent`), BEHAV teal (`molina_terminal_accent`); baris lain warna bawaan.
 
-Baris chip kedua memuat `Semua sesi | Sesi t1 | Sesi t2 | ...` (id dari tag `Molina/<area>/<id>`, 8 terakhir). Memilih sesi menampilkan semua area dengan id itu (mis. `term/t1` dan `proot/t1`) dan bisa digabung dengan filter jenis. Tombol "Salin tampilan" menyalin baris build, keterangan filter, dan maksimal 300 baris yang sedang tampil, siap ditempel ke chat saat melapor bug.
+Baris chip kedua memuat `Semua sesi | Term t1 | Cinema p1 | ...` (teal untuk sesi Terminal `t*`, amber untuk Cinema/mpv `p*`) (id dari tag `Molina/<area>/<id>`, 8 terakhir). Memilih sesi menampilkan semua area dengan id itu (mis. `term/t1` dan `proot/t1`) dan bisa digabung dengan filter jenis. Tombol "Salin tampilan" menyalin baris build, keterangan filter, dan maksimal 300 baris yang sedang tampil, siap ditempel ke chat saat melapor bug.
 
 ## Penamaan kode
 `MolinaEvents.bug/behavior` otomatis mengawali kode dengan area bila belum ada
@@ -140,4 +140,22 @@ Tag `Molina/files`. Path tidak pernah dicatat: hanya `depth` (jumlah segmen path
 
 `files.list-failed` dengan `kind=PERMISSION_DENIED` padahal izin sudah diberikan berarti penyebabnya
 di luar dialog izin (mis. path bukan milik Molina atau volume dicabut); lihat `errno`.
+
+## Kode baku: app
+| Kode | Jenis | Arti | Kolom |
+|---|---|---|---|
+| `app.nav` | BEHAV | pengguna pindah tab (cinema, files, terminal, settings) | `tab`, `from` (`start` bila belum ada tab sebelumnya) |
+
+## Kode baku: debug (hanya build debug)
+Tag `Molina/debug`. Dipicu dari Setelan > tombol `[DEBUG]`, yang hanya dibuat bila `BuildConfig.DEBUG`.
+
+| Kode | Jenis | Arti | Kolom |
+|---|---|---|---|
+| `debug.crash-trigger` | BEHAV | tepat sebelum crash uji dipicu | `source` |
+| `debug.test-bug` | BUG | BUG terkontrol, proses tidak mati | `source` |
+
+Menguji alur CRASH di perangkat: (1) Setelan > Picu CRASH, aplikasi menutup; (2) buka lagi, Log Viewer chip
+CRASH harus menampilkan `[CRASH:uncaught] ... thread=main root=java.lang.RuntimeException` dengan stack
+trace; (3) Tentang > Salin laporan masalah harus memuat "Crash terbaru" dan "Urutan perilaku sebelum crash"
+yang berakhir di `debug.crash-trigger` lalu `CRASH uncaught`. Area crash uji adalah `settings`.
 

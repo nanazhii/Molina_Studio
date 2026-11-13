@@ -29,4 +29,4 @@ jobs:
           . native/pins.env
           ln -sfn "$ANDROID_HOME/ndk/android-ndk-$NDK_VERSION" "$ANDROID_HOME/ndk/$NDK_REVISION"
       - name: Uji unit modul
-        run: gradle :core-common:testDebugUnitTest :core-storage:testDebugUnitTest :core-log:testDebugUnitTest :terminal-core:testDebugUnitTest :terminal-emulator:testDebugUnitTest :terminal-view:compileDebugJavaWithJavac :terminal-pty:assembleDebug :mpv-native:testDebugUnitTest :files:testDebugUnitTest --stacktrace
+        run: gradle :core-common:testDebugUnitTest :core-storage:testDebugUnitTest :core-log:testDebugUnitTest :terminal-core:testDebugUnitTest :terminal-emulator:testDebugUnitTest :terminal-view:compileDebugJavaWithJavac :terminal-pty:assembleDebug :mpv-native:testDebugUnitTest :files:testDebugUnitTest :terminal-proot:testDebugUnitTest :settings:testDebugUnitTest --stacktrace

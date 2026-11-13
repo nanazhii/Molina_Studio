@@ -44,6 +44,16 @@ class SettingsFragment : Fragment() {
             addView(logButton)
             addView(IconPicker.build(ctx))
             addView(aboutButton)
+            if (BuildConfig.DEBUG) {
+                addView(MaterialButton(ctx).apply {
+                    text = "[DEBUG] Uji BUG terkontrol"
+                    setOnClickListener { DebugCrash.bug() }
+                })
+                addView(MaterialButton(ctx).apply {
+                    text = "[DEBUG] Picu CRASH (aplikasi menutup)"
+                    setOnClickListener { DebugCrash.crash() }
+                })
+            }
         }
     }
 }

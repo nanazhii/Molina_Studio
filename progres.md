@@ -69,3 +69,8 @@
 - [ ] Verifikasi CI Patch 13b (terminal-core jvm-tests, PtyTerminalSessionTest Fixture baru)
 - [ ] Uji perangkat: buka tab Terminal, ketik exit, cek urutan term.session.start, term.pty-start, term.exit di Log Viewer; kasus proot gagal harus muncul sebagai BUG term.exit-early
 - [ ] Patch 13c: files (IOException/izin ditolak jadi BUG dengan kelas errno), lalu tombol crash debug-only
+- [x] Patch 13c: files.* (list, permission-*, list-failed/layout-failed dengan errno tanpa path); proot.* (rootfs-checked, guest-files, launch-built, BUG rootfs/binary); term.session.start punya kolom why; id sesi sama untuk Molina/term dan Molina/proot; Log Viewer: chip sesi + tombol Salin tampilan; docs/log-contract.md diperbarui; belum dikompilasi di sandbox
+- [ ] Verifikasi CI Patch 13c (files jvm-tests, kompilasi LogViewerFragment dan FilesFragment, terminal-proot dengan core-log)
+- [ ] Uji perangkat: buka tab Berkas (files.list), tolak izin lalu Beri izin (permission-*), buka Terminal Debian lalu exit, cek Log Viewer Sesi tN menampilkan term + proot berurutan, tekan Salin tampilan dan tempel
+- [ ] Opsional: tambahkan :terminal-proot dan :settings ke jvm-tests.yml
+- [ ] Patch 13d: tombol crash debug-only, lalu BEHAV navigasi 4 tab

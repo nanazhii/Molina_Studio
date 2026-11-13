@@ -14,6 +14,7 @@ import com.molina.cinema.CinemaFragment
 import com.molina.core.common.MolinaResult
 import com.molina.core.storage.LocalMolinaStorage
 import com.molina.files.FilesFragment
+import com.molina.log.MolinaEvents
 import com.molina.log.MolinaLog
 import com.molina.log.MolinaLogSetup
 import com.molina.log.MolinaLogger
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner {
     }
 
     private val logTag = MolinaLogger.tag("core")
+    private var currentTab: String? = null
 
     private val storagePermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -46,12 +48,20 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner {
         val nav = findViewById<BottomNavigationView>(R.id.bottom_nav)
         KeyboardNavHider.install(this, nav)
         nav.setOnItemSelectedListener { item ->
-            val fragment: Fragment = when (item.itemId) {
-                R.id.nav_cinema -> CinemaFragment()
-                R.id.nav_files -> FilesFragment()
-                R.id.nav_terminal -> TerminalFragment()
+            val tab = when (item.itemId) {
+                R.id.nav_cinema -> "cinema"
+                R.id.nav_files -> "files"
+                R.id.nav_terminal -> "terminal"
+                else -> "settings"
+            }
+            val fragment: Fragment = when (tab) {
+                "cinema" -> CinemaFragment()
+                "files" -> FilesFragment()
+                "terminal" -> TerminalFragment()
                 else -> SettingsFragment()
             }
+            MolinaEvents.behavior("app", "nav", fields = mapOf("tab" to tab, "from" to (currentTab ?: "start")))
+            currentTab = tab
             supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
             supportFragmentManager.commit { replace(R.id.container, fragment) }
             true
