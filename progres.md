@@ -60,3 +60,8 @@
 - [ ] Verifikasi CI Patch 12 (kompilasi LogViewerFragment, jvm-tests settings)
 - [ ] Uji perangkat: chip filter di Log Viewer, jumlah di chip, warna, laporan masalah 3 bagian setelah crash terkontrol
 - [ ] Usul Patch 13: BEHAV di navigasi 4 tab, cinema/mpv (open/play/stop), files; tombol crash debug-only
+- [x] Patch 12 diverifikasi CI dan perangkat
+- [x] Patch 13a (mpv): BEHAV/BUG mpv.*, MpvLogBridge (libmpv FATAL/ERROR, rate-limit), MpvNativeLog, scrub path; LogEvents.qualify memperbaiki kode tanpa awalan area; docs/log-contract.md diperbarui; belum dikompilasi di sandbox
+- [ ] Verifikasi CI Patch 13a (mpv-native + core-log jvm-tests)
+- [ ] Pasang MpvNativeLog.attach/detach saat sesi mpv nyata dibuat; uji perangkat apakah libplayer mengirim log mpv
+- [ ] Patch 13b: term/proot (exit code, PTY putus, spawn gagal), lalu 13c: files (IOException/izin), lalu tombol crash debug-only

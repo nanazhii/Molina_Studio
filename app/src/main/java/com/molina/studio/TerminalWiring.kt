@@ -6,6 +6,7 @@ import com.molina.log.MolinaEvents
 import com.molina.terminal.TerminalSessionFactory
 import com.molina.terminal.core.PtyTerminalSession
 import com.molina.terminal.core.SessionConfig
+import com.molina.terminal.core.TerminalSessionIds
 import com.molina.terminal.proot.DebianLayout
 import com.molina.terminal.proot.ProotLauncher
 import java.io.File
@@ -49,7 +50,12 @@ internal fun createTerminalSessionFactory(context: Context): TerminalSessionFact
                 ),
             )
         }
-        MolinaEvents.behavior("term", "session.start", fields = mapOf("kind" to if (debian != null) "debian" else "android-shell"))
-        PtyTerminalSession(config = config, client = client)
+        val sessionId = TerminalSessionIds.next()
+        MolinaEvents.behavior(
+            "term", "session.start",
+            fields = mapOf("kind" to if (debian != null) "debian" else "android-shell"),
+            id = sessionId,
+        )
+        PtyTerminalSession(config = config, client = client, sessionId = sessionId)
     }
 }

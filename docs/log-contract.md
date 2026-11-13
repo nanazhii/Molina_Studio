@@ -84,3 +84,25 @@ penanda. Penanda hanya dikenali pada tag `Molina/...`. Baris stack trace yang me
 
 Path dan URL media tidak pernah dicatat; hanya nama berkas.
 
+## Kode baku: term
+Tag `Molina/term/<id>`; id sesi (`t1`, `t2`, ...) sama untuk semua peristiwa satu sesi.
+
+| Kode | Jenis | Arti | Kolom |
+|---|---|---|---|
+| `term.session.start` | BEHAV | sesi dibuat (Debian atau shell Android) | `kind` |
+| `term.pty-start` | BEHAV | proses berhasil dijalankan di PTY | `pid`, `cmd`, `cols`, `rows` |
+| `term.resize` | BEHAV | ukuran berubah (hanya bila berbeda) | `cols`, `rows` |
+| `term.close` | BEHAV | sesi ditutup pengguna/aplikasi | `running` |
+| `term.exit` | BEHAV | keluar normal (0), atau non-nol setelah 5 detik | `code`, `uptime_ms` |
+| `term.spawn-failed` | BUG | proses gagal dijalankan (exec/PTY) | `error` |
+| `term.native-missing` | BUG | pustaka native PTY tidak termuat | `error` |
+| `term.exit-early` | BUG | keluar non-nol sebelum 5 detik (mis. proot gagal) | `code`, `uptime_ms` |
+| `term.killed` | BUG | dihentikan sinyal (SIGSEGV, SIGKILL oleh LMK, dst.) | `signal`, `uptime_ms` |
+| `term.exit-unknown` | BUG | kode keluar tidak bisa dibaca | `uptime_ms` |
+
+Penutupan oleh pengguna (`close`) tidak pernah menghasilkan BUG. Isi input/output dan environment
+tidak dicatat.
+
+## Kode baku: proot
+`proot.install.start|done|cancelled` (BEHAV), `proot.install-failed` dan `proot.prepare-failed` (BUG).
+

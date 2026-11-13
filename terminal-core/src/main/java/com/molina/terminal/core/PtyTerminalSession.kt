@@ -2,6 +2,8 @@ package com.molina.terminal.core
 
 import android.os.Handler
 import android.os.Looper
+import com.molina.log.MolinaLog
+import com.molina.log.MolinaLogger
 import com.molina.terminal.emulator.TerminalEmulator
 import com.molina.terminal.emulator.TerminalOutput
 import com.molina.terminal.emulator.TerminalSessionClient
@@ -40,6 +42,9 @@ class PtyTerminalSession(
     private val mainExecutor: Executor = MainThreadExecutor,
     private val launcher: PtyLauncher = DefaultPtyLauncher,
     private val transcriptRows: Int? = null,
+    private val sessionId: String = TerminalSessionIds.next(),
+    private val logger: MolinaLogger = MolinaLog.logger,
+    private val clock: () -> Long = System::currentTimeMillis,
 ) : TerminalOutput(), ViewSession, AutoCloseable {
 
     private var term: TerminalEmulator? = null // hanya main thread
@@ -50,6 +55,11 @@ class PtyTerminalSession(
     private val finished = AtomicBoolean(false)
     private val writeQueue = LinkedBlockingQueue<ByteArray>()
     private val pending = Semaphore(MAX_PENDING_CHUNKS)
+
+    @Volatile
+    private var startedAt = 0L
+    private var lastCols = 0 // hanya main thread
+    private var lastRows = 0
 
     /** Kode keluar proses (-sinyal bila dihentikan sinyal); null selama berjalan atau bila tak diketahui. */
     @Volatile
@@ -69,6 +79,11 @@ class PtyTerminalSession(
         }
         channel?.resize(rows, columns, cellWidthPixels, cellHeightPixels)
         emulator.resize(columns, rows, cellWidthPixels, cellHeightPixels)
+        if (columns != lastCols || rows != lastRows) {
+            lastCols = columns
+            lastRows = rows
+            TermEvents.resize(logger, sessionId, columns, rows)
+        }
     }
 
     override fun writeCodePoint(prependEscape: Boolean, codePoint: Int) {
@@ -101,6 +116,7 @@ class PtyTerminalSession(
     /** Hentikan proses (SIGKILL) dan lepaskan sumber daya. Tidak ada callback ke client sesudahnya. */
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
+        TermEvents.close(logger, sessionId, channel != null && !finished.get())
         writeQueue.offer(STOP)
         channel?.let {
             it.kill()
@@ -121,11 +137,16 @@ class PtyTerminalSession(
         }
         val chan = channel
         if (failure != null || chan == null) {
+            TermEvents.spawnFailed(logger, sessionId, failure)
             emulator.appendText("[Gagal memulai proses: ${failure?.message ?: "tidak diketahui"}]\r\n")
             client.onTextChanged(this)
-            finish(null)
+            finish(null, log = false)
             return
         }
+        startedAt = clock()
+        lastCols = columns
+        lastRows = rows
+        TermEvents.start(logger, sessionId, chan.pid, config.command.firstOrNull(), columns, rows)
         client.setTerminalShellPid(this, chan.pid)
         thread(name = "molina-pty-read", isDaemon = true) { readLoop(chan) }
         thread(name = "molina-pty-write", isDaemon = true) { writeLoop(chan) }
@@ -188,9 +209,10 @@ class PtyTerminalSession(
         }
     }
 
-    private fun finish(code: Int?) {
+    private fun finish(code: Int?, log: Boolean = true) {
         exitStatus = code
         if (closed.get() || !finished.compareAndSet(false, true)) return
+        if (log) TermEvents.exit(logger, sessionId, code, clock() - startedAt)
         val note = if (code == null) "\r\n[Proses selesai]\r\n" else "\r\n[Proses selesai, kode $code]\r\n"
         term?.appendText(note)
         client.onTextChanged(this)

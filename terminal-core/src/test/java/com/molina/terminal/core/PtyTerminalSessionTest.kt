@@ -1,5 +1,9 @@
 package com.molina.terminal.core
 
+import com.molina.log.LogEntry
+import com.molina.log.LogLevel
+import com.molina.log.LogSink
+import com.molina.log.MolinaLogger
 import com.molina.terminal.emulator.TerminalOutput
 import com.molina.terminal.emulator.TerminalSessionClient
 import java.io.ByteArrayOutputStream
@@ -97,6 +101,11 @@ class PtyTerminalSessionTest {
         }
     }
 
+    private class CaptureSink : LogSink {
+        val entries = java.util.concurrent.CopyOnWriteArrayList<LogEntry>()
+        override fun write(entry: LogEntry) { entries += entry }
+    }
+
     private class FakeClient : TerminalSessionClient {
         val textChanged = AtomicInteger()
         val finished = AtomicInteger()
@@ -145,10 +154,15 @@ class PtyTerminalSessionTest {
         val client = FakeClient()
         val executor = ManualExecutor()
         val launches = AtomicInteger()
+        val sink = CaptureSink()
+        @Volatile var now = 0L
         val session = PtyTerminalSession(
             config = SessionConfig(listOf("/bin/sh")),
             client = client,
             mainExecutor = executor,
+            sessionId = "t-test",
+            logger = MolinaLogger(listOf(sink)),
+            clock = { now },
             launcher = { config, _, _, _, _ ->
                 launches.incrementAndGet()
                 launcher?.invoke(config) ?: channel
@@ -273,5 +287,83 @@ class PtyTerminalSessionTest {
         f.session.updateSize(0, 24, 8, 16)
         assertEquals(0, f.launches.get())
         assertNull(f.session.emulator)
+    }
+
+    private fun Fixture.msgs() = sink.entries.map { it.message }
+
+    @Test
+    fun startAndResizeAreLoggedAsBehavior() {
+        val f = Fixture()
+        f.start()
+        f.session.updateSize(100, 30, 9, 18)
+        f.session.updateSize(100, 30, 9, 18)
+        assertEquals(
+            listOf("[BEHAV:term.pty-start] | pid=4242 cmd=sh cols=80 rows=24", "[BEHAV:term.resize] | cols=100 rows=30"),
+            f.msgs(),
+        )
+        assertTrue(f.sink.entries.all { it.tag == "Molina/term/t-test" })
+        f.session.close()
+    }
+
+    @Test
+    fun earlyNonZeroExitIsBug() {
+        val f = Fixture()
+        f.start()
+        f.now = 1_000L
+        f.channel.exit(127)
+        f.executor.runUntil { f.client.finished.get() == 1 }
+        val e = f.sink.entries.last()
+        assertEquals(LogLevel.ERROR, e.level)
+        assertEquals("[BUG:term.exit-early] proses keluar sebelum 5 detik | code=127 uptime_ms=1000", e.message)
+    }
+
+    @Test
+    fun lateNonZeroExitIsBehaviorNotBug() {
+        val f = Fixture()
+        f.start()
+        f.now = 60_000L
+        f.channel.exit(1)
+        f.executor.runUntil { f.client.finished.get() == 1 }
+        val e = f.sink.entries.last()
+        assertEquals(LogLevel.INFO, e.level)
+        assertEquals("[BEHAV:term.exit] | code=1 uptime_ms=60000", e.message)
+    }
+
+    @Test
+    fun signalExitIsBug() {
+        val f = Fixture()
+        f.start()
+        f.now = 2_000L
+        f.channel.exit(-11)
+        f.executor.runUntil { f.client.finished.get() == 1 }
+        assertEquals("[BUG:term.killed] proses dihentikan sinyal | signal=11 uptime_ms=2000", f.sink.entries.last().message)
+    }
+
+    @Test
+    fun userCloseLogsOnceAndNoExitBug() {
+        val f = Fixture()
+        f.start()
+        f.session.close()
+        f.session.close()
+        f.executor.drainFor(200)
+        val m = f.msgs()
+        assertEquals(1, m.count { it.startsWith("[BEHAV:term.close]") })
+        assertTrue("running=true" in m.first { it.startsWith("[BEHAV:term.close]") })
+        assertTrue(m.none { it.startsWith("[BUG") || "term.exit" in it })
+    }
+
+    @Test
+    fun spawnFailureIsBugAndNotDoubleReported() {
+        val f = Fixture({ _ -> throw java.io.IOException("exec gagal") })
+        f.start()
+        assertEquals(listOf("[BUG:term.spawn-failed] exec gagal | error=IOException"), f.msgs())
+        assertEquals(LogLevel.ERROR, f.sink.entries[0].level)
+    }
+
+    @Test
+    fun missingNativeLibraryHasOwnCode() {
+        val f = Fixture({ _ -> throw UnsatisfiedLinkError("libmolina_pty.so") })
+        f.start()
+        assertEquals(listOf("[BUG:term.native-missing] libmolina_pty.so | error=UnsatisfiedLinkError"), f.msgs())
     }
 }
