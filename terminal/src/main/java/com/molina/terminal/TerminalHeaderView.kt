@@ -78,8 +78,23 @@ internal class TerminalHeaderView(
         addView(dots, LinearLayout.LayoutParams(dp(44), dp(44)))
     }
 
+    private var rootLabel: String = ""
+    private var cwdLabel: String? = null
+
+    /** Cadangan bila sesi tidak melaporkan path (shell Android): folder utama drawer. */
     fun setPath(path: String) {
-        val label = DrawerFs.displayPath(path)
+        rootLabel = DrawerFs.displayPath(path)
+        render()
+    }
+
+    /** Path aktif terminal, mis. user@localhost:/sdcard; null bila sesi tidak melaporkannya. */
+    fun setCwd(label: String?) {
+        cwdLabel = label
+        render()
+    }
+
+    private fun render() {
+        val label = cwdLabel ?: rootLabel
         if (pathBox.text.toString() != label) pathBox.text = label
     }
 

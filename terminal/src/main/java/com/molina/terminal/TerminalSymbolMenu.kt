@@ -32,7 +32,7 @@ private const val MENU_MIN_HEIGHT_DP = 120
  * Berupa PopupWindow dengan ScrollView: tingginya dibatasi ruang di atas tombol (sempit saat keyboard
  * tampil), sisanya digulir. Tidak mengambil fokus sehingga keyboard tetap terbuka.
  */
-internal fun showTerminalMenu(anchor: View, actions: TerminalKeyActions, below: Boolean = false, onRestart: () -> Unit) {
+internal fun showTerminalMenu(anchor: View, actions: TerminalKeyActions, below: Boolean = false, withKeys: Boolean = true, onRestart: () -> Unit) {
     val ctx = anchor.context
     val density = ctx.resources.displayMetrics.density
     fun dp(v: Int): Int = (v * density + 0.5f).toInt()
@@ -45,19 +45,21 @@ internal fun showTerminalMenu(anchor: View, actions: TerminalKeyActions, below: 
     var popup: PopupWindow? = null
 
     val entries = buildList<MenuEntry> {
-        listOf("/", "|", "~", "\\", "_", "&").forEach { s ->
-            add(MenuEntry(s, true, null) { actions.send(s) })
+        if (withKeys) {
+            listOf("/", "|", "~", "\\", "_", "&").forEach { s ->
+                add(MenuEntry(s, true, null) { actions.send(s) })
+            }
+            add(MenuEntry("END", true, null) { actions.sendKey(KeyEvent.KEYCODE_MOVE_END) })
+            add(MenuEntry("PGUP", true, null) { actions.sendKey(KeyEvent.KEYCODE_PAGE_UP) })
+            add(MenuEntry("PGDN", true, null) { actions.sendKey(KeyEvent.KEYCODE_PAGE_DOWN) })
         }
-        add(MenuEntry("END", true, null) { actions.sendKey(KeyEvent.KEYCODE_MOVE_END) })
-        add(MenuEntry("PGUP", true, null) { actions.sendKey(KeyEvent.KEYCODE_PAGE_UP) })
-        add(MenuEntry("PGDN", true, null) { actions.sendKey(KeyEvent.KEYCODE_PAGE_DOWN) })
         add(MenuEntry(ctx.getString(R.string.terminal_restart_session), false, accent, onRestart))
     }
 
     val column = LinearLayout(ctx)
     column.orientation = LinearLayout.VERTICAL
     entries.forEachIndexed { index, entry ->
-        if (index == entries.lastIndex) {
+        if (index == entries.lastIndex && index > 0) {
             val divider = View(ctx)
             divider.setBackgroundColor(outline)
             column.addView(divider, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1)))

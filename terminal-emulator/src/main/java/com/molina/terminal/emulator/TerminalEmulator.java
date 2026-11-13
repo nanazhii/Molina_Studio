@@ -218,6 +218,8 @@ public final class TerminalEmulator {
 
 
     private String mTitle;
+    /** Path aktif dari OSC 7 (format internal Molina: user@localhost:path); null bila belum ada. */
+    private String mCwd;
     private final Stack<String> mTitleStack = new Stack<>();
 
     /** The cursor position. Between (0,0) and (mRows-1, mColumns-1). */
@@ -2782,6 +2784,9 @@ public final class TerminalEmulator {
             case 2: // Change window title to T.
                 setTitle(textParameter);
                 break;
+            case 7: // Path aktif; Molina: file://user@localhost:path
+                setCwd(textParameter);
+                break;
             case 4:
                 // P s = 4 ; c ; spec → Change Color Number c to the color specified by spec. This can be a name or RGB
                 // specification as per XParseColor. Any number of c name pairs may be given. The color numbers correspond
@@ -3526,6 +3531,16 @@ public final class TerminalEmulator {
 
     public String getSelectedText(int x1, int y1, int x2, int y2) {
         return mScreen.getSelectedText(x1, y1, x2, y2);
+    }
+
+    /** Path aktif yang dilaporkan shell lewat OSC 7 (null bila belum ada). */
+    public String getCwd() {
+        return mCwd;
+    }
+
+    private void setCwd(String value) {
+        String v = value.startsWith("file://") ? value.substring(7) : value;
+        mCwd = v.isEmpty() ? null : v;
     }
 
     /** Get the terminal session's title (null if not set). */

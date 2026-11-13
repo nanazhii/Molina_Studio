@@ -14,12 +14,14 @@ import com.molina.terminal.view.TerminalView
 internal class ForwardingSessionClient(
     private val onFinished: () -> Unit,
     private val onTitle: () -> Unit = {},
+    private val onScreen: () -> Unit = {},
 ) : TerminalSessionClient {
 
     var view: TerminalView? = null
 
     override fun onTextChanged(changedSession: TerminalOutput) {
         view?.onScreenUpdated()
+        onScreen()
     }
 
     override fun onTitleChanged(changedSession: TerminalOutput) = onTitle()

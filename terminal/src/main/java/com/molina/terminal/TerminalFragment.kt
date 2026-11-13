@@ -145,10 +145,12 @@ class TerminalFragment : Fragment() {
         val headerView = TerminalHeaderView(
             ctx,
             onFolder = { fileDrawer?.toggle() },
-            onMenu = { anchor -> showTerminalMenu(anchor, actions, below = true) { restartActive() } },
+            onMenu = { anchor -> showTerminalMenu(anchor, actions, below = true, withKeys = false) { restartActive() } },
         )
         headerView.setPath(holder.drawerState.root?.path ?: DrawerFs.DEFAULT_ROOT)
         terminalHeader = headerView
+        headerView.setCwd(holder.cwdOf(holder.currentIndex))
+        holder.screenListener = { terminalHeader?.setCwd(holder.cwdOf(holder.currentIndex)) }
         syncTabs()
 
         val column = LinearLayout(ctx).apply {
@@ -195,6 +197,7 @@ class TerminalFragment : Fragment() {
         }
         compatPanel.render(holder.failure, ProotCompat.enabled)
         nanoKeys?.refresh()
+        terminalHeader?.setCwd(holder.cwdOf(holder.currentIndex))
         terminalHeader?.setStatus(
             ContextCompat.getColor(requireContext(), if (holder.failure != null) UiR.color.molina_key_red else UiR.color.molina_key_green),
         )
@@ -267,6 +270,7 @@ class TerminalFragment : Fragment() {
         setup.listener = null
         holder.modifiers.listener = null
         holder.tabsListener = null
+        holder.screenListener = null
         holder.bind(null)
         super.onDestroyView()
     }

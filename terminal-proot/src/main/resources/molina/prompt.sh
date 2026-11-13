@@ -16,6 +16,14 @@ __molina_ps1() {
   case "$p" in
     /sdcard/Molina|/sdcard/Molina/*) sgr="$ok"; tag="[MOLINA] " ;;
   esac
+  local w="$p"
+  if [ -n "$HOME" ] && [ "$HOME" != / ]; then
+    case "$PWD" in
+      "$HOME") w="~" ;;
+      "$HOME"/*) w="~${PWD#"$HOME"}" ;;
+    esac
+  fi
+  printf '\033]7;file://%s@localhost:%s\007' "$name" "$w"
   PS1='\[\e['"$sgr"'m\]'"$tag$name"'@localhost:\w#\[\e[0m\] '
 }
 case ";${PROMPT_COMMAND-};" in

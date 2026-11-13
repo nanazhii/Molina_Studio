@@ -54,6 +54,13 @@ internal class TerminalSessionHolder : ViewModel() {
     /** Dipanggil saat daftar, pilihan, judul, atau status sesi berubah. */
     var tabsListener: (() -> Unit)? = null
 
+    /** Dipanggil tiap layar sesi berubah (untuk menyegarkan path aktif di header). */
+    var screenListener: (() -> Unit)? = null
+
+    /** Path aktif dari shell (OSC 7, format user@localhost:path); null bila sesi tidak melaporkannya. */
+    fun cwdOf(index: Int): String? =
+        entries.getOrNull(index)?.session?.getEmulator()?.cwd?.trim()?.takeIf { it.isNotEmpty() }
+
     /** Judul dari shell (OSC), null bila kosong. */
     fun titleOf(index: Int): String? =
         entries.getOrNull(index)?.session?.getEmulator()?.title?.trim()?.takeIf { it.isNotEmpty() }
@@ -114,6 +121,7 @@ internal class TerminalSessionHolder : ViewModel() {
         entry.client = ForwardingSessionClient(
             onFinished = { onEntryFinished(entry) },
             onTitle = { tabsListener?.invoke() },
+            onScreen = { screenListener?.invoke() },
         )
         entry.session = factory.create(entry.client)
         return entry
