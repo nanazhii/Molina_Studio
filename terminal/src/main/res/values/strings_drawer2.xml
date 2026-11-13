@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-patch20 -->
+<resources>
+    <string name="drawer_open_desc">Buka drawer berkas</string>
+    <string name="drawer_refresh">Segarkan</string>
+    <string name="terminal_menu_desc">Menu terminal</string>
+</resources>

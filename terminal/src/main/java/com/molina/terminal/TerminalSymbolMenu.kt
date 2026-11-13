@@ -32,7 +32,7 @@ private const val MENU_MIN_HEIGHT_DP = 120
  * Berupa PopupWindow dengan ScrollView: tingginya dibatasi ruang di atas tombol (sempit saat keyboard
  * tampil), sisanya digulir. Tidak mengambil fokus sehingga keyboard tetap terbuka.
  */
-internal fun showTerminalMenu(anchor: View, actions: TerminalKeyActions, onRestart: () -> Unit) {
+internal fun showTerminalMenu(anchor: View, actions: TerminalKeyActions, below: Boolean = false, onRestart: () -> Unit) {
     val ctx = anchor.context
     val density = ctx.resources.displayMetrics.density
     fun dp(v: Int): Int = (v * density + 0.5f).toInt()
@@ -101,11 +101,11 @@ internal fun showTerminalMenu(anchor: View, actions: TerminalKeyActions, onResta
     val location = IntArray(2)
     anchor.getLocationOnScreen(location)
 
-    val availableAbove = location[1] - frame.top - dp(8)
-    val height = min(scroll.measuredHeight, max(availableAbove, dp(MENU_MIN_HEIGHT_DP)))
+    val available = if (below) frame.bottom - (location[1] + anchor.height) - dp(8) else location[1] - frame.top - dp(8)
+    val height = min(scroll.measuredHeight, max(available, dp(MENU_MIN_HEIGHT_DP)))
     val width = scroll.measuredWidth
     val x = location[0].coerceIn(frame.left + dp(4), max(frame.left + dp(4), frame.right - width - dp(4)))
-    val y = max(frame.top, location[1] - height - dp(4))
+    val y = if (below) location[1] + anchor.height + dp(4) else max(frame.top, location[1] - height - dp(4))
 
     val window = PopupWindow(scroll, width, height, false)
     window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))

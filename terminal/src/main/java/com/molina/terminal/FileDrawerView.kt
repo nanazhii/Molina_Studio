@@ -73,6 +73,7 @@ internal class FileDrawerView(
         fun hasSession(): Boolean
         fun isProotSession(): Boolean
         fun isFullScreenProgram(): Boolean
+        fun onRootChanged(path: String)
         fun onOpenChanged(open: Boolean)
     }
 
@@ -141,7 +142,12 @@ internal class FileDrawerView(
         val header = LinearLayout(context)
         header.orientation = LinearLayout.HORIZONTAL
         header.gravity = Gravity.CENTER_VERTICAL
-        header.setPadding(dp(4), dp(4), dp(4), dp(4))
+        header.setPadding(dp(2), dp(2), dp(2), dp(2))
+        val headerFrame = GradientDrawable()
+        headerFrame.setColor(Color.TRANSPARENT)
+        headerFrame.cornerRadius = dp(8).toFloat()
+        headerFrame.setStroke(dp(2), ContextCompat.getColor(context, UiR.color.molina_key_green))
+        header.background = headerFrame
 
         back.text = "\u2039"
         back.textSize = 26f
@@ -154,11 +160,18 @@ internal class FileDrawerView(
         ring.setStroke(dp(1), dim)
         back.background = ring
         back.setOnClickListener { currentRoot().parentFile?.let { setRoot(it) } }
-        header.addView(back, LinearLayout.LayoutParams(dp(40), dp(40)))
+        header.addView(back, LinearLayout.LayoutParams(dp(36), dp(36)))
 
-        val col = LinearLayout(context)
-        col.orientation = LinearLayout.VERTICAL
-        col.setPadding(dp(8), 0, dp(4), 0)
+        // [HEADER-FILL] kotak path melebar (bobot 1) sampai tombol titik tiga
+        val box = LinearLayout(context)
+        box.orientation = LinearLayout.VERTICAL
+        box.gravity = Gravity.CENTER_VERTICAL
+        box.setPadding(dp(10), dp(2), dp(10), dp(2))
+        val boxBg = GradientDrawable()
+        boxBg.setColor(ContextCompat.getColor(context, UiR.color.molina_bg))
+        boxBg.cornerRadius = dp(4).toFloat()
+        boxBg.setStroke(dp(1), ContextCompat.getColor(context, UiR.color.molina_outline))
+        box.background = boxBg
         title.setTextColor(white)
         title.textSize = 14f
         title.typeface = Typeface.DEFAULT_BOLD
@@ -169,10 +182,21 @@ internal class FileDrawerView(
         pathText.typeface = Typeface.MONOSPACE
         pathText.maxLines = 1
         pathText.ellipsize = TextUtils.TruncateAt.MIDDLE
-        col.addView(title)
-        col.addView(pathText)
-        header.addView(col, LinearLayout.LayoutParams(0, WRAP, 1f))
-        panel.addView(header, LinearLayout.LayoutParams(MATCH, WRAP))
+        box.addView(title)
+        box.addView(pathText)
+        val boxLp = LinearLayout.LayoutParams(0, dp(40), 1f)
+        boxLp.marginStart = dp(4)
+        boxLp.marginEnd = dp(4)
+        header.addView(box, boxLp)
+
+        val headerMenu = HeaderDotsView(context)
+        headerMenu.contentDescription = context.getString(R.string.drawer_more)
+        headerMenu.setOnClickListener { showHeaderMenu(it) }
+        header.addView(headerMenu, LinearLayout.LayoutParams(dp(40), dp(40)))
+
+        val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
+        headerLp.setMargins(dp(6), dp(6), dp(6), dp(4))
+        panel.addView(header, headerLp)
 
         chips.orientation = LinearLayout.HORIZONTAL
         chipScroll.isHorizontalScrollBarEnabled = false
@@ -290,7 +314,8 @@ internal class FileDrawerView(
         val rows = DrawerFs.flatten(state, root)
         adapter.submitList(rows)
         title.text = root.name.ifEmpty { "/" }
-        pathText.text = root.path
+        pathText.text = DrawerFs.displayPath(root.path)
+        host.onRootChanged(root.path)
         val canUp = root.parentFile != null && vols.none { it.path == root.path }
         back.isEnabled = canUp
         back.alpha = if (canUp) 1f else 0.38f
@@ -437,6 +462,23 @@ internal class FileDrawerView(
                 ID_COPY -> copyPath(f)
                 ID_INFO -> showInfo(f, e.isDir)
                 ID_DELETE -> deleteDialog(f)
+            }
+            true
+        }
+        menu.show()
+    }
+
+    /** Titik tiga di header drawer: segarkan, folder baru, berkas baru (di folder utama drawer). */
+    private fun showHeaderMenu(anchor: View) {
+        val menu = PopupMenu(context, anchor)
+        menu.menu.add(0, ID_REFRESH, 0, context.getString(R.string.drawer_refresh))
+        menu.menu.add(0, ID_HEAD_NEW_DIR, 1, context.getString(R.string.drawer_new_dir))
+        menu.menu.add(0, ID_HEAD_NEW_FILE, 2, context.getString(R.string.drawer_new_file))
+        menu.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                ID_REFRESH -> refreshAll()
+                ID_HEAD_NEW_DIR -> newDirDialog(currentRoot())
+                ID_HEAD_NEW_FILE -> newFileDialog(currentRoot())
             }
             true
         }
@@ -648,6 +690,9 @@ internal class FileDrawerView(
         const val ID_COPY = 7
         const val ID_INFO = 8
         const val ID_DELETE = 9
+        const val ID_REFRESH = 20
+        const val ID_HEAD_NEW_DIR = 21
+        const val ID_HEAD_NEW_FILE = 22
     }
 }
 
@@ -717,7 +762,7 @@ private class DrawerPanel(
 }
 
 /** Ikon kecil: folder (kuning) atau berkas (garis putih). Digambar manual agar tanpa aset tambahan. */
-private class TreeIconView(context: Context) : View(context) {
+internal class TreeIconView(context: Context) : View(context) {
     var isDir: Boolean = false
         set(value) {
             if (field != value) { field = value; invalidate() }

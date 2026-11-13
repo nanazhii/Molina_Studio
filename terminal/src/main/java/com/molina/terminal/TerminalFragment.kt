@@ -33,6 +33,7 @@ class TerminalFragment : Fragment() {
     private lateinit var compatPanel: CompatPanelView
     private var closeDialog: AlertDialog? = null
     private var fileDrawer: FileDrawerView? = null
+    private var terminalHeader: TerminalHeaderView? = null
 
     /** Back menutup drawer berkas lebih dulu; aktif hanya saat drawer terbuka. */
     private val drawerBack = object : OnBackPressedCallback(false) {
@@ -108,6 +109,7 @@ class TerminalFragment : Fragment() {
                 override fun hasSession(): Boolean = holder.session != null
                 override fun isProotSession(): Boolean = holder.isProot(holder.currentIndex)
                 override fun isFullScreenProgram(): Boolean = holder.session?.getEmulator()?.isAlternateBufferActive == true
+                override fun onRootChanged(path: String) { terminalHeader?.setPath(path) }
                 override fun onOpenChanged(open: Boolean) {
                     drawerBack.isEnabled = open
                     if (!open) terminalView.requestFocus()
@@ -116,8 +118,23 @@ class TerminalFragment : Fragment() {
         )
         fileDrawer = drawerView
 
+        val headerView = TerminalHeaderView(
+            ctx,
+            onFolder = { fileDrawer?.toggle() },
+            onMenu = { anchor -> showTerminalMenu(anchor, actions, below = true) { restartActive() } },
+        )
+        headerView.setPath(holder.drawerState.root?.path ?: DrawerFs.DEFAULT_ROOT)
+        terminalHeader = headerView
+        syncTabs()
+
         val column = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
+            addView(
+                headerView,
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    setMargins(dp(ctx, 6), dp(ctx, 6), dp(ctx, 6), dp(ctx, 2))
+                },
+            )
             addView(tabBar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(ctx, SessionTabBar.HEIGHT_DP)))
             addView(
                 framed(ctx, terminalArea),
@@ -152,6 +169,9 @@ class TerminalFragment : Fragment() {
             terminalView.requestFocus()
         }
         compatPanel.render(holder.failure, ProotCompat.enabled)
+        terminalHeader?.setStatus(
+            ContextCompat.getColor(requireContext(), if (holder.failure != null) UiR.color.molina_key_red else UiR.color.molina_key_green),
+        )
     }
 
     private fun restartActive() {
@@ -215,6 +235,7 @@ class TerminalFragment : Fragment() {
         closeDialog?.dismiss()
         closeDialog = null
         fileDrawer = null
+        terminalHeader = null
         drawerBack.isEnabled = false
         setup.listener = null
         holder.modifiers.listener = null

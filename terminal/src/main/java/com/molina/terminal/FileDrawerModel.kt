@@ -56,6 +56,13 @@ internal object DrawerFs {
 
     fun volumeLabel(v: File): String = if (v.path == INTERNAL_ROOT) "Internal" else v.name
 
+    /** Label path untuk header: penyimpanan internal ditulis "Internal". */
+    fun displayPath(path: String): String = when {
+        path == INTERNAL_ROOT -> "Internal"
+        path.startsWith("$INTERNAL_ROOT/") -> "Internal" + path.substring(INTERNAL_ROOT.length)
+        else -> path
+    }
+
     /** Path untuk shell sesi: proot melihat /storage/emulated/0 sebagai /sdcard. Null bila tidak terlihat di sesi itu. */
     fun shellPath(file: File, proot: Boolean): String? {
         val p = file.path
