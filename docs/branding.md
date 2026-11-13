@@ -12,3 +12,15 @@
 - Label peluncur ikut berganti: "Molina" dan "Molina Cinema". Launcher bisa butuh beberapa detik, dan sebagian launcher menutup pintasan yang sudah ditaruh di layar utama saat ikon berganti.
 - Peluncuran lewat adb memakai `MainActivity` langsung atau salah satu alias, mis. `am start -n com.molina.studio/.MainActivity`.
 - Tentang: Setelan -> Tentang menampilkan wordmark, versi (versionName dan versionCode dari PackageManager), dan nama paket.
+
+## Pelacakan build
+- Setelan -> Tentang menampilkan `versionName (versionCode) · <7 karakter pertama commit>`.
+- Nilainya `BuildConfig.COMMIT_SHA` (modul settings), diambil dari env `GITHUB_SHA` saat build di GitHub Actions. Build di luar CI menampilkan `dev`.
+- Cocokkan angka itu dengan `git log --oneline` untuk tahu APK berasal dari commit mana.
+
+## Rencana pemisahan Molina Player
+Saat Player menjadi aplikasi sendiri (`com.molina.player`):
+1. Pindahkan `ic_launcher_cinema*` (drawable dan mipmap) ke modul aplikasi Player sebagai `ic_launcher`.
+2. Jadikan label aplikasi Player "Molina Cinema" dan pakai `Theme.Molina.Cinema`.
+3. Hapus `.IconAmber`, pilihan "Cinema" di `IconPicker`, dan referensi `ic_launcher_cinema` dari aplikasi Terminal; `.IconGreen` boleh dikembalikan menjadi filter LAUNCHER pada `MainActivity` biasa.
+4. Salin pola penanda commit (`COMMIT_SHA`) ke build Player.

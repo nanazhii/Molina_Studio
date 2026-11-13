@@ -25,7 +25,7 @@ class AboutFragment : Fragment() {
             contentDescription = "Molina"
         }
         val version = TextView(ctx).apply {
-            text = "Versi $name ($code)"
+            text = "Versi $name ($code) \u00b7 ${BuildConfig.COMMIT_SHA}"
             typeface = Typeface.MONOSPACE
             gravity = Gravity.CENTER
             setPadding(0, (12 * d).toInt(), 0, 0)

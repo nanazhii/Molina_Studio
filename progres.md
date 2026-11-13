@@ -48,3 +48,5 @@
 - [ ] Verifikasi splash dan ikon di perangkat Android 8; pasang ic_stat_molina_terminal saat layanan terminal latar belakang dibuat
 - [x] Pemilih ikon Terminal/Cinema (activity-alias) + layar Tentang: IconPicker, AboutFragment, manifest IconGreen/IconAmber
 - [ ] Uji di Android 8: ganti ikon di Setelan, cek peluncur memunculkan satu ikon saja, cek halaman Tentang
+- [x] Penanda commit di Tentang (BuildConfig.COMMIT_SHA) dari GITHUB_SHA; rencana pemisahan Player dicatat di docs/branding.md
+- [ ] Verifikasi: Tentang menampilkan 7 karakter commit sama dengan commit build CI
