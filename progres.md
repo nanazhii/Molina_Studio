@@ -81,3 +81,7 @@
 - [ ] Uji APK release: tombol [DEBUG] tidak boleh muncul di Setelan
 - [ ] Uji Log Viewer: chip Term t1 teal dan Cinema p1 amber (p1 muncul setelah sesi mpv nyata)
 - [ ] Berikutnya: pasang MpvNativeLog.attach/detach pada sesi mpv nyata (sisa 13a), lalu BEHAV di Cinema (open/play/stop)
+- [x] Patch 19: Drawer berkas Terminal diadopsi dari FileDrawer repo Molina-Studio. Ketuk ≡ = drawer tree (teks putih polos, opsi lewat ⋮ tanpa tekan lama), tahan ≡ = menu simbol lama. FileDrawerModel/FileDrawerView, state di TerminalSessionHolder, BEHAV term.drawer.open dan term.drawer.op, BUG term.drawer.op-failed. Belum dikompilasi di sandbox
+- [ ] Verifikasi CI Patch 19 (kompilasi terminal, module gate, jvm-tests)
+- [ ] Uji perangkat Android 8: ketuk ≡ buka drawer; ⋮ per baris; cd/nano di sesi Debian dan shell; ganti nama, folder baru, hapus; geser kiri/Back menutup; tahan ≡ masih membuka menu simbol
+- [ ] Tambahkan term.drawer.* ke docs/log-contract.md
