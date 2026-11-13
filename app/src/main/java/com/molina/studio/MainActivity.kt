@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val nav = findViewById<BottomNavigationView>(R.id.bottom_nav)
-        KeyboardNavHider.install(this, nav)
+        KeyboardNavHider.install(this, findViewById(R.id.nav_container))
         nav.setOnItemSelectedListener { item ->
             val tab = when (item.itemId) {
                 R.id.nav_cinema -> "cinema"

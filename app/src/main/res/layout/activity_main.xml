@@ -11,9 +11,22 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_nav"
+    <!-- molina-patch21: garis gradien RGB + nav dalam satu wadah (disembunyikan bersama saat keyboard tampil) -->
+    <LinearLayout
+        android:id="@+id/nav_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:menu="@menu/bottom_nav" />
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@drawable/molina_nav_brand_line" />
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_nav"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:menu="@menu/bottom_nav" />
+    </LinearLayout>
 </LinearLayout>
