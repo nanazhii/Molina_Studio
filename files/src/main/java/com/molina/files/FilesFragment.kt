@@ -17,8 +17,6 @@ import com.molina.core.common.MolinaResult
 import com.molina.core.storage.FileEntry
 import com.molina.core.storage.LocalMolinaStorage
 import com.molina.core.storage.MolinaStorage
-import com.molina.log.MolinaLog
-import com.molina.log.MolinaLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -26,7 +24,6 @@ import kotlinx.coroutines.launch
 class FilesFragment : Fragment(R.layout.fragment_files) {
     private val storage: MolinaStorage = LocalMolinaStorage()
     private val adapter = FilesAdapter { entry -> onEntryClick(entry) }
-    private val logTag = MolinaLogger.tag("files")
 
     private var views: Views? = null
     private var backCallback: OnBackPressedCallback? = null
@@ -34,7 +31,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     private var currentPath = ""
 
     private val permissionRequest =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            FilesEvents.permissionResult(granted)
             if (views != null) load(currentPath)
         }
 
@@ -83,6 +81,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         if (hasStoragePermission()) {
             load(currentPath)
         } else {
+            FilesEvents.permissionRequested()
             permissionRequest.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
     }
@@ -96,14 +95,24 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         currentPath = path
         showHeader(path)
         if (!hasStoragePermission()) {
+            FilesEvents.permissionMissing(path)
             showError(ErrorKind.PERMISSION_DENIED)
             return
         }
         loadJob = viewLifecycleOwner.lifecycleScope.launch {
-            if (BrowserPath.isRoot(path)) storage.ensureLayout()
+            if (BrowserPath.isRoot(path)) {
+                val layout = storage.ensureLayout()
+                if (layout is MolinaResult.Failure) FilesEvents.failed("layout", layout.error, path)
+            }
             when (val result = storage.list(path)) {
-                is MolinaResult.Success -> showContent(result.value)
-                is MolinaResult.Failure -> showError(result.error.kind)
+                is MolinaResult.Success -> {
+                    FilesEvents.listed(path, result.value.size)
+                    showContent(result.value)
+                }
+                is MolinaResult.Failure -> {
+                    FilesEvents.failed("list", result.error, path)
+                    showError(result.error.kind)
+                }
             }
         }
     }
@@ -135,7 +144,6 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         v.message.visibility = View.VISIBLE
         v.retry.text = if (kind == ErrorKind.PERMISSION_DENIED) "Beri izin" else "Coba lagi"
         v.retry.visibility = View.VISIBLE
-        MolinaLog.logger.w(logTag, "gagal membuka folder: $kind")
     }
 
     private class Views(root: View) {

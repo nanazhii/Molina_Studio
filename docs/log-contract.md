@@ -67,6 +67,8 @@ penanda. Penanda hanya dikenali pada tag `Molina/...`. Baris stack trace yang me
 (pid, tid, dan tag sama) ikut tersaring masuk. Warna: CRASH merah (`molina_error`), BUG amber
 (`molina_cinema_accent`), BEHAV teal (`molina_terminal_accent`); baris lain warna bawaan.
 
+Baris chip kedua memuat `Semua sesi | Sesi t1 | Sesi t2 | ...` (id dari tag `Molina/<area>/<id>`, 8 terakhir). Memilih sesi menampilkan semua area dengan id itu (mis. `term/t1` dan `proot/t1`) dan bisa digabung dengan filter jenis. Tombol "Salin tampilan" menyalin baris build, keterangan filter, dan maksimal 300 baris yang sedang tampil, siap ditempel ke chat saat melapor bug.
+
 ## Penamaan kode
 `MolinaEvents.bug/behavior` otomatis mengawali kode dengan area bila belum ada
 (`MolinaEvents.bug("proot", "install-failed", ...)` -> `[BUG:proot.install-failed]`).
@@ -89,7 +91,7 @@ Tag `Molina/term/<id>`; id sesi (`t1`, `t2`, ...) sama untuk semua peristiwa sat
 
 | Kode | Jenis | Arti | Kolom |
 |---|---|---|---|
-| `term.session.start` | BEHAV | sesi dibuat (Debian atau shell Android) | `kind` |
+| `term.session.start` | BEHAV | sesi dibuat; `why` hanya ada bila jatuh ke shell Android (`rootfs-missing`, `proot-not-ready`, `prepare-failed`) | `kind`, `why` |
 | `term.pty-start` | BEHAV | proses berhasil dijalankan di PTY | `pid`, `cmd`, `cols`, `rows` |
 | `term.resize` | BEHAV | ukuran berubah (hanya bila berbeda) | `cols`, `rows` |
 | `term.close` | BEHAV | sesi ditutup pengguna/aplikasi | `running` |
@@ -104,5 +106,38 @@ Penutupan oleh pengguna (`close`) tidak pernah menghasilkan BUG. Isi input/outpu
 tidak dicatat.
 
 ## Kode baku: proot
-`proot.install.start|done|cancelled` (BEHAV), `proot.install-failed` dan `proot.prepare-failed` (BUG).
+Tag `Molina/proot/<id>` memakai id sesi yang sama dengan `term` (`t1`, ...), jadi satu sesi Debian
+terbaca berurutan: `term.session.start`, `proot.rootfs-checked`, `proot.guest-files`,
+`proot.launch-built`, `term.pty-start`, lalu `term.exit` atau `term.exit-early`.
+
+| Kode | Jenis | Arti | Kolom |
+|---|---|---|---|
+| `proot.install.start` / `done` / `cancelled` | BEHAV | pemasangan rootfs | - |
+| `proot.rootfs-checked` | BEHAV | rootfs terbaca, bash dan env ada | `readable`, `bash`, `env` |
+| `proot.guest-files` | BEHAV | berkas dasar guest (resolv.conf, hosts, apt-conf) yang baru ditulis | `created` (atau `none`) |
+| `proot.launch-built` | BEHAV | perintah proot disusun, binary lolos pemeriksaan | `arm64`, `loader`, `libs`, `seccomp` |
+| `proot.install-failed` | BUG | pemasangan gagal | - |
+| `proot.prepare-failed` | BUG | exception saat prepareGuest/build | - |
+| `proot.rootfs-unreadable` | BUG | folder rootfs tidak terbaca | `readable`, `bash`, `env` |
+| `proot.rootfs-no-shell` | BUG | bash tidak ada di rootfs (sesi akan keluar cepat) | `readable`, `bash`, `env` |
+| `proot.rootfs-no-env` | BUG | usr/bin/env tidak ada di rootfs | `readable`, `bash`, `env` |
+| `proot.binary-missing` | BUG | binary proot tidak ditemukan | - |
+| `proot.binary-not-executable` | BUG | binary proot tidak punya izin eksekusi | - |
+| `proot.binary-wrong-arch` | BUG | binary proot bukan arm64 atau tidak terbaca | `arm64`, `loader`, `libs`, `seccomp` |
+
+## Kode baku: files
+Tag `Molina/files`. Path tidak pernah dicatat: hanya `depth` (jumlah segmen path relatif, root = 0),
+`count`, jenis galat, kelas exception, dan nama errno baku. Stack trace tidak dilampirkan.
+
+| Kode | Jenis | Arti | Kolom |
+|---|---|---|---|
+| `files.list` | BEHAV | folder berhasil dibuka | `depth`, `count` |
+| `files.permission-missing` | BEHAV | izin penyimpanan belum ada saat membuka folder (keadaan normal pertama kali) | `depth` |
+| `files.permission-request` | BEHAV | pengguna menekan Beri izin | - |
+| `files.permission-result` | BEHAV | hasil dialog izin | `granted` |
+| `files.list-failed` | BUG (W untuk NOT_FOUND/INVALID_PATH) | folder gagal dibaca | `kind`, `error`, `depth`, `errno` |
+| `files.layout-failed` | BUG | folder standar Molina gagal dibuat | `kind`, `error`, `depth`, `errno` |
+
+`files.list-failed` dengan `kind=PERMISSION_DENIED` padahal izin sudah diberikan berarti penyebabnya
+di luar dialog izin (mis. path bukan milik Molina atau volume dicabut); lihat `errno`.
 

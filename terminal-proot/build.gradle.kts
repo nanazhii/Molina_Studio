@@ -13,5 +13,6 @@ android {
     kotlinOptions { jvmTarget = "17" }
 }
 dependencies {
+    api(project(":core-log"))
     testImplementation("junit:junit:4.13.2")
 }

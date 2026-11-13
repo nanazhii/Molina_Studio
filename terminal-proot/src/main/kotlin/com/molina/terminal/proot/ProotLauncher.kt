@@ -1,6 +1,8 @@
 // molina-patch10b
 package com.molina.terminal.proot
 
+import com.molina.log.MolinaLog
+import com.molina.log.MolinaLogger
 import java.io.File
 import java.nio.file.Files
 
@@ -10,12 +12,18 @@ class ProotLaunch(
     val workingDir: String,
 )
 
-/** Menyusun perintah proot untuk Debian. Murni: tidak menjalankan apa pun. */
+/** Menyusun perintah proot untuk Debian. Tidak menjalankan proses; hanya mencatat BEHAV/BUG pemeriksaan (tanpa path). */
 object ProotLauncher {
     const val GUEST_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
     private const val SDCARD = "/storage/emulated/0"
 
-    fun build(layout: DebianLayout, hostHome: String, noSeccomp: Boolean = false): ProotLaunch {
+    fun build(
+        layout: DebianLayout,
+        hostHome: String,
+        noSeccomp: Boolean = false,
+        id: String? = null,
+        logger: MolinaLogger = MolinaLog.logger,
+    ): ProotLaunch {
         layout.prootTmp.mkdirs()
         val command = mutableListOf(
             layout.prootBin.path,
@@ -42,23 +50,29 @@ object ProotLauncher {
             env["LD_LIBRARY_PATH"] = layout.prootDir.path
         }
         if (noSeccomp) env["PROOT_NO_SECCOMP"] = "1"
+        ProotEvents.launch(logger, id, layout, noSeccomp, loader.isFile, env.containsKey("LD_LIBRARY_PATH"))
         return ProotLaunch(command, env, hostHome)
     }
 
     /** Berkas dasar rootfs (idempotent; tidak menimpa suntingan pengguna). */
-    fun prepareGuest(rootfs: File) {
+    fun prepareGuest(rootfs: File, id: String? = null, logger: MolinaLogger = MolinaLog.logger) {
+        ProotEvents.rootfs(logger, id, rootfs)
         File(rootfs, "sdcard").mkdirs()
-        writeIfMissing(File(rootfs, "etc/resolv.conf"), "nameserver 1.1.1.1\nnameserver 8.8.8.8\n", true)
-        writeIfMissing(File(rootfs, "etc/hosts"), "127.0.0.1 localhost\n::1 localhost\n", true)
-        writeIfMissing(File(rootfs, "etc/apt/apt.conf.d/01molina-proot"), "APT::Sandbox::User \"root\";\n", false)
+        val created = ArrayList<String>()
+        if (writeIfMissing(File(rootfs, "etc/resolv.conf"), "nameserver 1.1.1.1\nnameserver 8.8.8.8\n", true)) created += "resolv.conf"
+        if (writeIfMissing(File(rootfs, "etc/hosts"), "127.0.0.1 localhost\n::1 localhost\n", true)) created += "hosts"
+        if (writeIfMissing(File(rootfs, "etc/apt/apt.conf.d/01molina-proot"), "APT::Sandbox::User \"root\";\n", false)) created += "apt-conf"
+        ProotEvents.guestFiles(logger, id, created)
     }
 
-    private fun writeIfMissing(f: File, content: String, emptyCountsAsMissing: Boolean) {
+    /** true bila berkas ditulis; false bila sudah ada (suntingan pengguna tidak ditimpa). */
+    private fun writeIfMissing(f: File, content: String, emptyCountsAsMissing: Boolean): Boolean {
         val p = f.toPath()
         val missing = Files.isSymbolicLink(p) || !f.exists() || (emptyCountsAsMissing && f.length() == 0L)
-        if (!missing) return
+        if (!missing) return false
         f.parentFile?.mkdirs()
         Files.deleteIfExists(p)
         f.writeText(content)
+        return true
     }
 }

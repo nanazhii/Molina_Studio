@@ -10,7 +10,7 @@ internal enum class EventFilter(val label: String, val marker: String?) {
 }
 
 /** Satu baris Log Viewer. [head] = baris pembawa penanda; false = baris biasa atau lanjutan stack trace. */
-internal class ViewLine(val text: String, val kind: EventFilter, val head: Boolean)
+internal class ViewLine(val text: String, val kind: EventFilter, val head: Boolean, val tag: String = "")
 
 /** Logika murni (tanpa Android) agar bisa diuji di JVM. */
 internal object LogFilter {
@@ -44,7 +44,7 @@ internal object LogFilter {
             val carry = own == null && key == lastKey &&
                 (lastKind == EventFilter.CRASH || lastKind == EventFilter.BUG) && STACK.containsMatchIn(msg)
             val kind = own ?: if (carry) lastKind else EventFilter.ALL
-            out.add(ViewLine(line, kind, own != null))
+            out.add(ViewLine(line, kind, own != null, tag))
             lastKey = key
             lastKind = kind
         }
@@ -54,11 +54,48 @@ internal object LogFilter {
     private fun markerKind(msg: String): EventFilter? =
         EventFilter.values().firstOrNull { it.marker != null && msg.startsWith(it.marker) }
 
-    fun select(lines: List<ViewLine>, filter: EventFilter, onlyMolina: Boolean): List<ViewLine> =
+    fun select(lines: List<ViewLine>, filter: EventFilter, onlyMolina: Boolean, session: String? = null): List<ViewLine> =
         lines.filter {
             (filter == EventFilter.ALL || it.kind == filter) &&
-                (!onlyMolina || it.text.contains(" Molina/"))
+                (!onlyMolina || it.text.contains(" Molina/")) &&
+                (session == null || sessionOf(it.tag) == session)
         }
+
+    /** Id sesi dari tag Molina/<area>/<id> (mis. "t1"); null untuk tag tanpa id atau bukan Molina. */
+    fun sessionOf(tag: String): String? {
+        val p = tag.trim().split('/')
+        return if (p.size >= 3 && p[0] == "Molina") p[2].ifEmpty { null } else null
+    }
+
+    /** Id sesi yang terlihat di buffer, urut kemunculan pertama; [max] terakhir saja. */
+    fun sessions(lines: List<ViewLine>, max: Int = 8): List<String> {
+        val seen = LinkedHashSet<String>()
+        for (v in lines) sessionOf(v.tag)?.let { seen.add(it) }
+        return seen.toList().takeLast(max)
+    }
+
+    /** Teks untuk ditempel ke chat: baris build, keterangan filter, lalu [max] baris terakhir. */
+    fun copyText(
+        buildLine: String,
+        shown: List<ViewLine>,
+        filter: EventFilter,
+        onlyMolina: Boolean,
+        session: String?,
+        max: Int = 300,
+    ): String {
+        val tail = shown.takeLast(max)
+        val sb = StringBuilder(buildLine).append('\n')
+        sb.append("Tampilan: ").append(filter.label)
+            .append(" | sesi=").append(session ?: "semua")
+            .append(" | hanya-Molina=").append(if (onlyMolina) "ya" else "tidak")
+            .append(" | ").append(tail.size).append(" baris").append('\n')
+        if (shown.size > tail.size) {
+            sb.append('(').append(shown.size - tail.size).append(" baris lebih lama dipangkas)\n")
+        }
+        sb.append('\n')
+        for (v in tail) sb.append(v.text).append('\n')
+        return sb.toString()
+    }
 
     /** Jumlah peristiwa (baris pembawa penanda) per jenis. */
     fun counts(lines: List<ViewLine>): Map<EventFilter, Int> {

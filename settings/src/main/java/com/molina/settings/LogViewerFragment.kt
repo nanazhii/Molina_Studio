@@ -1,7 +1,10 @@
 // molina-patch12
 package com.molina.settings
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.graphics.Typeface
+import android.os.Build
 import android.os.Bundle
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -13,11 +16,13 @@ import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -39,6 +44,11 @@ class LogViewerFragment : Fragment() {
     private var dirty = false
     private var onlyMolina = false
     private var filter = EventFilter.ALL
+    private var session: String? = null
+    private var sessionIds: List<String> = emptyList()
+    private var shownSession: String? = null
+    private lateinit var sessionGroup: ChipGroup
+    private lateinit var sessionRow: HorizontalScrollView
     private lateinit var output: TextView
     private lateinit var scroll: ScrollView
 
@@ -79,6 +89,23 @@ class LogViewerFragment : Fragment() {
             isHorizontalScrollBarEnabled = false
             addView(group)
         }
+        sessionIds = emptyList()
+        shownSession = session
+        sessionGroup = ChipGroup(ctx).apply {
+            isSingleLine = true
+            isSingleSelection = true
+            isSelectionRequired = true
+            setPadding(pad, 0, pad, 0)
+        }
+        sessionRow = HorizontalScrollView(ctx).apply {
+            isHorizontalScrollBarEnabled = false
+            visibility = View.GONE
+            addView(sessionGroup)
+        }
+        val copyButton = MaterialButton(ctx).apply {
+            text = "Salin tampilan"
+            setOnClickListener { copyView() }
+        }
         output = TextView(ctx).apply {
             typeface = Typeface.MONOSPACE
             textSize = 11f
@@ -91,6 +118,8 @@ class LogViewerFragment : Fragment() {
             addView(banner)
             addView(toggle)
             addView(chipRow)
+            addView(sessionRow)
+            addView(copyButton)
             addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         }
     }
@@ -131,13 +160,50 @@ class LogViewerFragment : Fragment() {
     private fun render() {
         if (!isAdded) return
         val all = LogFilter.classify(lines)
+        val ids = LogFilter.sessions(all)
+        val current = session
+        if (current != null && current !in ids) session = null
+        if (ids != sessionIds || session != shownSession) rebuildSessionChips(ids)
         val counts = LogFilter.counts(all)
         for ((f, chip) in chips) {
             val n = counts[f] ?: 0
             chip.text = if (n > 0) f.label + " " + n else f.label
         }
-        output.text = colorize(LogFilter.select(all, filter, onlyMolina))
+        output.text = colorize(LogFilter.select(all, filter, onlyMolina, session))
         scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
+    }
+
+    private fun rebuildSessionChips(ids: List<String>) {
+        sessionIds = ids
+        shownSession = session
+        sessionGroup.removeAllViews()
+        sessionRow.visibility = if (ids.isEmpty()) View.GONE else View.VISIBLE
+        if (ids.isEmpty()) return
+        sessionGroup.addView(sessionChip("Semua sesi", null))
+        for (id in ids) sessionGroup.addView(sessionChip("Sesi $id", id))
+    }
+
+    private fun sessionChip(label: String, target: String?): Chip = Chip(requireContext()).apply {
+        text = label
+        isCheckable = true
+        isChecked = target == session
+        setOnClickListener {
+            session = target
+            shownSession = target
+            dirty = true
+        }
+    }
+
+    /** Salin tampilan saat ini (sesuai filter dan sesi) agar bisa ditempel ke chat saat melapor bug. */
+    private fun copyView() {
+        val ctx = requireContext()
+        val shown = LogFilter.select(LogFilter.classify(lines), filter, onlyMolina, session)
+        val text = LogFilter.copyText(BuildLine.describe(ctx), shown, filter, onlyMolina, session)
+        ctx.getSystemService(ClipboardManager::class.java)
+            .setPrimaryClip(ClipData.newPlainText("Molina log", text))
+        if (Build.VERSION.SDK_INT < 33) {
+            Toast.makeText(ctx, "Tampilan log disalin (" + shown.size + " baris)", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun colorize(shown: List<ViewLine>): CharSequence {
