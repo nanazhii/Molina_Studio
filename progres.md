@@ -46,3 +46,5 @@
 - [ ] Verifikasi ikon di launcher perangkat Android 8 (bulat dan kotak)
 - [x] Branding lanjutan: ikon Cinema amber, wordmark MOLINA_ + splash (Theme.Molina.Splash), ikon notifikasi ic_stat_molina_terminal, docs/branding.md
 - [ ] Verifikasi splash dan ikon di perangkat Android 8; pasang ic_stat_molina_terminal saat layanan terminal latar belakang dibuat
+- [x] Pemilih ikon Terminal/Cinema (activity-alias) + layar Tentang: IconPicker, AboutFragment, manifest IconGreen/IconAmber
+- [ ] Uji di Android 8: ganti ikon di Setelan, cek peluncur memunculkan satu ikon saja, cek halaman Tentang

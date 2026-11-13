@@ -27,12 +27,23 @@ class SettingsFragment : Fragment() {
                 }
             }
         }
+        val aboutButton = MaterialButton(ctx).apply {
+            text = "Tentang"
+            setOnClickListener {
+                parentFragmentManager.commit {
+                    replace(containerId, AboutFragment())
+                    addToBackStack(null)
+                }
+            }
+        }
         return LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad * 3, pad, pad)
             addView(title)
             addView(info)
             addView(logButton)
+            addView(IconPicker.build(ctx))
+            addView(aboutButton)
         }
     }
 }
