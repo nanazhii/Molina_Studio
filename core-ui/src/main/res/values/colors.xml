@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="molina_bg">#0E1114</color>
-    <color name="molina_surface">#171B20</color>
-    <color name="molina_surface_variant">#1F252B</color>
+    <color name="molina_bg">#000000</color>
+    <color name="molina_surface">#000000</color>
+    <color name="molina_surface_variant">#0D0D0D</color>
     <color name="molina_on_surface">#E6EAEE</color>
     <color name="molina_on_surface_variant">#A9B3BD</color>
-    <color name="molina_outline">#333B44</color>
+    <color name="molina_outline">#2A2D35</color>
     <color name="molina_error">#FF6B6B</color>
     <color name="molina_terminal_accent">#00BFA5</color>
     <color name="molina_on_terminal_accent">#00201B</color>
     <color name="molina_terminal_container">#003D35</color>
-    <color name="molina_cinema_bg">#07090B</color>
+    <color name="molina_cinema_bg">#000000</color>
     <color name="molina_cinema_accent">#FFB300</color>
     <color name="molina_on_cinema_accent">#261A00</color>
     <color name="molina_cinema_container">#3A2A00</color>
@@ -20,8 +20,8 @@
     <color name="molina_key_blue">#448AFF</color>
     <!-- molina-patch18: bilah tab sesi (selaras Molina-Studio) dan extrakey hitam pekat -->
     <color name="molina_extrakey_bg">#000000</color>
-    <color name="molina_tab_bar_bg">#0A0A0F</color>
-    <color name="molina_tab_idle_bg">#14161B</color>
+    <color name="molina_tab_bar_bg">#000000</color>
+    <color name="molina_tab_idle_bg">#0D0D0D</color>
     <color name="molina_tab_line">#2A2D35</color>
     <color name="molina_tab_muted">#9AA0A6</color>
     <color name="molina_tab_brand">#2ECC71</color>

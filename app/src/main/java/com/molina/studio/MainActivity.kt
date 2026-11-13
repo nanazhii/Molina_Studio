@@ -20,15 +20,21 @@ import com.molina.log.MolinaLog
 import com.molina.log.MolinaLogSetup
 import com.molina.log.MolinaLogger
 import com.molina.settings.SettingsFragment
+import com.molina.settings.TerminalPrefs
+import com.molina.terminal.NanoKeysStateOwner
 import com.molina.terminal.TerminalFragment
 import com.molina.terminal.TerminalSessionFactory
 import com.molina.terminal.TerminalSessionFactoryOwner
 import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner {
+class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysStateOwner {
     override val terminalSessionFactory: TerminalSessionFactory by lazy {
         createTerminalSessionFactory(applicationContext)
     }
+
+    override var nanoKeysOpen: Boolean
+        get() = TerminalPrefs.nanoKeysOpen(applicationContext)
+        set(value) = TerminalPrefs.setNanoKeysOpen(applicationContext, value)
 
     private val logTag = MolinaLogger.tag("core")
     private var currentTab: String? = null

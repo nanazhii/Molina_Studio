@@ -46,6 +46,7 @@ class TerminalFragment : Fragment() {
         val owner = requireActivity() as? TerminalSessionFactoryOwner
             ?: error("Activity harus mengimplementasikan TerminalSessionFactoryOwner")
         factory = owner.terminalSessionFactory
+        (owner as? NanoKeysStateOwner)?.let { holder.nanoKeysOpen = it.nanoKeysOpen }
 
         MolinaTerminalColors.apply(ctx)
         if (holder.textSizePx == 0) holder.textSizePx = MolinaTerminalViewClient.defaultTextSizePx(ctx)
@@ -86,7 +87,10 @@ class TerminalFragment : Fragment() {
                 }
             },
             isOpen = { holder.nanoKeysOpen },
-            setOpen = { holder.nanoKeysOpen = it },
+            setOpen = { v ->
+                holder.nanoKeysOpen = v
+                (owner as? NanoKeysStateOwner)?.nanoKeysOpen = v
+            },
         )
         nanoKeys = nano
 

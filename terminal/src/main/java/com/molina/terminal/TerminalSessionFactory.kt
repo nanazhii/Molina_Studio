@@ -16,3 +16,8 @@ fun interface TerminalSessionFactory {
 interface TerminalSessionFactoryOwner {
     val terminalSessionFactory: TerminalSessionFactory
 }
+
+/** Penyimpan status lipat/buka toolbar nano lintas peluncuran; diisi oleh `app` (terminal tidak boleh bergantung pada settings). */
+interface NanoKeysStateOwner {
+    var nanoKeysOpen: Boolean
+}
