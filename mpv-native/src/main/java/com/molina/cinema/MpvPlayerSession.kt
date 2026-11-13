@@ -3,6 +3,7 @@ package com.molina.cinema
 
 import android.content.Context
 import android.view.Surface
+import com.molina.log.ExitHooks
 import com.molina.log.MolinaEvents
 import com.molina.log.MolinaLog
 import com.molina.log.MolinaLogger
@@ -94,6 +95,9 @@ class MpvPlayerSession internal constructor(
             MPVLib.setOptionString("opengl-es", "yes")
             MPVLib.setOptionString("hwdec", "mediacodec,mediacodec-copy")
             MPVLib.setOptionString("ao", "audiotrack,opensles")
+            // Batas memori: cache demuxer maju 32 MiB, mundur 8 MiB (bawaan mpv jauh lebih besar).
+            MPVLib.setOptionString("demuxer-max-bytes", "32MiB")
+            MPVLib.setOptionString("demuxer-max-back-bytes", "8MiB")
             MPVLib.init()
             MPVLib.addObserver(observer)
             MPVLib.observeProperty("pause", MPVLib.MpvFormat.MPV_FORMAT_FLAG)
@@ -101,6 +105,7 @@ class MpvPlayerSession internal constructor(
             MPVLib.observeProperty("time-pos", MPVLib.MpvFormat.MPV_FORMAT_INT64)
             MPVLib.observeProperty("duration", MPVLib.MpvFormat.MPV_FORMAT_INT64)
             behavior("session-start")
+            ExitHooks.add("mpv-$sessionId") { release() }
             true
         } catch (t: Throwable) {
             if (t is VirtualMachineError) throw t
@@ -130,6 +135,7 @@ class MpvPlayerSession internal constructor(
 
     override fun release() {
         if (!released.compareAndSet(false, true)) return
+        ExitHooks.remove("mpv-$sessionId")
         cleanup()
         channel.close()
     }

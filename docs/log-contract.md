@@ -153,8 +153,11 @@ di luar dialog izin (mis. path bukan milik Molina atau volume dicabut); lihat `e
 |---|---|---|---|
 | `app.nav` | BEHAV | pengguna pindah tab (cinema, files, terminal, settings) | `tab`, `from` (`start` bila belum ada tab sebelumnya) |
 | `app.exit.requested` | BEHAV | pengguna menekan Keluar di notifikasi; semua sesi ditutup lalu proses dimatikan | `via` |
-| `app.exit.swept` | BEHAV | sisa proses milik aplikasi dimatikan sebelum keluar | `killed` |
+| `app.exit.swept` | BEHAV | semua kait modul selesai dan sisa proses UID dimatikan sebelum keluar | `killed`, `leftover`, `ms` |
 | `app.exit-failed` | BUG | langkah keluar gagal (proses aplikasi tetap dimatikan) | - |
+| `app.exit-leftover` | BUG | masih ada proses hidup (bukan zombie) setelah putaran terakhir | `leftover` |
+| `app.exit-hook-timeout` | BUG | kait keluar modul (mis. mpv release) melewati 1,5 detik | `hooks` |
+| `app.trim` | BEHAV | sistem meminta pangkas memori; level 20 UI tersembunyi, 40 latar, 60 sedang, 80 kritis | `level`, `java_mb`, `native_mb` |
 | `app.session-service-failed` | BUG | layanan notifikasi gagal dijalankan | - |
 
 ## Kode baku: debug (hanya build debug)

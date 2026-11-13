@@ -244,8 +244,8 @@ class PtyTerminalSession(
     }
 
     private companion object {
-        const val READ_BUFFER_SIZE = 64 * 1024
-        const val MAX_PENDING_CHUNKS = 32
+        const val READ_BUFFER_SIZE = 32 * 1024
+        const val MAX_PENDING_CHUNKS = 16
         const val PERMIT_POLL_MS = 50L
         const val ESC: Byte = 27
         const val TAIL_MAX = 2048
