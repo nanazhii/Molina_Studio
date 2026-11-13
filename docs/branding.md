@@ -24,3 +24,7 @@ Saat Player menjadi aplikasi sendiri (`com.molina.player`):
 2. Jadikan label aplikasi Player "Molina Cinema" dan pakai `Theme.Molina.Cinema`.
 3. Hapus `.IconAmber`, pilihan "Cinema" di `IconPicker`, dan referensi `ic_launcher_cinema` dari aplikasi Terminal; `.IconGreen` boleh dikembalikan menjadi filter LAUNCHER pada `MainActivity` biasa.
 4. Salin pola penanda commit (`COMMIT_SHA`) ke build Player.
+
+## Baris versi di log
+- Saat start (dan sekali lagi setelah izin penyimpanan diberikan, ketika log pindah ke folder publik) aplikasi menulis satu baris `Molina <versi> (<kode>) · <commit> · API <level>` dengan tag `Molina/core`.
+- Cari dengan: `grep "Molina 0\." /sdcard/Molina/logs/molina.log | tail -1` (sesuaikan nama berkas dengan konfigurasi log).

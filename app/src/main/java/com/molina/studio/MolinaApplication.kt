@@ -7,5 +7,6 @@ class MolinaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         MolinaLogSetup.init(this)
+        BuildInfo.log(this)
     }
 }

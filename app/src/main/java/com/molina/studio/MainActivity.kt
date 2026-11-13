@@ -71,7 +71,10 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner {
 
     /** Folder /storage/emulated/0/Molina dibuat setelah izin ada; logger dipindah ke Molina/logs. */
     private fun onStorageReady(reinitLog: Boolean) {
-        if (reinitLog) MolinaLogSetup.init(applicationContext)
+        if (reinitLog) {
+            MolinaLogSetup.init(applicationContext)
+            BuildInfo.log(applicationContext)
+        }
         lifecycleScope.launch {
             when (val r = LocalMolinaStorage().ensureLayout()) {
                 is MolinaResult.Success -> MolinaLog.logger.i(logTag, "folder Molina siap")
