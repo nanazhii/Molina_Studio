@@ -141,3 +141,6 @@
 - [ ] Verifikasi CI Patch 26f (kompilasi :files, jvm-tests FilesNavTest dan FilesEventsTest)
 - [ ] Uji perangkat Android 8: tombol ☰ membuka laci; ketuk latar atau Back menutup; ketuk Cinema/Molina pindah folder dan item aktif hijau; Tambah ke Favorit dari ⋮ folder lalu muncul di laci; tekan lama favorit menghapusnya; putar layar menutup laci; Debian menampilkan penjelasan
 - [ ] Berikutnya: Patch 26g (pil melayang + menu Alat + ikon status Debian), Patch 26h (Sampah + Urungkan), Patch 26i (multi-root agar Debian bisa dijelajahi, menunggu keputusan)
+- [x] Push 26h lengkap bertahap: core-storage (TrashBin + API Sampah) di b13a25a; MolinaPaths.TRASH_DIR/paths.trash menyusul di commit berikutnya
+- [ ] Verifikasi CI setelah commit core-common (kompilasi :core-storage, :files; jvm-tests TrashBinTest dan LocalMolinaStorageTrashTest)
+- [ ] Tambahkan patch_*.py ke .gitignore agar skrip patch lokal tidak ter-commit
