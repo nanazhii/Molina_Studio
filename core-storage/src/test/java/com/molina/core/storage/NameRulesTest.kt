@@ -27,6 +27,12 @@ class NameRulesTest {
         assertEquals("x".repeat(255), NameRules.validate("x".repeat(255)).getOrNull())
     }
 
+    // molina-patch26k
+    @Test fun namaDiHitungDalamByte() {
+        assertEquals("\u00e9".repeat(127), NameRules.validate("\u00e9".repeat(127)).getOrNull()) // 254 byte
+        assertEquals(ErrorKind.INVALID_NAME, NameRules.validate("\u00e9".repeat(128)).errorOrNull()?.kind) // 256 byte
+    }
+
     @Test fun uniqueMenambahNomorSebelumEkstensi() {
         File(tmp.root, "a.txt").createNewFile()
         File(tmp.root, "a (1).txt").createNewFile()

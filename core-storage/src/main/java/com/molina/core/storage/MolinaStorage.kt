@@ -86,6 +86,30 @@ interface MolinaStorage {
 
     /** Berkas yang boleh dibagikan; folder dan isi Sampah dilewati dan dihitung di [ShareTargets.skipped]. */
     suspend fun shareTargets(relatives: List<String>): MolinaResult<ShareTargets>
+
+    // molina-patch26k
+    /** Daftar isi arsip tanpa mengekstrak. Batal mengikuti pembatalan coroutine. Alasan gagal: lihat [ArchiveException.reason] pada cause. */
+    suspend fun listArchive(relative: String, password: String? = null): MolinaResult<ArchiveListing>
+
+    /** Ekstrak ke [destRelative] (folder). Gagal atau batal = semua hasil operasi ini dihapus. */
+    suspend fun extractArchive(
+        relative: String,
+        destRelative: String,
+        target: ExtractTarget,
+        password: String? = null,
+        only: Set<String>? = null,
+        cancel: CancelToken = CancelToken(),
+        onProgress: (ArchiveProgress) -> Unit = {},
+    ): MolinaResult<ExtractResult>
+
+    /** Kompres [relatives] menjadi satu arsip di [destRelative]. Isi Sampah dilewati dan dihitung di skipped. */
+    suspend fun compressItems(
+        relatives: List<String>,
+        destRelative: String,
+        options: CompressOptions,
+        cancel: CancelToken = CancelToken(),
+        onProgress: (ArchiveProgress) -> Unit = {},
+    ): MolinaResult<CompressResult>
 }
 
 class LocalMolinaStorage(
@@ -249,6 +273,62 @@ class LocalMolinaStorage(
                 }
             }
         }
+
+    // molina-patch26k
+    private fun relativeOf(f: File): String = f.canonicalFile.relativeTo(paths.root.canonicalFile).path
+
+    override suspend fun listArchive(relative: String, password: String?): MolinaResult<ArchiveListing> =
+        withContext(dispatchers.io) {
+            onResolved(relative) { f ->
+                archiveCatching { ArchiveEngine.list(f, password) { !isActive } }
+            }
+        }
+
+    override suspend fun extractArchive(
+        relative: String,
+        destRelative: String,
+        target: ExtractTarget,
+        password: String?,
+        only: Set<String>?,
+        cancel: CancelToken,
+        onProgress: (ArchiveProgress) -> Unit,
+    ): MolinaResult<ExtractResult> = withContext(dispatchers.io) {
+        onResolved(relative) { src ->
+            onResolved(destRelative) { dest ->
+                archiveCatching {
+                    val ctl = ArchiveCtl(ArchiveKind.EXTRACT, { cancel.isCancelled || !isActive }, onProgress)
+                    val out = ArchiveEngine.extract(src, dest, target, password, only, ctl)
+                    ExtractResult(out.dir?.let { relativeOf(it) } ?: "", out.files, out.renamed, out.skipped, out.cancelled)
+                }
+            }
+        }
+    }
+
+    override suspend fun compressItems(
+        relatives: List<String>,
+        destRelative: String,
+        options: CompressOptions,
+        cancel: CancelToken,
+        onProgress: (ArchiveProgress) -> Unit,
+    ): MolinaResult<CompressResult> = withContext(dispatchers.io) {
+        when (val resolved = resolveAll(relatives)) {
+            is MolinaResult.Failure -> resolved
+            is MolinaResult.Success -> onResolved(destRelative) { dest ->
+                archiveCatching {
+                    val trash = paths.trash.canonicalFile.path
+                    val usable = resolved.value.filter { !(it.path == trash || it.path.startsWith(trash + File.separator)) }
+                    val ctl = ArchiveCtl(ArchiveKind.COMPRESS, { cancel.isCancelled || !isActive }, onProgress)
+                    val out = ArchiveEngine.compress(usable, dest, options, ctl)
+                    CompressResult(
+                        out.file?.let { relativeOf(it) } ?: "",
+                        out.entries,
+                        out.skipped + (resolved.value.size - usable.size),
+                        out.cancelled,
+                    )
+                }
+            }
+        }
+    }
 
     private inline fun onTransferInputs(
         sources: List<String>,

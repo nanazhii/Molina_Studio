@@ -213,7 +213,7 @@ class TrashBin(private val root: File) {
     }
 
     private fun validName(n: String): Boolean =
-        n.isNotEmpty() && n != "." && n != ".." && !n.contains('/') && !n.contains('\u0000') && n.length <= 255
+        n.isNotEmpty() && n != "." && n != ".." && !n.contains('/') && !n.contains('\u0000') && n.toByteArray(Charsets.UTF_8).size <= NameRules.MAX_BYTES
 
     private fun validOrigin(o: String): Boolean =
         o.isNotEmpty() && !o.startsWith("/") && !o.contains('\u0000') &&

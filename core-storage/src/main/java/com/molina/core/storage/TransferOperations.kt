@@ -122,6 +122,10 @@ internal object TransferOperations {
         } catch (e: Cancelled) {
             return MolinaResult.Success(BatchResult(kind, 0, 0, 0, true, null))
         }
+        // molina-patch26k: salinan tidak dimulai bila ruang kosong jelas tidak cukup
+        if (kind == TransferKind.COPY && destDir != null && DiskSpace.lacks(destDir, sizes.sum())) {
+            return fail(ErrorKind.NO_SPACE, "Ruang penyimpanan tidak cukup")
+        }
         val ctx = Ctx(kind, items.size, sizes.sum(), cancel, onProgress)
 
         for ((i, item) in items.withIndex()) {

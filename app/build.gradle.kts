@@ -41,6 +41,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    // molina-patch26k: commons-compress dan turunannya membawa berkas META-INF yang sama
+    packaging {
+        resources {
+            excludes += setOf("META-INF/LICENSE*", "META-INF/NOTICE*", "META-INF/DEPENDENCIES", "META-INF/{AL2.0,LGPL2.1}")
+        }
+    }
 }
 dependencies {
     implementation(project(":core-ui"))

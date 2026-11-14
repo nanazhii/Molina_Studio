@@ -14,5 +14,8 @@ android {
 }
 dependencies {
     api(project(":core-common"))
+    implementation(libs.zip4j)
+    implementation(libs.commons.compress)
+    implementation(libs.tukaani.xz)
     testImplementation(libs.junit)
 }

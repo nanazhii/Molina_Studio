@@ -62,3 +62,18 @@ Perubahan: TerminalSession -> MolinaTerminalSession (interface baru di terminal-
 Sumber: terminal-emulator/src/main/jni/termux.c dan JNI.java @ 8629e632fcb9 -> modul `terminal-pty` (molina_pty.c, PtyNative.java).
 Perubahan: nama simbol JNI dan makro; logika PTY tidak diubah. PtyProcess.kt dan CMake adalah kode baru Molina.
 - `PtyTerminalSession.kt` (terminal-core): kode baru Molina; pola thread baca/tulis dan antrean mengikuti TerminalSession.java upstream, tanpa menyalin kode.
+
+<!-- molina-patch26k -->
+## Dependensi eksternal: arsip (Patch 26k)
+
+Modul `core-storage` memakai tiga pustaka pihak ketiga untuk ZIP, 7z, dan tar. Hanya pola desain repo
+lama yang diikuti; kode mesin (`ArchiveEngine`, `ArchiveNames`) ditulis ulang untuk Molina.
+
+| Pustaka | Versi | Untuk | Lisensi (verifikasi dari POM di Maven Central sebelum rilis) |
+|---|---|---|---|
+| `net.lingala.zip4j:zip4j` | 2.11.5 | ZIP, ZIP bersandi AES-256 | Apache-2.0 |
+| `org.apache.commons:commons-compress` | 1.27.1 | 7z, tar, gz, bz2, xz | Apache-2.0 |
+| `org.tukaani:xz` | 1.10 | dekoder/enkoder xz dan LZMA2 | domain publik / 0BSD |
+
+- [ ] Verifikasi lisensi tiap POM, lalu centang dan catat tanggalnya di sini.
+- [ ] Hasilkan `gradle/verification-metadata.xml` (workflow Verifikasi Gradle) setelah dependensi ini masuk.

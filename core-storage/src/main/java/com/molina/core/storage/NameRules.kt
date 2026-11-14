@@ -9,13 +9,14 @@ import java.nio.file.Files
 
 /** Aturan nama berkas/folder. Pesan galat sengaja tanpa nama (lihat docs/penamaan.md). */
 object NameRules {
-    const val MAX_LENGTH = 255
+    /** Batas nama = 255 BYTE UTF-8 (batas sistem berkas), bukan 255 karakter. molina-patch26k */
+    const val MAX_BYTES = 255
 
     /** Mengembalikan nama yang sudah di-trim, atau INVALID_NAME. */
     fun validate(raw: String): MolinaResult<String> {
         val n = raw.trim()
         val bad = n.isEmpty() || n == "." || n == ".." || n.contains('/') || n.contains('\u0000') ||
-            n.length > MAX_LENGTH
+            n.toByteArray(Charsets.UTF_8).size > MAX_BYTES
         return if (bad) {
             MolinaResult.Failure(MolinaError(ErrorKind.INVALID_NAME, "Nama tidak valid"))
         } else {
