@@ -2,7 +2,8 @@ package com.molina.core.common
 
 import kotlin.coroutines.cancellation.CancellationException
 
-enum class ErrorKind { NOT_FOUND, PERMISSION_DENIED, INVALID_PATH, IO, UNKNOWN }
+// molina-patch26a: INVALID_NAME, ALREADY_EXISTS, PROTECTED untuk operasi berkas
+enum class ErrorKind { NOT_FOUND, PERMISSION_DENIED, INVALID_PATH, INVALID_NAME, ALREADY_EXISTS, PROTECTED, IO, UNKNOWN }
 
 /** Pesan sengaja tanpa path/isi data (lihat docs/penamaan.md: log tidak mencatat path penuh). */
 data class MolinaError(

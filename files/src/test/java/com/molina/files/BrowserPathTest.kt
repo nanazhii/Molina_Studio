@@ -36,4 +36,14 @@ class BrowserPathTest {
         assertEquals("Molina", BrowserPath.title(""))
         assertEquals("Molina/cinema/film", BrowserPath.title("cinema/film"))
     }
+
+    // molina-patch26b
+    @Test
+    fun entryPathLangsungDanDariHasilPencarian() {
+        assertEquals("cinema/a.mp4", BrowserPath.entryPath("cinema", null, "a.mp4"))
+        assertEquals("cinema/a.mp4", BrowserPath.entryPath("cinema", "", "a.mp4"))
+        assertEquals("a.mp4", BrowserPath.entryPath("", null, "a.mp4"))
+        assertEquals("cinema/film/2024/a.mp4", BrowserPath.entryPath("cinema", "film/2024", "a.mp4"))
+        assertEquals("film/a.mp4", BrowserPath.entryPath("", "film", "a.mp4"))
+    }
 }

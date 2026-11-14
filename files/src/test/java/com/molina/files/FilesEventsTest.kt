@@ -93,4 +93,39 @@ class FilesEventsTest {
         assertNull(FilesEvents.errnoOf(IOException("folder bernama EMPTY")))
         assertNull(FilesEvents.errnoOf(null))
     }
+
+    // molina-patch26b
+    @Test
+    fun opHanyaJenisDanKedalamanTanpaNama() {
+        FilesEvents.op("rename", false, "Movies/2024/rahasia.mkv", logger)
+        FilesEvents.op("create-folder", true, "", logger)
+        assertEquals(
+            listOf(
+                "[BEHAV:files.op-rename] | kind=file depth=3",
+                "[BEHAV:files.op-create-folder] | kind=folder depth=0",
+            ),
+            sink.entries.map { it.message },
+        )
+        assertFalse("rahasia" in sink.entries.first().message)
+    }
+
+    @Test
+    fun pencarianTidakMencatatKueri() {
+        FilesEvents.searched("Movies", 7, deep = true, truncated = false, logger = logger)
+        assertEquals(
+            "[BEHAV:files.search] | depth=1 deep=true count=7 truncated=false",
+            sink.entries.single().message,
+        )
+    }
+
+    @Test
+    fun galatNamaSudahAdaDanDilindungiBerlevelWarn() {
+        FilesEvents.failed("create-folder", MolinaError(ErrorKind.ALREADY_EXISTS, "Nama sudah dipakai"), "Movies", logger)
+        FilesEvents.failed("delete", MolinaError(ErrorKind.PROTECTED, "Folder ini dilindungi"), "", logger)
+        assertEquals(listOf(LogLevel.WARN, LogLevel.WARN), sink.entries.map { it.level })
+        assertEquals(
+            "[BUG:files.create-folder-failed] Nama sudah dipakai | kind=ALREADY_EXISTS error=none depth=1",
+            sink.entries.first().message,
+        )
+    }
 }

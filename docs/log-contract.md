@@ -145,7 +145,10 @@ Tag `Molina/files`. Path tidak pernah dicatat: hanya `depth` (jumlah segmen path
 | `files.permission-missing` | BEHAV | izin penyimpanan belum ada saat membuka folder (keadaan normal pertama kali) | `depth` |
 | `files.permission-request` | BEHAV | pengguna menekan Beri izin | - |
 | `files.permission-result` | BEHAV | hasil dialog izin | `granted` |
-| `files.list-failed` | BUG (W untuk NOT_FOUND/INVALID_PATH) | folder gagal dibaca | `kind`, `error`, `depth`, `errno` |
+| `files.search` | BEHAV | daftar dengan kueri nama (kueri tidak dicatat) | `depth`, `deep`, `count`, `truncated` |
+| `files.op-create-folder` / `files.op-create-file` / `files.op-rename` / `files.op-delete` | BEHAV | operasi tulis berhasil (tanpa nama/path) | `kind` (folder/file), `depth` |
+| `files.list-failed` | BUG (W untuk NOT_FOUND/INVALID_PATH/INVALID_NAME/ALREADY_EXISTS/PROTECTED) | folder gagal dibaca | `kind`, `error`, `depth`, `errno` |
+| `files.create-folder-failed` / `files.create-file-failed` / `files.rename-failed` / `files.delete-failed` | BUG (W untuk galat nama/dilindungi) | operasi tulis gagal | `kind`, `error`, `depth`, `errno` |
 | `files.layout-failed` | BUG | folder standar Molina gagal dibuat | `kind`, `error`, `depth`, `errno` |
 
 `files.list-failed` dengan `kind=PERMISSION_DENIED` padahal izin sudah diberikan berarti penyebabnya

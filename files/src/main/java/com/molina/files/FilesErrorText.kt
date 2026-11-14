@@ -9,7 +9,18 @@ object FilesErrorText {
         ErrorKind.PERMISSION_DENIED ->
             "Izin penyimpanan belum diberikan. Jika dialog tidak muncul, aktifkan lewat Setelan Android > Aplikasi > Molina > Izin."
         ErrorKind.INVALID_PATH -> "Path tidak valid"
+        ErrorKind.INVALID_NAME -> "Nama tidak valid (kosong, memuat \"/\", atau lebih dari 255 karakter)"
+        ErrorKind.ALREADY_EXISTS -> "Nama sudah dipakai di folder ini"
+        ErrorKind.PROTECTED -> "Folder ini dilindungi dan tidak bisa diubah atau dihapus"
         ErrorKind.IO -> "Kesalahan I/O saat membaca folder"
         ErrorKind.UNKNOWN -> "Kesalahan tak terduga"
+    }
+
+    /** Teks galat untuk operasi tulis (buat/ganti nama/hapus). */
+    fun forOp(kind: ErrorKind): String = when (kind) {
+        ErrorKind.NOT_FOUND -> "Item tidak ditemukan"
+        ErrorKind.PERMISSION_DENIED -> "Akses ditolak. Periksa izin penyimpanan"
+        ErrorKind.IO -> "Operasi gagal (periksa izin tulis)"
+        else -> of(kind)
     }
 }

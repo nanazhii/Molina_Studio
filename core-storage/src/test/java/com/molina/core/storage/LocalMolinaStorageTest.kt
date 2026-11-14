@@ -81,4 +81,49 @@ class LocalMolinaStorageTest {
         val root = tmp.newFolder("Molina")
         assertEquals(ErrorKind.INVALID_PATH, storage(root).list("..").errorOrNull()?.kind)
     }
+
+    // molina-patch26a
+    @Test fun browseKueriDanSortirLewatStorage() = runBlocking {
+        val root = tmp.newFolder("Molina")
+        File(root, "Film A.mkv").writeText("1")
+        File(root, "Film B.mkv").writeText("12")
+        File(root, "catatan.txt").writeText("x")
+        val r = storage(root).browse("", ListOptions(query = "film", sortKey = SortKey.SIZE, ascending = false)).getOrNull()!!
+        assertEquals(listOf("Film B.mkv", "Film A.mkv"), r.entries.map { it.name })
+    }
+
+    @Test fun browseKeluarRootDitolak() = runBlocking {
+        val root = tmp.newFolder("Molina")
+        assertEquals(ErrorKind.INVALID_PATH, storage(root).browse("..").errorOrNull()?.kind)
+    }
+
+    @Test fun createFolderDanFileDiSubfolder() = runBlocking {
+        val root = tmp.newFolder("Molina")
+        File(root, "sub").mkdir()
+        val s = storage(root)
+        assertTrue(s.createFolder("sub", "baru").getOrNull()!!.isDirectory)
+        assertTrue(!s.createFile("sub", "a.sh").getOrNull()!!.isDirectory)
+        assertTrue(File(root, "sub/baru").isDirectory && File(root, "sub/a.sh").isFile)
+        assertEquals(ErrorKind.ALREADY_EXISTS, s.createFolder("sub", "baru").errorOrNull()?.kind)
+        assertEquals(ErrorKind.INVALID_PATH, s.createFolder("../luar", "x").errorOrNull()?.kind)
+    }
+
+    @Test fun renameDanDeleteBerjalan() = runBlocking {
+        val root = tmp.newFolder("Molina")
+        File(root, "lama.txt").writeText("x")
+        val s = storage(root)
+        assertEquals("baru.txt", s.rename("lama.txt", "baru.txt").getOrNull()!!.name)
+        assertTrue(s.delete("baru.txt").getOrNull() != null)
+        assertTrue(!File(root, "baru.txt").exists())
+    }
+
+    @Test fun folderStandarDanRootDilindungi() = runBlocking {
+        val root = tmp.newFolder("Molina")
+        val s = storage(root)
+        s.ensureLayout()
+        assertEquals(ErrorKind.PROTECTED, s.delete("logs").errorOrNull()?.kind)
+        assertEquals(ErrorKind.PROTECTED, s.rename("terminal", "x").errorOrNull()?.kind)
+        assertEquals(ErrorKind.PROTECTED, s.delete("").errorOrNull()?.kind)
+        assertTrue(File(root, "logs").isDirectory && File(root, "terminal").isDirectory)
+    }
 }

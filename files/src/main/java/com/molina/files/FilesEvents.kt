@@ -29,6 +29,26 @@ internal object FilesEvents {
             logger = logger,
         )
 
+    // molina-patch26b
+    /** [name]: create-folder | create-file | rename | delete. Tanpa nama/path; hanya jenis dan kedalaman. */
+    fun op(name: String, directory: Boolean, path: String, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "op-$name",
+            fields = mapOf("kind" to if (directory) "folder" else "file", "depth" to depth(path).toString()),
+            logger = logger,
+        )
+
+    /** Pencarian nama (kueri TIDAK dicatat, hanya mode dan jumlah hasil). */
+    fun searched(path: String, count: Int, deep: Boolean, truncated: Boolean, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "search",
+            fields = mapOf(
+                "depth" to depth(path).toString(), "deep" to deep.toString(),
+                "count" to count.toString(), "truncated" to truncated.toString(),
+            ),
+            logger = logger,
+        )
+
     fun permissionMissing(path: String, logger: MolinaLogger = MolinaLog.logger) =
         MolinaEvents.behavior(AREA, "permission-missing", fields = mapOf("depth" to depth(path).toString()), logger = logger)
 
@@ -38,7 +58,7 @@ internal object FilesEvents {
     fun permissionResult(granted: Boolean, logger: MolinaLogger = MolinaLog.logger) =
         MolinaEvents.behavior(AREA, "permission-result", fields = mapOf("granted" to granted.toString()), logger = logger)
 
-    /** [op] = "list" atau "layout" -> kode files.list-failed / files.layout-failed (BUG). */
+    /** [op] = list | layout | create-folder | create-file | rename | delete -> kode files.<op>-failed (BUG). */
     fun failed(op: String, error: MolinaError, path: String, logger: MolinaLogger = MolinaLog.logger) {
         val cause = error.cause
         val fields = linkedMapOf(
@@ -48,7 +68,8 @@ internal object FilesEvents {
         )
         errnoOf(cause)?.let { fields["errno"] = it }
         val level = when (error.kind) {
-            ErrorKind.NOT_FOUND, ErrorKind.INVALID_PATH -> LogLevel.WARN
+            ErrorKind.NOT_FOUND, ErrorKind.INVALID_PATH, ErrorKind.INVALID_NAME,
+            ErrorKind.ALREADY_EXISTS, ErrorKind.PROTECTED -> LogLevel.WARN
             else -> LogLevel.ERROR
         }
         MolinaEvents.bug(AREA, op + "-failed", error.message, fields = fields, level = level, logger = logger)
