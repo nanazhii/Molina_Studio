@@ -441,6 +441,7 @@ internal class FileDrawerView(
             h.row.alpha = if (e.hidden) 0.6f else 1f
             h.arrow.text = if (e.isDir) (if (item.expanded) "\u25BE" else "\u25B8") else ""
             h.icon.isDir = e.isDir
+            h.icon.kind = if (e.isDir) FileKind.OTHER else FileKind.of(e.name)
             h.name.text = e.name
             h.row.setOnClickListener { onRowTap(item) }
             h.more.setOnClickListener { showRowMenu(it, e) }
@@ -905,25 +906,37 @@ private class DrawerPanel(
     }
 }
 
-/** Ikon kecil: folder (kuning) atau berkas (garis putih). Digambar manual agar tanpa aset tambahan. */
+/**
+ * [FILE-KIND] Ikon kecil: folder (kuning) atau berkas. Berkas diwarnai dan diberi lambang menurut [FileKind]
+ * (skrip, kode, markup, data, gambar, video, audio, subtitle, arsip, teks); jenis tak dikenal tetap garis putih.
+ * Digambar manual agar tanpa aset tambahan.
+ */
 internal class TreeIconView(context: Context) : View(context) {
     var isDir: Boolean = false
         set(value) {
             if (field != value) { field = value; invalidate() }
         }
 
+    var kind: FileKind = FileKind.OTHER
+        set(value) {
+            if (field != value) { field = value; invalidate() }
+        }
+
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
     private val line = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val glyph = Paint(Paint.ANTI_ALIAS_FLAG)
     private val rect = RectF()
     private val path = Path()
 
     init {
         fill.style = Paint.Style.FILL
-        fill.color = 0xFFFFC107.toInt()
         line.style = Paint.Style.STROKE
-        line.color = Color.WHITE
         line.strokeWidth = 1.5f * resources.displayMetrics.density
         line.strokeJoin = Paint.Join.ROUND
+        glyph.style = Paint.Style.STROKE
+        glyph.strokeWidth = 1.3f * resources.displayMetrics.density
+        glyph.strokeJoin = Paint.Join.ROUND
+        glyph.strokeCap = Paint.Cap.ROUND
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -931,11 +944,16 @@ internal class TreeIconView(context: Context) : View(context) {
         val h = height.toFloat()
         val r = h * 0.1f
         if (isDir) {
+            fill.color = 0xFFFFC107.toInt()
             rect.set(0f, h * 0.18f, w * 0.45f, h * 0.5f)
             canvas.drawRoundRect(rect, r, r, fill)
             rect.set(0f, h * 0.3f, w, h * 0.88f)
             canvas.drawRoundRect(rect, r, r, fill)
         } else {
+            val c = kind.color
+            fill.color = c
+            line.color = c
+            glyph.color = c
             path.reset()
             path.moveTo(w * 0.2f, h * 0.08f)
             path.lineTo(w * 0.62f, h * 0.08f)
@@ -943,12 +961,101 @@ internal class TreeIconView(context: Context) : View(context) {
             path.lineTo(w * 0.82f, h * 0.92f)
             path.lineTo(w * 0.2f, h * 0.92f)
             path.close()
+            if (kind != FileKind.OTHER) {
+                fill.alpha = 0x2A // latar tipis sewarna jenis berkas
+                canvas.drawPath(path, fill)
+                fill.alpha = 0xFF
+            }
             canvas.drawPath(path, line)
             path.reset()
             path.moveTo(w * 0.62f, h * 0.08f)
             path.lineTo(w * 0.62f, h * 0.28f)
             path.lineTo(w * 0.82f, h * 0.28f)
             canvas.drawPath(path, line)
+            drawGlyph(canvas, w, h)
+        }
+    }
+
+    /** Lambang kecil di badan berkas (di bawah lipatan sudut). */
+    private fun drawGlyph(canvas: Canvas, w: Float, h: Float) {
+        val top = h * 0.46f
+        val bottom = h * 0.82f
+        val mid = (top + bottom) / 2f
+        when (kind) {
+            FileKind.SHELL -> {
+                path.reset()
+                path.moveTo(w * 0.3f, top)
+                path.lineTo(w * 0.44f, mid)
+                path.lineTo(w * 0.3f, bottom)
+                canvas.drawPath(path, glyph)
+                canvas.drawLine(w * 0.5f, bottom, w * 0.7f, bottom, glyph)
+            }
+            FileKind.CODE, FileKind.MARKUP -> {
+                path.reset()
+                path.moveTo(w * 0.42f, top)
+                path.lineTo(w * 0.3f, mid)
+                path.lineTo(w * 0.42f, bottom)
+                path.moveTo(w * 0.6f, top)
+                path.lineTo(w * 0.72f, mid)
+                path.lineTo(w * 0.6f, bottom)
+                canvas.drawPath(path, glyph)
+                if (kind == FileKind.MARKUP) canvas.drawLine(w * 0.54f, top, w * 0.48f, bottom, glyph)
+            }
+            FileKind.DATA -> {
+                path.reset()
+                path.moveTo(w * 0.43f, top)
+                path.lineTo(w * 0.34f, top)
+                path.lineTo(w * 0.34f, bottom)
+                path.lineTo(w * 0.43f, bottom)
+                path.moveTo(w * 0.59f, top)
+                path.lineTo(w * 0.68f, top)
+                path.lineTo(w * 0.68f, bottom)
+                path.lineTo(w * 0.59f, bottom)
+                canvas.drawPath(path, glyph)
+            }
+            FileKind.IMAGE -> {
+                path.reset()
+                path.moveTo(w * 0.3f, bottom)
+                path.lineTo(w * 0.45f, h * 0.6f)
+                path.lineTo(w * 0.55f, h * 0.72f)
+                path.lineTo(w * 0.62f, h * 0.64f)
+                path.lineTo(w * 0.72f, bottom)
+                canvas.drawPath(path, glyph)
+                canvas.drawCircle(w * 0.6f, h * 0.52f, h * 0.045f, fill)
+            }
+            FileKind.VIDEO -> {
+                path.reset()
+                path.moveTo(w * 0.4f, top)
+                path.lineTo(w * 0.4f, bottom)
+                path.lineTo(w * 0.7f, mid)
+                path.close()
+                canvas.drawPath(path, fill)
+            }
+            FileKind.AUDIO -> {
+                canvas.drawLine(w * 0.6f, top, w * 0.6f, h * 0.74f, glyph)
+                canvas.drawLine(w * 0.6f, top, w * 0.72f, h * 0.56f, glyph)
+                canvas.drawCircle(w * 0.52f, h * 0.76f, h * 0.07f, fill)
+            }
+            FileKind.SUBTITLE -> {
+                canvas.drawLine(w * 0.3f, h * 0.62f, w * 0.72f, h * 0.62f, glyph)
+                canvas.drawLine(w * 0.3f, h * 0.76f, w * 0.6f, h * 0.76f, glyph)
+            }
+            FileKind.TEXT -> {
+                canvas.drawLine(w * 0.3f, h * 0.5f, w * 0.72f, h * 0.5f, glyph)
+                canvas.drawLine(w * 0.3f, h * 0.64f, w * 0.72f, h * 0.64f, glyph)
+                canvas.drawLine(w * 0.3f, h * 0.78f, w * 0.55f, h * 0.78f, glyph)
+            }
+            FileKind.ARCHIVE -> {
+                rect.set(w * 0.4f, h * 0.42f, w * 0.52f, h * 0.5f)
+                canvas.drawRect(rect, fill)
+                rect.set(w * 0.5f, h * 0.52f, w * 0.62f, h * 0.6f)
+                canvas.drawRect(rect, fill)
+                rect.set(w * 0.4f, h * 0.62f, w * 0.52f, h * 0.7f)
+                canvas.drawRect(rect, fill)
+                rect.set(w * 0.43f, h * 0.74f, w * 0.57f, h * 0.84f)
+                canvas.drawRect(rect, glyph)
+            }
+            else -> Unit
         }
     }
 }
