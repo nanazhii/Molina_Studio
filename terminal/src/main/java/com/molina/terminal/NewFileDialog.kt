@@ -4,6 +4,7 @@ package com.molina.terminal
 import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
@@ -12,14 +13,17 @@ import android.text.InputFilter
 import android.text.InputType
 import android.text.TextUtils
 import android.text.TextWatcher
+import android.util.TypedValue
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.PopupMenu
+import android.widget.ListPopupWindow
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -96,6 +100,48 @@ internal fun showNewFileDialog(
     }
     extBox.addView(TextView(context).apply { text = "."; setTextColor(dim); typeface = Typeface.MONOSPACE; textSize = 14f })
     extBox.addView(ext, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
+    // [EXT-POPUP] daftar ekstensi ringkas: lebar mengikuti teks terpanjang (bukan minWidth 196dp bawaan PopupMenu)
+    fun showExtPopup() {
+        val labels = listOf(context.getString(R.string.newfile_ext_none)) + NewFileName.EXTENSIONS.map { ".$it" }
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            typeface = Typeface.MONOSPACE
+            textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 13f, context.resources.displayMetrics)
+        }
+        val widest = labels.maxOf { paint.measureText(it) }.toInt()
+        val popup = ListPopupWindow(context)
+        popup.anchorView = extBox
+        popup.setDropDownGravity(Gravity.END)
+        popup.width = widest + dp(24) + dp(2)
+        popup.height = dp(34) * 7
+        popup.verticalOffset = dp(2)
+        popup.isModal = true
+        popup.setBackgroundDrawable(border(8, frame, Color.BLACK))
+        popup.setAdapter(object : ArrayAdapter<String>(context, 0, labels) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View =
+                (convertView as? TextView ?: TextView(context)).apply {
+                    text = getItem(position)
+                    setTextColor(if (position == 0) dim else Color.WHITE)
+                    typeface = Typeface.MONOSPACE
+                    textSize = 13f
+                    maxLines = 1
+                    gravity = Gravity.CENTER_VERTICAL
+                    height = dp(34)
+                    setPadding(dp(12), 0, dp(12), 0)
+                }
+        })
+        popup.setOnItemClickListener { _, _, position, _ ->
+            ext.setText(if (position == 0) "" else NewFileName.EXTENSIONS[position - 1])
+            ext.setSelection(ext.text.length)
+            popup.dismiss()
+        }
+        popup.show()
+        popup.listView?.apply {
+            divider = null
+            overScrollMode = View.OVER_SCROLL_NEVER
+            selector = ColorDrawable(ColorUtils.setAlphaComponent(Color.WHITE, 0x22))
+        }
+    }
+
     val arrow = TextView(context).apply {
         text = "\u25BE"
         setTextColor(frame)
@@ -103,16 +149,7 @@ internal fun showNewFileDialog(
         gravity = Gravity.CENTER
         setPadding(dp(6), 0, dp(6), 0)
         isClickable = true
-        setOnClickListener { anchor ->
-            val menu = PopupMenu(context, anchor)
-            menu.menu.add(0, 0, 0, R.string.newfile_ext_none)
-            NewFileName.EXTENSIONS.forEachIndexed { i, e -> menu.menu.add(0, i + 1, i + 1, ".$e") }
-            menu.setOnMenuItemClickListener { item ->
-                ext.setText(if (item.itemId == 0) "" else NewFileName.EXTENSIONS[item.itemId - 1])
-                true
-            }
-            menu.show()
-        }
+        setOnClickListener { showExtPopup() }
     }
     extBox.addView(arrow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT))
 
