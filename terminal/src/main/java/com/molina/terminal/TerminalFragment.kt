@@ -223,7 +223,7 @@ class TerminalFragment : Fragment() {
             addView(
                 framed(ctx, terminalArea),
                 LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
-                    setMargins(dp(ctx, 6), dp(ctx, 6), dp(ctx, 6), dp(ctx, 4))
+                    setMargins(dp(ctx, 6), dp(ctx, 2), dp(ctx, 6), dp(ctx, 4))
                 },
             )
             addView(compatPanel, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))

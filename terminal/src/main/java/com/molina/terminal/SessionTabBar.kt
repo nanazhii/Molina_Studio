@@ -40,6 +40,7 @@ internal class SessionTabBar(
     private val idleBg = color(UiR.color.molina_tab_idle_bg)
     private val line = color(UiR.color.molina_tab_line)
     private val muted = color(UiR.color.molina_tab_muted)
+    private val headerFrame = color(UiR.color.molina_header_frame)
 
     private val row = LinearLayout(context)
     private var lastKey: List<Any>? = null
@@ -74,7 +75,7 @@ internal class SessionTabBar(
             row.addView(pill, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(PILL_DP)).apply { marginEnd = dp(6) })
             if (i == current) selected = pill
         }
-        row.addView(addPill(canAdd), LinearLayout.LayoutParams(dp(36), dp(PILL_DP)))
+        row.addView(addPill(canAdd), LinearLayout.LayoutParams(dp(32), dp(PILL_DP)))
         if (current != lastCurrent || titles.size != lastCount) {
             lastCurrent = current
             lastCount = titles.size
@@ -103,9 +104,9 @@ internal class SessionTabBar(
             setWillNotDraw(false)
             setPadding(dp(10), 0, if (selected) dp(3) else dp(10), 0)
             background = GradientDrawable().apply {
-                cornerRadius = dp(PILL_DP).toFloat()
+                cornerRadius = dp(PILL_RADIUS_DP).toFloat()
                 setColor(if (selected) ColorUtils.setAlphaComponent(accent, 0x1F) else idleBg)
-                setStroke(dp(1), if (selected) ColorUtils.setAlphaComponent(accent, 0x80) else line)
+                setStroke(dp(1), if (selected) headerFrame else line)
             }
             if (selected) {
                 val dot = View(context)
@@ -138,7 +139,7 @@ internal class SessionTabBar(
                         onClose(index)
                     }
                 }
-                addView(close, LinearLayout.LayoutParams(dp(24), dp(24)).apply { marginStart = dp(4) })
+                addView(close, LinearLayout.LayoutParams(dp(20), dp(20)).apply { marginStart = dp(4) })
             }
             setOnClickListener {
                 performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
@@ -162,8 +163,8 @@ internal class SessionTabBar(
         setTextColor(brand)
         alpha = if (enabledLook) 1f else 0.4f
         background = GradientDrawable().apply {
-            cornerRadius = dp(PILL_DP).toFloat()
-            setStroke(dp(1), ColorUtils.setAlphaComponent(brand, 0x99))
+            cornerRadius = dp(PILL_RADIUS_DP).toFloat()
+            setStroke(dp(1), headerFrame)
         }
         contentDescription = resources.getString(R.string.terminal_tab_add)
         setOnClickListener {
@@ -177,7 +178,8 @@ internal class SessionTabBar(
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
 
     companion object {
-        const val HEIGHT_DP = 36
-        private const val PILL_DP = 28
+        const val HEIGHT_DP = 30
+        private const val PILL_DP = 24
+        private const val PILL_RADIUS_DP = 8
     }
 }

@@ -162,3 +162,4 @@
 - [ ] Verifikasi CI 26k-1: kompilasi :core-storage dan :files; jvm-tests ArchiveEngineTest, ArchiveNamesTest, ArchiveStorageTest, DiskSpaceTest, NameRulesTest; cek API setMaxMemoryLimitKb (commons-compress) dan getLastModifiedTimeEpoch (zip4j)
 - [ ] Verifikasi lisensi zip4j, commons-compress, xz dari POM; catat di docs/provenance.md; hasilkan gradle/verification-metadata.xml
 - [ ] Patch 26k-2: UI Arsip di :files (menu item Ekstrak/Kompres, dialog sandi, kemajuan + batal via pola FilesTransfer, ArchiveKind terpisah dari TransferKind, event log files.archive-*)
+- Patch 27: bingkai header terminal/drawer/panel drawer putih-abu (`molina_header_frame` #9AA0A8, 1dp); tombol kembali drawer 30dp (glyph 22sp); kotak path + titik tiga drawer 34dp; header terminal hanya breadcrumb path (Internal > ...) tanpa user@localhost:. Menunggu hasil CI.
