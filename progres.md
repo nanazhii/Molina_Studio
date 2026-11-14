@@ -158,3 +158,7 @@
 - [x] Audit sumber aktual Penjelajah lama vs baru: 7 kekurangan arsip lama dicatat (batal ZIP bersandi, rollback folder, batas memori 7z/xz, pagar bom arsip, batal daftar isi, galat menyesatkan, entri dilewati tak dilaporkan)
 - [ ] Celah repo baru untuk 26k: NameRules 255 byte (bukan karakter), cek ruang kosong sebelum salin/arsip, pesan galat tautan simbolik
 - [ ] 26k memakai ArchiveKind + state terpisah (pola FilesTransfer), bukan menambah TransferKind (when eksaustif di FilesEvents/TransferText)
+- [x] Patch 26k-1: mesin arsip di :core-storage (zip4j + commons-compress + xz): list/ekstrak/kompres ZIP (AES), 7z, tar, tar.gz/bz2/xz, gz/bz2/xz; perbaikan 7 kekurangan repo lama; NameRules 255 byte; ErrorKind.NO_SPACE; cek ruang kosong sebelum salin; API listArchive/extractArchive/compressItems; belum dikompilasi
+- [ ] Verifikasi CI 26k-1: kompilasi :core-storage dan :files; jvm-tests ArchiveEngineTest, ArchiveNamesTest, ArchiveStorageTest, DiskSpaceTest, NameRulesTest; cek API setMaxMemoryLimitKb (commons-compress) dan getLastModifiedTimeEpoch (zip4j)
+- [ ] Verifikasi lisensi zip4j, commons-compress, xz dari POM; catat di docs/provenance.md; hasilkan gradle/verification-metadata.xml
+- [ ] Patch 26k-2: UI Arsip di :files (menu item Ekstrak/Kompres, dialog sandi, kemajuan + batal via pola FilesTransfer, ArchiveKind terpisah dari TransferKind, event log files.archive-*)
