@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-patch26e-h: orb tombol naik gaya repo lama (hijau merek aktif, abu nonaktif) -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false">
+        <shape android:shape="oval">
+            <gradient android:angle="270" android:startColor="#D7DDE4" android:endColor="#B5BDC7" />
+            <stroke android:width="1dp" android:color="#9AA3AD" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="oval">
+            <gradient android:angle="270" android:startColor="#00E676" android:endColor="#00A152" />
+            <stroke android:width="1dp" android:color="#007A40" />
+        </shape>
+    </item>
+</selector>

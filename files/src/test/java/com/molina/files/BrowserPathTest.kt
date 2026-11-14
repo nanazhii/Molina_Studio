@@ -46,4 +46,13 @@ class BrowserPathTest {
         assertEquals("cinema/film/2024/a.mp4", BrowserPath.entryPath("cinema", "film/2024", "a.mp4"))
         assertEquals("film/a.mp4", BrowserPath.entryPath("", "film", "a.mp4"))
     }
+
+    @Test
+    fun crumbsFromRootAndNested() {
+        assertEquals(listOf("Molina" to ""), BrowserPath.crumbs(""))
+        assertEquals(
+            listOf("Molina" to "", "cinema" to "cinema", "film" to "cinema/film"),
+            BrowserPath.crumbs("cinema/film"),
+        )
+    }
 }

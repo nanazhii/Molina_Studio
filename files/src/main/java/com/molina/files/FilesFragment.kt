@@ -9,6 +9,7 @@ import android.view.HapticFeedbackConstants
 import android.view.Menu
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -98,6 +99,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         v.progressCancel.setOnClickListener { FilesTransfer.cancel() }
         v.up.setOnClickListener { goUp() }
         v.menu.setOnClickListener { showHeaderMenu(it) }
+        v.searchBtn.setOnClickListener { toggleSearch() }
+        v.search.visibility = if (options.query.isNotEmpty()) View.VISIBLE else View.GONE
         v.retry.setOnClickListener { onRetry() }
         v.search.setText(options.query)
         v.search.addTextChangedListener(object : TextWatcher {
@@ -565,10 +568,60 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                 ContextCompat.getColor(requireContext(), android.R.color.white)
             },
         )
+        v.crumbs.visibility = if (picking) View.GONE else View.VISIBLE
+        v.title.visibility = if (picking) View.VISIBLE else View.GONE
+        if (!picking) renderCrumbs(path)
         val canUp = picking || !root
         v.up.isEnabled = canUp
         v.up.alpha = if (canUp) 1f else 0.35f
         updateBack()
+    }
+
+    // molina-patch26e-h: breadcrumb gaya repo lama (maks. 2 segmen terakhir, "… ›" bila terpotong), tiap segmen bisa diketuk
+    private fun renderCrumbs(path: String) {
+        val v = views ?: return
+        val all = BrowserPath.crumbs(path)
+        val shown = if (all.size > 2) all.takeLast(2) else all
+        val dim = ContextCompat.getColor(requireContext(), UiR.color.molina_tab_muted)
+        v.crumbs.removeAllViews()
+        fun add(text: String, color: Int, target: String?, weight: Boolean) {
+            val tv = TextView(requireContext()).apply {
+                this.text = text
+                setTextColor(color)
+                textSize = 13f
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                if (target != null) setOnClickListener { navigate(target) }
+            }
+            val lp = if (weight) {
+                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            } else {
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            }
+            v.crumbs.addView(tv, lp)
+        }
+        if (all.size > 2) add("… › ", dim, null, false)
+        shown.forEachIndexed { i, c ->
+            if (i > 0) add(" › ", dim, null, false)
+            add(c.first, android.graphics.Color.WHITE, c.second, i == shown.lastIndex)
+        }
+    }
+
+    private fun toggleSearch() {
+        val v = views ?: return
+        if (v.search.visibility == View.VISIBLE) {
+            clearQuery()
+            v.search.clearFocus()
+            v.search.visibility = View.GONE
+            (requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? InputMethodManager)
+                ?.hideSoftInputFromWindow(v.search.windowToken, 0)
+            load(currentPath)
+        } else {
+            v.search.visibility = View.VISIBLE
+            v.search.requestFocus()
+            (requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? InputMethodManager)
+                ?.showSoftInput(v.search, InputMethodManager.SHOW_IMPLICIT)
+        }
     }
 
     private fun showStatus(text: String?) {
@@ -614,6 +667,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         val up: ImageButton = root.findViewById(R.id.files_up)
         val menu: ImageButton = root.findViewById(R.id.files_menu)
         val search: EditText = root.findViewById(R.id.files_search)
+        val crumbs: LinearLayout = root.findViewById(R.id.files_crumbs)
+        val searchBtn: ImageButton = root.findViewById(R.id.files_search_btn)
         val status: TextView = root.findViewById(R.id.files_status)
         val message: TextView = root.findViewById(R.id.files_message)
         val retry: MaterialButton = root.findViewById(R.id.files_retry)

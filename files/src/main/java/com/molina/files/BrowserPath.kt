@@ -14,4 +14,16 @@ object BrowserPath {
     /** Path relatif sebuah entri; [relDir] terisi pada hasil pencarian sampai subfolder. */
     fun entryPath(current: String, relDir: String?, name: String): String =
         child(if (relDir.isNullOrEmpty()) current else child(current, relDir), name)
+
+    // molina-patch26e-h
+    /** Breadcrumb: daftar (label, path); elemen pertama selalu root "Molina". */
+    fun crumbs(path: String): List<Pair<String, String>> {
+        val out = mutableListOf("Molina" to "")
+        var acc = ""
+        for (seg in path.split('/').filter { it.isNotEmpty() }) {
+            acc = child(acc, seg)
+            out += seg to acc
+        }
+        return out
+    }
 }
