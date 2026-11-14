@@ -10,6 +10,7 @@ object TerminalPrefs {
     private const val KEY_NANO_OPEN = "nano_keys_open"
     private const val KEY_RUN_MODE = "run_mode"
     private const val KEY_RUN_LOG = "run_log"
+    const val RUN_SMART = "smart"
     const val RUN_ASK = "ask"
     const val RUN_ACTIVE = "active"
     const val RUN_NEW = "new"
@@ -28,9 +29,9 @@ object TerminalPrefs {
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putBoolean(KEY_NANO_OPEN, value).apply()
     }
 
-    /** Perilaku tombol Jalankan di drawer berkas: [RUN_ASK] (bawaan), [RUN_ACTIVE], atau [RUN_NEW]. */
+    /** Perilaku tombol Jalankan di drawer berkas: [RUN_SMART] (bawaan), [RUN_ASK], [RUN_ACTIVE], atau [RUN_NEW]. */
     fun runMode(ctx: Context): String =
-        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).getString(KEY_RUN_MODE, RUN_ASK) ?: RUN_ASK
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).getString(KEY_RUN_MODE, RUN_SMART) ?: RUN_SMART
 
     fun setRunMode(ctx: Context, value: String) {
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putString(KEY_RUN_MODE, value).apply()

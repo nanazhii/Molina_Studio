@@ -59,6 +59,7 @@ class SettingsFragment : Fragment() {
             addView(RadioGroup(ctx).apply {
                 val current = TerminalPrefs.runMode(ctx)
                 listOf(
+                    TerminalPrefs.RUN_SMART to "Pintar: pakai tab dengan folder sama, jika belum ada buka tab baru",
                     TerminalPrefs.RUN_ASK to "Tanya setiap kali",
                     TerminalPrefs.RUN_ACTIVE to "Langsung di sesi aktif",
                     TerminalPrefs.RUN_NEW to "Langsung di sesi baru",

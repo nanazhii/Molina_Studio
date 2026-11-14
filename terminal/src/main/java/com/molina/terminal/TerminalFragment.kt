@@ -151,6 +151,12 @@ class TerminalFragment : Fragment() {
                     sendWhenReady(s, text)
                     return true
                 }
+                override fun activateSessionAt(guestDir: String): Boolean {
+                    val i = holder.indexOfDir(guestDir)
+                    if (i < 0) return false
+                    holder.select(i)
+                    return true
+                }
                 override fun runMode(): RunMode = (owner as? RunPrefsOwner)?.runMode ?: RunMode.ASK
                 override fun runLogEnabled(): Boolean = (owner as? RunPrefsOwner)?.runLogEnabled == true
                 override fun onRootChanged(path: String) { terminalHeader?.setPath(path) }
@@ -178,7 +184,7 @@ class TerminalFragment : Fragment() {
             addView(
                 headerView,
                 LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                    setMargins(dp(ctx, 6), dp(ctx, 6), dp(ctx, 6), dp(ctx, 2))
+                    setMargins(dp(ctx, 6), dp(ctx, 4), dp(ctx, 6), dp(ctx, 2))
                 },
             )
             addView(tabBar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(ctx, SessionTabBar.HEIGHT_DP)))

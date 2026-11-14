@@ -35,7 +35,7 @@ internal class TerminalHeaderView(
     init {
         orientation = HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
-        setPadding(dp(2), dp(2), dp(2), dp(2))
+        setPadding(dp(1), dp(1), dp(1), dp(1))
         val frame = GradientDrawable()
         frame.setColor(ContextCompat.getColor(context, UiR.color.molina_extrakey_bg))
         frame.cornerRadius = dp(8).toFloat()
@@ -53,8 +53,8 @@ internal class TerminalHeaderView(
         folder.setOnClickListener { onFolder() }
         val icon = TreeIconView(context)
         icon.isDir = true
-        folder.addView(icon, FrameLayout.LayoutParams(dp(26), dp(26), Gravity.CENTER))
-        addView(folder, LinearLayout.LayoutParams(dp(44), dp(44)))
+        folder.addView(icon, FrameLayout.LayoutParams(dp(20), dp(20), Gravity.CENTER))
+        addView(folder, LinearLayout.LayoutParams(dp(32), dp(32)))
 
         val box = GradientDrawable()
         box.setColor(ContextCompat.getColor(context, UiR.color.molina_bg))
@@ -62,20 +62,20 @@ internal class TerminalHeaderView(
         box.setStroke(dp(1), ContextCompat.getColor(context, UiR.color.molina_outline))
         pathBox.background = box
         pathBox.setTextColor(Color.WHITE)
-        pathBox.textSize = 14f
+        pathBox.textSize = 13f
         pathBox.maxLines = 1
         pathBox.ellipsize = TextUtils.TruncateAt.MIDDLE
         pathBox.gravity = Gravity.CENTER_VERTICAL
-        pathBox.setPadding(dp(12), 0, dp(12), 0)
+        pathBox.setPadding(dp(10), 0, dp(10), 0)
         pathBox.setOnClickListener { onFolder() }
-        val boxLp = LinearLayout.LayoutParams(0, dp(36), 1f)
+        val boxLp = LinearLayout.LayoutParams(0, dp(26), 1f)
         boxLp.marginStart = dp(2)
         boxLp.marginEnd = dp(4)
         addView(pathBox, boxLp)
 
         dots.contentDescription = context.getString(R.string.terminal_menu_desc)
         dots.setOnClickListener { onMenu(dots) }
-        addView(dots, LinearLayout.LayoutParams(dp(44), dp(44)))
+        addView(dots, LinearLayout.LayoutParams(dp(32), dp(32)))
     }
 
     private var rootLabel: String = ""
@@ -132,7 +132,7 @@ internal class HeaderDotsView(context: Context) : View(context) {
         for (i in -1..1) canvas.drawCircle(cx, cy + i * 7f * d, 2.2f * d, dot)
         statusColor?.let {
             status.color = it
-            canvas.drawCircle(cx + 8f * d, cy - 12f * d, 4.5f * d, status)
+            canvas.drawCircle(cx + 7f * d, cy - 9.5f * d, 3.5f * d, status)
         }
     }
 }

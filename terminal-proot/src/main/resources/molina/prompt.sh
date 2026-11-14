@@ -4,6 +4,23 @@
 case $- in *i*) ;; *) return 0 ;; esac
 
 __molina_ps1() {
+  # [CWD-HOOK] permintaan cd dari drawer berkas: pindah folder tanpa menampilkan baris perintah cd
+  local req=/etc/molina/cwd.req
+  if [ -f "$req" ]; then
+    local ts="" target="" now=0 age=0
+    { IFS= read -r ts; IFS= read -r target; } < "$req"
+    rm -f "$req"
+    printf -v now '%(%s)T' -1
+    case "$ts" in ''|*[!0-9]*) ts=0 ;; esac
+    age=$((now - ts))
+    if [ -n "$target" ] && [ "$age" -ge -5 ] && [ "$age" -le 5 ]; then
+      if cd -- "$target" 2>/dev/null; then
+        printf '\033[1A\r\033[2K'
+      else
+        printf 'molina: cd gagal: %s\n' "$target"
+      fi
+    fi
+  fi
   [ -r /etc/molina/prompt.env ] && . /etc/molina/prompt.env
   local name="${MOLINA_PS_NAME:-user}" ok="${MOLINA_PS_OK:-1;32}" bad="${MOLINA_PS_BAD:-1;31}"
   local sgr="$bad" tag="" p="$PWD"

@@ -8,6 +8,10 @@ import java.io.File
 object ShellPrompt {
     const val SCRIPT_PATH = "etc/profile.d/molina-prompt.sh"
     const val ENV_PATH = "etc/molina/prompt.env"
+    const val CD_REQ_PATH = "etc/molina/cwd.req"
+
+    /** Ctrl-A, Ctrl-K, Enter: kosongkan baris yang sedang diketik (tanpa bell) lalu picu prompt; hook membaca [CD_REQ_PATH]. */
+    const val CD_KEYS = "\u0001\u000b\r"
     private const val RESOURCE = "/molina/prompt.sh"
 
     fun envText(showRoot: Boolean): String =
@@ -24,6 +28,24 @@ object ShellPrompt {
             writeIfDifferent(File(rootfs, ENV_PATH), envText(showRoot))
         } catch (e: Exception) {
             MolinaEvents.bug("proot", "prompt-failed", e.message ?: e.javaClass.simpleName, e, id = id)
+        }
+    }
+
+    /**
+     * Menulis permintaan cd senyap untuk hook prompt di sesi Debian: baris 1 detik epoch, baris 2 path guest.
+     * Hook membuang permintaan yang lebih tua dari 5 detik. False bila path tidak aman atau gagal menulis.
+     */
+    fun requestCd(rootfs: File, guestPath: String, nowSec: Long = System.currentTimeMillis() / 1000, id: String? = null): Boolean {
+        if (guestPath.isEmpty() || guestPath.any { it.isISOControl() }) return false
+        return try {
+            val f = File(rootfs, CD_REQ_PATH)
+            f.parentFile?.mkdirs()
+            f.writeText("$nowSec\n$guestPath\n")
+            f.setReadable(true, false)
+            true
+        } catch (e: Exception) {
+            MolinaEvents.bug("proot", "cd-request-failed", e.message ?: e.javaClass.simpleName, e, id = id)
+            false
         }
     }
 

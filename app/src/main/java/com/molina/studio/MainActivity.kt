@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
 
     override val runMode: RunMode
         get() = when (TerminalPrefs.runMode(applicationContext)) {
+            TerminalPrefs.RUN_SMART -> RunMode.SMART
             TerminalPrefs.RUN_ACTIVE -> RunMode.ACTIVE
             TerminalPrefs.RUN_NEW -> RunMode.NEW
             else -> RunMode.ASK

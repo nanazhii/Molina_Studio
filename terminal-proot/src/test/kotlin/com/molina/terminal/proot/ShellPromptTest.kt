@@ -15,6 +15,26 @@ class ShellPromptTest {
     }
 
     @Test
+    fun requestCdWritesEpochAndPath() {
+        val d = Files.createTempDirectory("molina").toFile()
+        try {
+            assertTrue(ShellPrompt.requestCd(d, "/sdcard/Molina_Studio", nowSec = 1_700_000_000L))
+            assertEquals("1700000000\n/sdcard/Molina_Studio\n", File(d, ShellPrompt.CD_REQ_PATH).readText())
+            assertEquals(false, ShellPrompt.requestCd(d, "/sdcard/a\nb"))
+            assertEquals(false, ShellPrompt.requestCd(d, ""))
+        } finally {
+            d.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun scriptHasSilentCdHook() {
+        val s = ShellPrompt.script()
+        assertTrue(s.contains("/etc/molina/cwd.req"))
+        assertTrue(s.contains("CWD-HOOK"))
+    }
+
+    @Test
     fun scriptIsBundledWithColorRules() {
         val s = ShellPrompt.script()
         assertTrue(s.contains("__molina_ps1"))

@@ -61,6 +61,25 @@ internal class TerminalSessionHolder : ViewModel() {
     fun cwdOf(index: Int): String? =
         entries.getOrNull(index)?.session?.getEmulator()?.cwd?.trim()?.takeIf { it.isNotEmpty() }
 
+    /**
+     * [RUN-SMART] Indeks tab Debian yang folder aktifnya sama dengan [guestDir] (path guest, mis. /sdcard/Molina_Studio)
+     * dan siap menerima perintah; -1 bila tidak ada. Tab aktif didahulukan. Tab layar penuh dan tab mati dilewati.
+     */
+    fun indexOfDir(guestDir: String): Int {
+        val want = guestDir.trimEnd('/').ifEmpty { "/" }
+        val order = listOf(currentIndex) + entries.indices.filter { it != currentIndex }
+        for (i in order) {
+            val e = entries.getOrNull(i) ?: continue
+            if (e.finished || !e.session.isRunning || !e.session.isProot) continue
+            if (e.session.getEmulator()?.isAlternateBufferActive == true) continue
+            val label = cwdOf(i) ?: continue
+            if (!label.contains("@localhost:")) continue
+            val path = label.substringAfter("@localhost:").trimEnd('/').ifEmpty { "/" }
+            if (path == want) return i
+        }
+        return -1
+    }
+
     /** Judul dari shell (OSC), null bila kosong. */
     fun titleOf(index: Int): String? =
         entries.getOrNull(index)?.session?.getEmulator()?.title?.trim()?.takeIf { it.isNotEmpty() }

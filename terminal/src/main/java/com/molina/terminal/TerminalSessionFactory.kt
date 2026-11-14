@@ -23,8 +23,8 @@ interface NanoKeysStateOwner {
 }
 
 // molina-patch28
-/** Mode tombol Jalankan di drawer berkas: tanya (dialog), sesi aktif, atau sesi baru. */
-enum class RunMode { ASK, ACTIVE, NEW }
+/** Mode tombol Jalankan di drawer berkas: pintar (tab dengan folder sama, else tab baru), tanya (dialog), sesi aktif, atau sesi baru. */
+enum class RunMode { SMART, ASK, ACTIVE, NEW }
 
 /** Preferensi Jalankan; diisi oleh `app` dari settings (terminal tidak boleh bergantung pada settings). Dibaca tiap aksi, jadi perubahan setelan langsung berlaku. */
 interface RunPrefsOwner {

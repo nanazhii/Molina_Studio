@@ -44,6 +44,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.molina.core.ui.R as UiR
 import com.molina.log.MolinaEvents
+import com.molina.terminal.proot.DebianLayout
+import com.molina.terminal.proot.ShellPrompt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -74,6 +76,8 @@ internal class FileDrawerView(
         fun isProotSession(): Boolean
         fun isFullScreenProgram(): Boolean
         fun runInNewSession(line: (proot: Boolean) -> String?): Boolean
+        /** Pilih tab Debian yang folder aktifnya [guestDir]; false bila tidak ada. */
+        fun activateSessionAt(guestDir: String): Boolean
         fun runMode(): RunMode
         fun runLogEnabled(): Boolean
         fun onRootChanged(path: String)
@@ -441,8 +445,7 @@ internal class FileDrawerView(
         val menu = PopupMenu(context, anchor)
         val m = menu.menu
         if (e.isDir) {
-            m.add(0, ID_CD, 0, context.getString(R.string.drawer_cd))
-            m.add(0, ID_ROOT, 1, context.getString(R.string.drawer_set_root))
+            m.add(0, ID_CD_ROOT, 0, context.getString(R.string.drawer_cd_root))
             m.add(0, ID_NEW_DIR, 2, context.getString(R.string.drawer_new_dir_here))
             m.add(0, ID_NEW_FILE, 3, context.getString(R.string.drawer_new_file_here))
         } else {
@@ -457,8 +460,7 @@ internal class FileDrawerView(
         m.add(0, ID_DELETE, 13, del)
         menu.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                ID_CD -> if (cdHere(f)) close()
-                ID_ROOT -> setRoot(f)
+                ID_CD_ROOT -> cdAndSetRoot(f)
                 ID_NEW_DIR -> newDirDialog(f)
                 ID_NEW_FILE -> newFileDialog(f)
                 ID_NANO -> if (editInNano(f)) close()
@@ -473,21 +475,21 @@ internal class FileDrawerView(
         menu.show()
     }
 
-    /** Titik tiga di header drawer: segarkan, folder baru, berkas baru (di folder utama drawer). */
+    /** Titik tiga di header drawer: satu aksi, cd terminal ke folder utama (Folder baru/Berkas baru ada di bilah bawah). */
     private fun showHeaderMenu(anchor: View) {
         val menu = PopupMenu(context, anchor)
-        menu.menu.add(0, ID_REFRESH, 0, context.getString(R.string.drawer_refresh))
-        menu.menu.add(0, ID_HEAD_NEW_DIR, 1, context.getString(R.string.drawer_new_dir))
-        menu.menu.add(0, ID_HEAD_NEW_FILE, 2, context.getString(R.string.drawer_new_file))
+        menu.menu.add(0, ID_CD_ROOT, 0, context.getString(R.string.drawer_cd_root))
         menu.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                ID_REFRESH -> refreshAll()
-                ID_HEAD_NEW_DIR -> newDirDialog(currentRoot())
-                ID_HEAD_NEW_FILE -> newFileDialog(currentRoot())
-            }
+            if (item.itemId == ID_CD_ROOT) cdAndSetRoot(currentRoot())
             true
         }
         menu.show()
+    }
+
+    /** cd terminal ke [dir] lalu jadikan folder utama drawer; drawer ditutup bila cd berhasil dikirim. */
+    private fun cdAndSetRoot(dir: File) {
+        if (currentRoot().path != dir.path) setRoot(dir)
+        if (cdHere(dir)) close()
     }
 
     // ---------- aksi shell ----------
@@ -504,8 +506,18 @@ internal class FileDrawerView(
 
     private fun cdHere(dir: File): Boolean {
         val p = shellTarget(dir) ?: return false
+        if (host.isProotSession()) {
+            // [CWD-SILENT] sesi Debian: hook prompt yang pindah folder, jadi baris "cd '...'" tidak tampil
+            val rootfs = DebianLayout(context.applicationContext.filesDir).rootfsDir
+            scope.launch {
+                val silent = withContext(Dispatchers.IO) { ShellPrompt.requestCd(rootfs, p) }
+                host.send(if (silent) ShellPrompt.CD_KEYS else "cd " + DrawerFs.quote(p) + "\r")
+                MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "cd", "mode" to if (silent) "silent" else "typed"))
+            }
+            return true
+        }
         host.send("cd " + DrawerFs.quote(p) + "\r")
-        MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "cd"))
+        MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "cd", "mode" to "typed"))
         return true
     }
 
@@ -519,10 +531,17 @@ internal class FileDrawerView(
     /** Tombol Jalankan: ikut setelan (tanya / sesi aktif / sesi baru). */
     private fun runFlow(f: File) {
         when (host.runMode()) {
+            RunMode.SMART -> runSmart(f)
             RunMode.ACTIVE -> runInActive(f)
             RunMode.NEW -> runInNew(f)
             RunMode.ASK -> runDialog(f)
         }
+    }
+
+    /** [RUN-SMART] Tab dengan folder berkas yang sama dipakai ulang; bila belum ada, buka tab baru. */
+    private fun runSmart(f: File) {
+        val guestDir = f.parentFile?.let { DrawerFs.shellPath(it, true) }
+        if (guestDir != null && host.activateSessionAt(guestDir)) runInActive(f) else runInNew(f)
     }
 
     /** Dialog opsi Jalankan: sesi aktif, sesi baru, atau batal. */
@@ -741,6 +760,7 @@ internal class FileDrawerView(
         const val FRACTION = 0.40f
         const val ID_CD = 1
         const val ID_ROOT = 2
+        const val ID_CD_ROOT = 3
         const val ID_NEW_DIR = 3
         const val ID_NEW_FILE = 4
         const val ID_NANO = 5
