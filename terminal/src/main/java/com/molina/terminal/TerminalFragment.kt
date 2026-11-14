@@ -157,6 +157,11 @@ class TerminalFragment : Fragment() {
                     holder.select(i)
                     return true
                 }
+                override fun showNanoKeys() {
+                    holder.nanoKeysOpen = true
+                    (owner as? NanoKeysStateOwner)?.nanoKeysOpen = true
+                    nanoKeys?.refresh()
+                }
                 override fun runMode(): RunMode = (owner as? RunPrefsOwner)?.runMode ?: RunMode.ASK
                 override fun runLogEnabled(): Boolean = (owner as? RunPrefsOwner)?.runLogEnabled == true
                 override fun onRootChanged(path: String) { terminalHeader?.setPath(path) }

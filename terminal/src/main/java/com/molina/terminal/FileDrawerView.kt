@@ -78,6 +78,8 @@ internal class FileDrawerView(
         fun runInNewSession(line: (proot: Boolean) -> String?): Boolean
         /** Pilih tab Debian yang folder aktifnya [guestDir]; false bila tidak ada. */
         fun activateSessionAt(guestDir: String): Boolean
+        /** Buka baris tombol nano (drop-up) agar tombol RUN terlihat. */
+        fun showNanoKeys()
         fun runMode(): RunMode
         fun runLogEnabled(): Boolean
         fun onRootChanged(path: String)
@@ -538,10 +540,37 @@ internal class FileDrawerView(
         }
     }
 
-    /** [RUN-SMART] Tab dengan folder berkas yang sama dipakai ulang; bila belum ada, buka tab baru. */
+    /**
+     * [RUN-NANO] Jalankan = buka berkas di nano: tab dengan folder sama dipakai ulang, bila belum ada buka tab baru.
+     * Pengguna lalu menekan RUN di bilah nano; molina-run memeriksa dan memperbaiki header/penutup skrip sesuai ekstensi.
+     * Sesi tanpa Debian (shell Android) tidak punya nano Molina, jadi berkas langsung dijalankan seperti sebelumnya.
+     */
     private fun runSmart(f: File) {
         val guestDir = f.parentFile?.let { DrawerFs.shellPath(it, true) }
-        if (guestDir != null && host.activateSessionAt(guestDir)) runInActive(f) else runInNew(f)
+        if (guestDir != null && host.activateSessionAt(guestDir)) {
+            if (editInNano(f)) {
+                host.showNanoKeys()
+                MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run_nano", "tab" to "reuse"))
+                close()
+            }
+            return
+        }
+        if (nanoLine(f, true) == null && nanoLine(f, false) == null) { toast(R.string.drawer_not_visible); return }
+        if (host.runInNewSession { proot -> nanoLine(f, proot) }) {
+            host.showNanoKeys()
+            MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run_nano", "tab" to "new"))
+            close()
+        }
+    }
+
+    /** Baris untuk tab baru: Debian = cd ke folder berkas lalu nano; selain itu jalankan langsung. Null bila path tidak aman. */
+    private fun nanoLine(f: File, proot: Boolean): String? {
+        if (!proot) return runLine(f, false)
+        val dir = f.parentFile ?: return null
+        val p = DrawerFs.shellPath(f, true) ?: return null
+        val d = DrawerFs.shellPath(dir, true) ?: return null
+        if (DrawerFs.hasControlChars(p) || DrawerFs.hasControlChars(d)) return null
+        return "cd " + DrawerFs.quote(d) + " && nano " + DrawerFs.quote(p) + "\r"
     }
 
     /** Dialog opsi Jalankan: sesi aktif, sesi baru, atau batal. */

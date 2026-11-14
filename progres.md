@@ -102,3 +102,6 @@
 - [ ] Verifikasi CI Patch 27 + 28b (kompilasi :terminal, :settings, :app; jvm-tests :terminal-proot)
 - [x] Patch 27b: label ⋮ header drawer jadi 'Jalankan di terminal' (string drawer_run_in_terminal); ⋮ per folder tetap 'cd ke terminal + jadikan folder utama'
 - [x] Patch 27c: label menu drawer disingkat: folder/header = 'cd', berkas = 'Jalankan' (eksekusi sesuai ekstensi sh/py/js/pl/rb); string drawer_run_in_terminal dibuang
+- [x] Patch 29: Jalankan drawer = buka berkas di nano (tab folder sama dipakai ulang, atau tab baru) lalu pengguna menekan RUN; molina-run memeriksa/memperbaiki header dan penutup skrip sesuai ekstensi. Bilah tombol nano dibuka otomatis (Host.showNanoKeys). Kunci pref run_mode_v2 (pilihan lama direset ke mode ini). Sesi shell Android tetap menjalankan langsung
+- [ ] Verifikasi CI Patch 29 (kompilasi :terminal, :settings)
+- [ ] Uji perangkat: Jalankan skrip .py di folder X (tab baru + nano terbuka + bilah RUN terlihat), tekan RUN (jalan), Jalankan skrip lain di folder X (tab yang sama dipakai), skrip tanpa shebang/dengan EOF terpotong memunculkan dialog perbaikan

@@ -8,7 +8,7 @@ object TerminalPrefs {
     private const val FILE = "molina_terminal"
     private const val KEY_SHOW_ROOT = "prompt_show_root"
     private const val KEY_NANO_OPEN = "nano_keys_open"
-    private const val KEY_RUN_MODE = "run_mode"
+    private const val KEY_RUN_MODE = "run_mode_v2"
     private const val KEY_RUN_LOG = "run_log"
     const val RUN_SMART = "smart"
     const val RUN_ASK = "ask"
