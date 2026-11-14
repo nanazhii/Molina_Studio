@@ -23,6 +23,7 @@ internal class FilesNavView(
     private val onFolder: (String) -> Unit,
     private val onRemove: (String) -> Unit,
     private val onDebian: () -> Unit,
+    private val onTrash: () -> Unit,
 ) {
     fun render(items: List<FilesNav.Item>) {
         val ctx = list.context
@@ -32,6 +33,7 @@ internal class FilesNavView(
                 FilesNav.Kind.HEADER -> header(ctx, item, first = index == 0)
                 FilesNav.Kind.FOLDER -> folder(ctx, item)
                 FilesNav.Kind.DEBIAN -> debian(ctx)
+                FilesNav.Kind.TRASH -> trash(ctx)
             }
             list.addView(
                 row,
@@ -91,6 +93,25 @@ internal class FilesNavView(
                     true
                 }
             }
+        }
+    }
+
+    // molina-patch26h
+    private fun trash(ctx: Context): View {
+        val ink = ContextCompat.getColor(ctx, UiR.color.molina_on_surface)
+        return TextView(ctx).apply {
+            text = "Sampah"
+            textSize = 14f
+            gravity = Gravity.CENTER_VERTICAL
+            setTextColor(ink)
+            setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_files_trash, 0, 0, 0)
+            compoundDrawableTintList = ColorStateList.valueOf(ink)
+            compoundDrawablePadding = px(ctx, 10)
+            setPadding(px(ctx, 12), px(ctx, 10), px(ctx, 12), px(ctx, 10))
+            val out = TypedValue()
+            ctx.theme.resolveAttribute(android.R.attr.selectableItemBackground, out, true)
+            setBackgroundResource(out.resourceId)
+            setOnClickListener { onTrash() }
         }
     }
 

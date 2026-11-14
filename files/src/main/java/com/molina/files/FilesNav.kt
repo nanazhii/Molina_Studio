@@ -6,7 +6,7 @@ package com.molina.files
  * (Molina dan Debian). Murni JVM; path relatif terhadap root Molina, root = "".
  */
 internal object FilesNav {
-    enum class Kind { HEADER, FOLDER, DEBIAN }
+    enum class Kind { HEADER, FOLDER, DEBIAN, TRASH }
 
     data class Item(
         val kind: Kind,
@@ -42,6 +42,7 @@ internal object FilesNav {
         items += Item(Kind.HEADER, "Penyimpanan")
         items += Item(Kind.FOLDER, "Molina", "", active = current.isEmpty())
         items += Item(Kind.DEBIAN, "Debian")
+        items += Item(Kind.TRASH, "Sampah")
         return items
     }
 }

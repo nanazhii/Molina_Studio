@@ -51,6 +51,22 @@ class FilesEventsTest {
         assertEquals("[BEHAV:files.restore] | depth=2", e.message)
     }
 
+    // molina-patch26h
+    @Test
+    fun trashEventsHaveCountsOnly() {
+        FilesEvents.trashed(3, logger)
+        FilesEvents.trashRestored("undo", 3, logger)
+        FilesEvents.trashPurged("auto", 2, logger)
+        assertEquals(
+            listOf(
+                "[BEHAV:files.trash] | count=3",
+                "[BEHAV:files.trash-restore] | via=undo count=3",
+                "[BEHAV:files.trash-purge] | via=auto count=2",
+            ),
+            sink.entries.map { it.message },
+        )
+    }
+
     // molina-patch26f
     @Test
     fun favoriteHasActionAndDepthOnly() {

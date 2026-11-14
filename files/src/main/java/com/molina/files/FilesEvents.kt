@@ -40,6 +40,27 @@ internal object FilesEvents {
             logger = logger,
         )
 
+    // molina-patch26h
+    /** Item dipindah ke Sampah. Hanya jumlah, tanpa nama/path. */
+    fun trashed(count: Int, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(AREA, "trash", fields = mapOf("count" to count.toString()), logger = logger)
+
+    /** [via]: undo | sheet. */
+    fun trashRestored(via: String, count: Int, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "trash-restore",
+            fields = mapOf("via" to via, "count" to count.toString()),
+            logger = logger,
+        )
+
+    /** [via]: sheet | empty | auto. */
+    fun trashPurged(via: String, count: Int, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "trash-purge",
+            fields = mapOf("via" to via, "count" to count.toString()),
+            logger = logger,
+        )
+
     // molina-patch26f
     /** [action]: add | remove. Hanya kedalaman path, tanpa nama folder. */
     fun favorite(action: String, path: String, logger: MolinaLogger = MolinaLog.logger) =

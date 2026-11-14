@@ -13,7 +13,7 @@ class FilesNavTest {
     fun orderIsFavoritesThenStorage() {
         val items = FilesNav.build(listOf("Film/2024"), "")
         assertEquals(
-            listOf("Favorit", "Cinema", "Terminal", "Log", "2024", "Penyimpanan", "Molina", "Debian"),
+            listOf("Favorit", "Cinema", "Terminal", "Log", "2024", "Penyimpanan", "Molina", "Debian", "Sampah"),
             labels(items),
         )
         assertTrue(items.first().star)

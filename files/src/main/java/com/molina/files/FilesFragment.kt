@@ -46,6 +46,7 @@ import com.molina.core.storage.ScopedKeyValueStore
 import com.molina.core.storage.SharedPrefsKeyValueStore
 import com.molina.core.storage.SortKey
 import com.molina.core.storage.TransferKind
+import com.molina.core.storage.TrashItem
 import com.molina.core.ui.MolinaDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -128,6 +129,10 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             },
             onRemove = { path -> toggleFavorite(path) },
             onDebian = { notifyDebian() },
+            onTrash = {
+                closeNav()
+                openTrash()
+            },
         )
         v.navBtn.setOnClickListener { openNav() }
         v.navScrim.setOnClickListener { closeNav() }
@@ -171,6 +176,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                 FilesTransfer.state.collect { renderTransfer(it) }
             }
         }
+        if (savedInstanceState == null) purgeExpiredTrash()
         if (savedInstanceState == null) openLastFolder() else load(currentPath)
     }
 
@@ -350,13 +356,15 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             m.add(Menu.NONE, MENU_COPY, 0, "Salin").isEnabled = canAct
             m.add(Menu.NONE, MENU_MOVE, 1, "Pindah").isEnabled = canAct
             m.add(Menu.NONE, MENU_DELETE_SELECTED, 2, "Hapus").isEnabled = canAct
+            m.add(Menu.NONE, MENU_DELETE_PERM_SELECTED, 2, "Hapus permanen").isEnabled = canAct
             m.add(Menu.NONE, MENU_SELECT_ALL, 3, "Pilih semua")
             m.add(Menu.NONE, MENU_SELECT_DONE, 4, "Selesai memilih")
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     MENU_COPY -> setClip(TransferKind.COPY)
                     MENU_MOVE -> setClip(TransferKind.MOVE)
-                    MENU_DELETE_SELECTED -> confirmDeleteSelection()
+                    MENU_DELETE_SELECTED -> trashSelection()
+                    MENU_DELETE_PERM_SELECTED -> confirmDeleteSelection()
                     MENU_SELECT_ALL -> selectAllVisible()
                     MENU_SELECT_DONE -> exitSelection("menu")
                 }
@@ -416,6 +424,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         val popup = PopupMenu(requireContext(), anchor)
         popup.menu.add(Menu.NONE, MENU_RENAME, 0, "Ganti nama")
         popup.menu.add(Menu.NONE, MENU_DELETE, 1, "Hapus")
+        popup.menu.add(Menu.NONE, MENU_DELETE_PERM, 1, "Hapus permanen")
         val favPath = keyOf(entry)
         if (entry.isDirectory && !FilesNav.isBuiltIn(favPath)) {
             popup.menu.add(Menu.NONE, MENU_FAV, 2, favLabel(favPath))
@@ -423,12 +432,90 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 MENU_RENAME -> promptRename(entry)
-                MENU_DELETE -> promptDelete(entry)
+                MENU_DELETE -> trashEntry(entry)
+                MENU_DELETE_PERM -> promptDelete(entry)
                 MENU_FAV -> toggleFavorite(keyOf(entry))
             }
             true
         }
         popup.show()
+    }
+
+    // --- Sampah (molina-patch26h)
+
+    /** Dipakai [TrashSheet]. */
+    internal val trashStorage: MolinaStorage get() = storage
+
+    internal fun onTrashChanged() {
+        if (views != null) load(currentPath)
+    }
+
+    private fun trashEntry(entry: FileEntry) {
+        if (FilesTransfer.isRunning) notifyBusy() else moveToTrash(listOf(keyOf(entry)))
+    }
+
+    private fun trashSelection() {
+        val paths = selection.snapshot()
+        if (paths.isEmpty()) return
+        if (FilesTransfer.isRunning) notifyBusy() else moveToTrash(paths)
+    }
+
+    /** Pindah ke Sampah (rename, instan); hasilnya bisa diurungkan lewat Snackbar. */
+    private fun moveToTrash(paths: List<String>) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            when (val result = storage.trash(paths)) {
+                is MolinaResult.Success -> {
+                    FilesEvents.trashed(result.value.size)
+                    if (selection.active) exitSelection("op")
+                    load(currentPath)
+                    showTrashUndo(result.value)
+                }
+                is MolinaResult.Failure -> {
+                    reportOpFailure("trash", result.error, currentPath)
+                    load(currentPath)
+                }
+            }
+        }
+    }
+
+    private fun showTrashUndo(items: List<TrashItem>) {
+        val root = view ?: return
+        val ids = items.map { it.id }
+        val text = if (items.size == 1) "Dipindah ke Sampah" else "${items.size} item dipindah ke Sampah"
+        Snackbar.make(root, text, Snackbar.LENGTH_LONG)
+            .setDuration(UNDO_MS)
+            .setAction("Urungkan") { undoTrash(ids) }
+            .show()
+    }
+
+    private fun undoTrash(ids: List<String>) {
+        if (views == null) return
+        viewLifecycleOwner.lifecycleScope.launch {
+            when (val result = storage.restoreTrash(ids)) {
+                is MolinaResult.Success -> {
+                    FilesEvents.trashRestored("undo", result.value.size)
+                    load(currentPath)
+                }
+                is MolinaResult.Failure -> {
+                    reportOpFailure("trash-restore", result.error, currentPath)
+                    load(currentPath)
+                }
+            }
+        }
+    }
+
+    private fun openTrash() {
+        if (childFragmentManager.findFragmentByTag(TRASH_TAG) != null) return
+        TrashSheet().show(childFragmentManager, TRASH_TAG)
+    }
+
+    /** Membersihkan item Sampah yang melewati batas simpan; tanpa mengganggu pemuatan folder. */
+    private fun purgeExpiredTrash() {
+        val s = storage
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = s.purgeExpiredTrash()
+            if (result is MolinaResult.Success && result.value > 0) FilesEvents.trashPurged("auto", result.value)
+        }
     }
 
     // --- laci kiri (molina-patch26f)
@@ -527,7 +614,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         } else {
             "\"${entry.name}\" akan dihapus permanen."
         }
-        MolinaDialog.confirm(requireContext(), "Hapus?", message, "Hapus") {
+        MolinaDialog.confirm(requireContext(), "Hapus permanen?", message, "Hapus permanen") {
             runOp("delete", entry.isDirectory, path) { storage.delete(path) }
         }
     }
@@ -620,9 +707,9 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         if (paths.isEmpty()) return
         MolinaDialog.confirm(
             requireContext(),
-            title = "Hapus ${paths.size} item?",
+            title = "Hapus permanen ${paths.size} item?",
             message = "Item terpilih dan seluruh isinya akan dihapus permanen.",
-            positive = "Hapus",
+            positive = "Hapus permanen",
         ) {
             if (!FilesTransfer.start(TransferKind.DELETE, paths, currentPath)) notifyBusy()
         }
@@ -851,5 +938,9 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         const val MENU_FAV = 17
         const val NAV_WIDTH_DP = 240
         const val NAV_ANIM_MS = 180L
+        const val MENU_DELETE_PERM_SELECTED = 18
+        const val MENU_DELETE_PERM = 19
+        const val TRASH_TAG = "trash"
+        const val UNDO_MS = 6000
     }
 }

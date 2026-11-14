@@ -144,6 +144,10 @@ Tag `Molina/files`. Path tidak pernah dicatat: hanya `depth` (jumlah segmen path
 | `files.list` | BEHAV | folder berhasil dibuka | `depth`, `count` |
 | `files.restore` | BEHAV | Berkas dibuka langsung di folder terakhir yang diingat (bukan root; tanpa path) | `depth` |
 | `files.favorite` | BEHAV | Folder ditambah/dihapus dari Favorit laci kiri (tanpa nama folder) | `action` (add/remove), `depth` |
+| `files.trash` | BEHAV | Item dipindah ke Sampah (bisa diurungkan; tanpa nama/path) | `count` |
+| `files.trash-restore` | BEHAV | Item dipulihkan dari Sampah | `via` (undo/sheet), `count` |
+| `files.trash-purge` | BEHAV | Item dihapus permanen dari Sampah | `via` (sheet/empty/auto), `count` |
+| `files.trash-failed` / `files.trash-restore-failed` / `files.trash-purge-failed` / `files.trash-list-failed` | BUG (W untuk galat nama/dilindungi) | operasi Sampah gagal | `kind`, `error`, `depth`, `errno` |
 | `files.permission-missing` | BEHAV | izin penyimpanan belum ada saat membuka folder (keadaan normal pertama kali) | `depth` |
 | `files.permission-request` | BEHAV | pengguna menekan Beri izin | - |
 | `files.permission-result` | BEHAV | hasil dialog izin | `granted` |
