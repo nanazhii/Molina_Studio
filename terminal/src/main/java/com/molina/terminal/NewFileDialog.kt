@@ -56,7 +56,7 @@ internal fun showNewFileDialog(
 ) {
     val density = context.resources.displayMetrics.density
     fun dp(v: Int): Int = (v * density + 0.5f).toInt()
-    val frame = ContextCompat.getColor(context, R.color.molina_nano_frame)
+    val frame = ContextCompat.getColor(context, UiR.color.molina_header_frame)
     val dim = 0xFFA3A8B0.toInt()
     val brand = ContextCompat.getColor(context, UiR.color.molina_tab_brand)
     val init = NewFileName.split(NewFileName.TEMPLATE)
