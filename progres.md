@@ -125,3 +125,7 @@
 - [ ] Verifikasi CI Patch 26d (kompilasi :core-ui dan :files, module gate)
 - [ ] Uji perangkat: dialog Folder baru/Berkas baru/Ganti nama/Hapus/Hapus N item di Berkas tampil sama seperti sebelumnya (hitam pekat, bingkai abu-putih, tombol Batal abu dan aksi hijau); header Berkas dan kotak cari tidak berubah
 - [ ] Berikutnya: Terminal memakai MolinaDialog untuk dialog konfirmasi/ganti nama di drawer (Patch 26d-2, opsional), lalu Patch 26e (Putar ke Cinema + thumbnail), lalu Favorit/Terakhir dibuka
+- [x] Patch 26e-h: header Berkas bergaya repo lama (bingkai gradien abu, orb naik hijau merek, breadcrumb 2 segmen bisa diketuk, ikon cari membuka kolom cari); BrowserPath.crumbs + tes. Di-push sebagai 5f99d9e, belum dikompilasi di sandbox
+- [ ] Verifikasi CI Patch 26e-h (kompilasi :files dan :core-ui, jvm-tests BrowserPathTest)
+- [ ] Uji perangkat Android 8: orb abu di root; ketuk segmen breadcrumb loncat folder; ikon cari buka/tutup kolom; putar layar dengan kueri aktif; Mode Pilih menampilkan 'N dipilih'
+- [x] Keputusan Penjelajah: Buka dengan, ketuk berkas teks, dan Pratinjau ditunda ke tahap akhir; Terminal, Editor, dan menu Alat (salin path, vault, script, nano, Code) dihapus dari desain. Antrean porting: Favorit/Terakhir/Prefs, Recycle Bin, Properti/Bagikan, Arsip, Thumbnail+Putar ke Cinema
