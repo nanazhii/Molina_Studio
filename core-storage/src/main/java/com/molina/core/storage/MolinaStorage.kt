@@ -59,6 +59,23 @@ interface MolinaStorage {
         cancel: CancelToken = CancelToken(),
         onProgress: (TransferProgress) -> Unit = {},
     ): MolinaResult<BatchResult>
+
+    // molina-patch26h
+    /** Memindahkan item ke Sampah (rename, bisa diurungkan). Root, folder standar, dan Sampah dilindungi. */
+    suspend fun trash(relatives: List<String>): MolinaResult<List<TrashItem>>
+
+    suspend fun listTrash(): MolinaResult<List<TrashItem>>
+
+    /** Mengembalikan item Sampah ke lokasi asal; hasilnya path relatif hasil pemulihan. */
+    suspend fun restoreTrash(ids: List<String>): MolinaResult<List<String>>
+
+    /** Menghapus permanen item tertentu dari Sampah; hasilnya jumlah yang terhapus. */
+    suspend fun purgeTrash(ids: List<String>): MolinaResult<Int>
+
+    suspend fun emptyTrash(): MolinaResult<Int>
+
+    /** Membersihkan item Sampah yang lebih tua dari batas simpan (30 hari). */
+    suspend fun purgeExpiredTrash(now: Long = System.currentTimeMillis()): MolinaResult<Int>
 }
 
 class LocalMolinaStorage(
@@ -67,7 +84,10 @@ class LocalMolinaStorage(
 ) : MolinaStorage {
 
     /** Root dan folder standar: tidak boleh dihapus atau diganti namanya. */
-    private val protectedPaths: Set<File> get() = paths.layout.toSet()
+    private val protectedPaths: Set<File> get() = paths.layout.toSet() + paths.trash
+
+    // molina-patch26h
+    private val bin by lazy { TrashBin(paths.root) }
 
     override suspend fun ensureLayout(): MolinaResult<Unit> = withContext(dispatchers.io) {
         molinaCatching {
@@ -155,6 +175,30 @@ class LocalMolinaStorage(
         }
     }
 
+    // molina-patch26h
+    override suspend fun trash(relatives: List<String>): MolinaResult<List<TrashItem>> =
+        withContext(dispatchers.io) {
+            when (val files = resolveAll(relatives)) {
+                is MolinaResult.Failure -> files
+                is MolinaResult.Success -> bin.trash(files.value, protectedPaths)
+            }
+        }
+
+    override suspend fun listTrash(): MolinaResult<List<TrashItem>> =
+        withContext(dispatchers.io) { molinaCatching { bin.list() } }
+
+    override suspend fun restoreTrash(ids: List<String>): MolinaResult<List<String>> =
+        withContext(dispatchers.io) { bin.restore(ids) }
+
+    override suspend fun purgeTrash(ids: List<String>): MolinaResult<Int> =
+        withContext(dispatchers.io) { bin.purge(ids) }
+
+    override suspend fun emptyTrash(): MolinaResult<Int> =
+        withContext(dispatchers.io) { bin.empty() }
+
+    override suspend fun purgeExpiredTrash(now: Long): MolinaResult<Int> =
+        withContext(dispatchers.io) { bin.purgeExpired(now) }
+
     private inline fun onTransferInputs(
         sources: List<String>,
         destRelative: String,
@@ -193,6 +237,7 @@ class LocalMolinaStorage(
         if (!dir.isDirectory) throw IOException("bukan folder")
         val children = dir.listFiles() ?: throw SecurityException()
         children
+            .filter { it.name != MolinaPaths.TRASH_DIR }
             .map { FileEntry(it.name, it.path, it.isDirectory, if (it.isDirectory) 0L else it.length(), it.lastModified()) }
             .sortedWith(compareByDescending<FileEntry> { it.isDirectory }
                 .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })

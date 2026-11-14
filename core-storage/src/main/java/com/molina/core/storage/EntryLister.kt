@@ -1,6 +1,7 @@
 // molina-patch26a
 package com.molina.core.storage
 
+import com.molina.core.common.MolinaPaths
 import java.io.File
 import java.nio.file.Files
 import java.util.Locale
@@ -35,7 +36,8 @@ internal object EntryLister {
     fun list(dir: File, o: ListOptions, cancelled: () -> Boolean = { false }): ListResult? {
         val w = words(o.query)
         val top = dir.listFiles() ?: return null
-        fun visible(f: File) = o.showHidden || !f.name.startsWith(".")
+        // molina-patch26h: folder Sampah tidak pernah tampil (juga saat "tampilkan tersembunyi")
+        fun visible(f: File) = f.name != MolinaPaths.TRASH_DIR && (o.showHidden || !f.name.startsWith("."))
         fun extOk(f: File): Boolean {
             val only = o.onlyExt ?: return true
             return f.isDirectory || f.extension.lowercase(Locale.ROOT) in only
