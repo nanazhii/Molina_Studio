@@ -59,10 +59,9 @@ class SettingsFragment : Fragment() {
             addView(RadioGroup(ctx).apply {
                 val current = TerminalPrefs.runMode(ctx)
                 listOf(
-                    TerminalPrefs.RUN_SMART to "Buka di nano lalu RUN (tab folder sama, atau tab baru)",
-                    TerminalPrefs.RUN_ASK to "Tanya setiap kali",
-                    TerminalPrefs.RUN_ACTIVE to "Langsung di sesi aktif",
-                    TerminalPrefs.RUN_NEW to "Langsung di sesi baru",
+                    TerminalPrefs.RUN_ASK to "Tanya setiap kali (sesi baru / sesi aktif / batal)",
+                    TerminalPrefs.RUN_ACTIVE to "Selalu di sesi aktif (nano + RUN otomatis)",
+                    TerminalPrefs.RUN_NEW to "Selalu di sesi baru (nano + RUN otomatis)",
                 ).forEach { (value, label) ->
                     addView(RadioButton(ctx).apply {
                         text = label

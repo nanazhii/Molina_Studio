@@ -21,6 +21,7 @@ import android.text.SpannableString
 import android.text.TextUtils
 import android.text.format.Formatter
 import android.text.style.ForegroundColorSpan
+import android.util.TypedValue
 import android.view.GestureDetector
 import android.view.Gravity
 import android.view.MotionEvent
@@ -29,6 +30,7 @@ import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
@@ -83,6 +85,8 @@ internal class FileDrawerView(
         /** [RUN-AUTO] Tunggu nano terbuka di sesi aktif, lalu kirim RUN (Alt+R) otomatis. */
         fun autoRunNano()
         fun runMode(): RunMode
+        /** [RUN-REMEMBER] Simpan pilihan Jalankan ke Setelan (kotak "Ingat pilihan"). */
+        fun rememberRunMode(mode: RunMode)
         fun runLogEnabled(): Boolean
         fun onRootChanged(path: String)
         fun onOpenChanged(open: Boolean)
@@ -93,6 +97,7 @@ internal class FileDrawerView(
     private val hairline = ColorUtils.setAlphaComponent(Color.WHITE, 0x4D)
     private val accent = ContextCompat.getColor(context, UiR.color.molina_terminal_accent)
     private val danger = ContextCompat.getColor(context, UiR.color.molina_key_red)
+    private val runGreen = ContextCompat.getColor(context, UiR.color.molina_key_green)
     private var vols: List<File> = listOf(File(DrawerFs.INTERNAL_ROOT))
 
     private val panel = DrawerPanel(
@@ -454,7 +459,11 @@ internal class FileDrawerView(
             m.add(0, ID_NEW_FILE, 3, context.getString(R.string.drawer_new_file_here))
         } else {
             m.add(0, ID_NANO, 0, context.getString(R.string.drawer_nano))
-            if (RunnableFile.interpreter(e.name) != null) m.add(0, ID_RUN, 1, context.getString(R.string.drawer_run))
+            if (RunnableFile.interpreter(e.name) != null) {
+                val run = SpannableString("\u25B6 " + context.getString(R.string.drawer_run))
+                run.setSpan(ForegroundColorSpan(runGreen), 0, 1, 0)
+                m.add(0, ID_RUN, 1, run)
+            }
         }
         m.add(0, ID_RENAME, 10, context.getString(R.string.drawer_rename))
         m.add(0, ID_COPY, 11, context.getString(R.string.drawer_copy_path))
@@ -532,8 +541,12 @@ internal class FileDrawerView(
         return true
     }
 
-    /** Tombol Jalankan: selalu tanya dulu (sesi baru / sesi aktif / batal). */ // molina-patch30
-    private fun runFlow(f: File) = runDialog(f)
+    /** Tombol Jalankan: ikut setelan (tanya lewat dialog = bawaan, selalu sesi aktif, atau selalu sesi baru). */ // molina-patch31
+    private fun runFlow(f: File) = when (host.runMode()) {
+        RunMode.ACTIVE -> runActiveAuto(f)
+        RunMode.NEW -> runNewAuto(f)
+        RunMode.ASK -> runDialog(f)
+    }
 
     /**
      * [RUN-AUTO] Jalankan = alur sama seperti Edit di nano, tetapi RUN (Alt+R) dikirim otomatis begitu nano siap.
@@ -576,13 +589,42 @@ internal class FileDrawerView(
         return "cd " + DrawerFs.quote(d) + " && nano " + DrawerFs.quote(p) + "\r"
     }
 
-    /** Dialog opsi Jalankan: sesi baru, sesi aktif (ikut path aktif), atau batal. */
+    /** Dialog opsi Jalankan: sesi baru, sesi aktif (ikut path aktif), atau batal; kotak "Ingat pilihan" menyimpannya ke Setelan. */
     private fun runDialog(f: File) {
-        AlertDialog.Builder(context)
+        val builder = AlertDialog.Builder(context)
+        val ctx = builder.context
+        val tv = TypedValue()
+        ctx.theme.resolveAttribute(android.R.attr.textColorPrimary, tv, true)
+        val textColor = if (tv.resourceId != 0) ContextCompat.getColor(ctx, tv.resourceId) else tv.data
+        val remember = CheckBox(ctx).apply { setText(R.string.drawer_run_remember) }
+        var dlg: AlertDialog? = null
+        fun row(label: Int, mode: RunMode, go: () -> Unit): TextView = TextView(ctx).apply {
+            setText(label)
+            textSize = 16f
+            setTextColor(textColor)
+            setPadding(dp(24), dp(14), dp(24), dp(14))
+            isClickable = true
+            val out = TypedValue()
+            if (ctx.theme.resolveAttribute(android.R.attr.selectableItemBackground, out, true)) setBackgroundResource(out.resourceId)
+            setOnClickListener {
+                if (remember.isChecked) {
+                    host.rememberRunMode(mode)
+                    Toast.makeText(ctx, R.string.drawer_run_remembered, Toast.LENGTH_LONG).show()
+                    MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run_remember", "mode" to if (mode == RunMode.NEW) "new" else "active"))
+                }
+                dlg?.dismiss()
+                go()
+            }
+        }
+        val body = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(row(R.string.drawer_run_new, RunMode.NEW) { runNewAuto(f) })
+            addView(row(R.string.drawer_run_active, RunMode.ACTIVE) { runActiveAuto(f) })
+            addView(remember, LinearLayout.LayoutParams(MATCH, WRAP).apply { setMargins(dp(20), dp(8), dp(20), 0) })
+        }
+        dlg = builder
             .setTitle(context.getString(R.string.drawer_run_title, f.name))
-            .setItems(
-                arrayOf(context.getString(R.string.drawer_run_new), context.getString(R.string.drawer_run_active)),
-            ) { _, which -> if (which == 0) runNewAuto(f) else runActiveAuto(f) }
+            .setView(body)
             .setNegativeButton(R.string.terminal_tab_cancel, null)
             .show()
     }

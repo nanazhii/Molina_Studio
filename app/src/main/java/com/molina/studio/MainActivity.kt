@@ -38,13 +38,20 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
         get() = TerminalPrefs.nanoKeysOpen(applicationContext)
         set(value) = TerminalPrefs.setNanoKeysOpen(applicationContext, value)
 
-    override val runMode: RunMode
+    override var runMode: RunMode
         get() = when (TerminalPrefs.runMode(applicationContext)) {
-            TerminalPrefs.RUN_SMART -> RunMode.SMART
             TerminalPrefs.RUN_ACTIVE -> RunMode.ACTIVE
             TerminalPrefs.RUN_NEW -> RunMode.NEW
             else -> RunMode.ASK
         }
+        set(value) = TerminalPrefs.setRunMode(
+            applicationContext,
+            when (value) {
+                RunMode.ACTIVE -> TerminalPrefs.RUN_ACTIVE
+                RunMode.NEW -> TerminalPrefs.RUN_NEW
+                RunMode.ASK -> TerminalPrefs.RUN_ASK
+            },
+        )
 
     override val runLogEnabled: Boolean
         get() = TerminalPrefs.runLog(applicationContext)

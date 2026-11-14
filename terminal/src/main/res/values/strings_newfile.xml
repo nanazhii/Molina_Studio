@@ -10,4 +10,6 @@
     <string name="drawer_run_active">Sesi aktif</string>
     <string name="drawer_run_new">Sesi baru</string>
     <string name="drawer_run_log_note">Keluaran dicatat di Molina/run-logs</string>
+    <string name="drawer_run_remember">Ingat pilihan</string>
+    <string name="drawer_run_remembered">Pilihan disimpan. Ubah di Setelan &gt; Terminal.</string>
 </resources>

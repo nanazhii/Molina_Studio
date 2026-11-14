@@ -189,6 +189,7 @@ class TerminalFragment : Fragment() {
                     }
                 }
                 override fun runMode(): RunMode = (owner as? RunPrefsOwner)?.runMode ?: RunMode.ASK
+                override fun rememberRunMode(mode: RunMode) { (owner as? RunPrefsOwner)?.runMode = mode }
                 override fun runLogEnabled(): Boolean = (owner as? RunPrefsOwner)?.runLogEnabled == true
                 override fun onRootChanged(path: String) { terminalHeader?.setPath(path) }
                 override fun onOpenChanged(open: Boolean) {

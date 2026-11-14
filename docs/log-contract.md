@@ -184,3 +184,6 @@ yang berakhir di `debug.crash-trigger` lalu `CRASH uncaught`. Area crash uji ada
 - BEHAV `term.drawer.op` op=`run_nano` fields: `tab`=`active|new`, `auto`=`1|0` (0 = tab shell Android, berkas dijalankan langsung)
 - BEHAV `term.drawer.op` op=`auto_run_sent` fields: `waited_ms` (RUN/Alt+R terkirim setelah judul `nano: ` + layar alternatif terdeteksi)
 - BUG `term.drawer.auto-run-timeout` fields: `waited_ms` (nano tidak siap dalam 12 dtk, RUN tidak dikirim)
+
+<!-- molina-patch31 -->
+- BEHAV `term.drawer.op` op=`run_remember` fields: `mode`=`active|new` (kotak Ingat pilihan di dialog Jalankan; dibaca lagi di Setelan > Terminal)
