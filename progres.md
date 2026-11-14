@@ -105,3 +105,7 @@
 - [x] Patch 29: Jalankan drawer = buka berkas di nano (tab folder sama dipakai ulang, atau tab baru) lalu pengguna menekan RUN; molina-run memeriksa/memperbaiki header dan penutup skrip sesuai ekstensi. Bilah tombol nano dibuka otomatis (Host.showNanoKeys). Kunci pref run_mode_v2 (pilihan lama direset ke mode ini). Sesi shell Android tetap menjalankan langsung
 - [ ] Verifikasi CI Patch 29 (kompilasi :terminal, :settings)
 - [ ] Uji perangkat: Jalankan skrip .py di folder X (tab baru + nano terbuka + bilah RUN terlihat), tekan RUN (jalan), Jalankan skrip lain di folder X (tab yang sama dipakai), skrip tanpa shebang/dengan EOF terpotong memunculkan dialog perbaikan
+- [x] Patch 29: Jalankan drawer = buka berkas di nano (tab folder sama dipakai ulang, atau tab baru) lalu pengguna menekan RUN; molina-run memeriksa/memperbaiki header dan penutup skrip. Bilah tombol nano dibuka otomatis (Host.showNanoKeys). Kunci pref run_mode_v2 (pilihan lama direset)
+- [x] Patch 29b: jalur Jalankan langsung (shell Android dan mode lama) mencetak ringkasan seperti molina-run: ▶ nama (penerjemah), ✔ selesai (N dtk) / ✘ keluar dengan kode N; mode log hanya melaporkan waktu (■)
+- [ ] Verifikasi CI Patch 29 + 29b (kompilasi :terminal, :settings)
+- [ ] Uji perangkat: Jalankan skrip .py (tab baru + nano + bilah RUN), RUN berjalan dengan ringkasan; mode lama Sesi aktif menampilkan ▶ dan ✔; skrip yang gagal menampilkan ✘ dengan kode keluar

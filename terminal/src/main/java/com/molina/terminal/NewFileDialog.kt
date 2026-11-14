@@ -228,7 +228,16 @@ internal object RunnableFile {
             val piped = "$runner $quotedFile 2>&1 | tee ${log.quotedBase}-\$(date +%Y%m%d-%H%M%S).log"
             "if mkdir -p ${log.quotedDir} 2>/dev/null; then $piped; else echo '[Molina] folder log tidak bisa dibuat, dijalankan tanpa catatan'; $plain; fi"
         }
-        return "cd $quotedDir && if command -v $cmd >/dev/null 2>&1; then $exec; else echo '[Molina] $hint'; fi\r"
+        // [RUN-SUMMARY] ringkasan sama dengan molina-run. Dengan log, status keluar pipeline milik tee, jadi hanya waktu yang dilaporkan.
+        val start = "printf '\\033[1;32m▶ %s (%s)\\033[0m\\n' ${DrawerFs.quote(fileName)} $cmd; _mr_t=\$(date +%s); "
+        val tail = if (log == null) {
+            "; _mr_rc=\$?; _mr_d=\$((\$(date +%s)-_mr_t)); if [ \$_mr_rc -eq 0 ]; then printf '\\033[1;32m✔ selesai (%s dtk)\\033[0m\\n' \$_mr_d; " +
+                "elif [ \$_mr_rc -eq 130 ]; then printf '\\033[1;31m✘ dihentikan (Ctrl+C)\\033[0m\\n'; " +
+                "else printf '\\033[1;31m✘ keluar dengan kode %s (%s dtk)\\033[0m\\n' \$_mr_rc \$_mr_d; fi; unset _mr_t _mr_rc _mr_d"
+        } else {
+            "; _mr_d=\$((\$(date +%s)-_mr_t)); printf '\\033[1;32m■ selesai (%s dtk)\\033[0m\\n' \$_mr_d; unset _mr_t _mr_d"
+        }
+        return "cd $quotedDir && if command -v $cmd >/dev/null 2>&1; then $start$exec$tail; else echo '[Molina] $hint'; fi\r"
     }
 }
 
