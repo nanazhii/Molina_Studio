@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- molina-patch26b: bingkai hijau seperti header Terminal -->
+<!-- molina-patch26d: bingkai hijau header (dipakai bersama; asal: bg_files_header) -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="@color/molina_extrakey_bg" />
     <corners android:radius="8dp" />

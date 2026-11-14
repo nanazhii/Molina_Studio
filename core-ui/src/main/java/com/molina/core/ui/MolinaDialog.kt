@@ -1,5 +1,5 @@
-// molina-patch26b
-package com.molina.files
+// molina-patch26d
+package com.molina.core.ui
 
 import android.app.Dialog
 import android.content.Context
@@ -13,8 +13,11 @@ import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.TextView
 
-/** Dialog hitam pekat berbingkai abu-putih untuk input nama dan konfirmasi. Dipakai ulang oleh operasi berkas. */
-internal object FilesDialog {
+/**
+ * Dialog hitam pekat berbingkai abu-putih untuk input nama dan konfirmasi, dipakai bersama modul
+ * (dipindah dari :files). Nama awal diblok tanpa ekstensi bila selectBase.
+ */
+object MolinaDialog {
 
     /** Nama awal diblok tanpa ekstensi bila [selectBase] (mis. saat Ganti nama berkas). */
     fun input(
@@ -44,7 +47,7 @@ internal object FilesDialog {
     ) {
         val dialog = Dialog(context)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        val view = LayoutInflater.from(context).inflate(R.layout.dialog_files, null, false)
+        val view = LayoutInflater.from(context).inflate(R.layout.molina_dialog, null, false)
         view.findViewById<TextView>(R.id.dlg_title).text = title
         val msg = view.findViewById<TextView>(R.id.dlg_message)
         if (message != null) {

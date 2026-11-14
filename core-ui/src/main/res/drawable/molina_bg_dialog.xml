@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- molina-patch26d: dialog hitam pekat berbingkai abu-putih (asal: bg_files_dialog) -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="@color/molina_bg" />
     <corners android:radius="10dp" />

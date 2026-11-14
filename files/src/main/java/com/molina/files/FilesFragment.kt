@@ -37,6 +37,7 @@ import com.molina.core.storage.LocalMolinaStorage
 import com.molina.core.storage.MolinaStorage
 import com.molina.core.storage.SortKey
 import com.molina.core.storage.TransferKind
+import com.molina.core.ui.MolinaDialog
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -362,7 +363,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     // --- operasi
 
     private fun promptCreate(folder: Boolean) {
-        FilesDialog.input(
+        MolinaDialog.input(
             requireContext(),
             title = if (folder) "Folder baru" else "Berkas baru",
             initial = "",
@@ -377,7 +378,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
 
     private fun promptRename(entry: FileEntry) {
         val path = BrowserPath.entryPath(currentPath, entry.relDir, entry.name)
-        FilesDialog.input(
+        MolinaDialog.input(
             requireContext(),
             title = "Ganti nama",
             initial = entry.name,
@@ -395,7 +396,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         } else {
             "\"${entry.name}\" akan dihapus permanen."
         }
-        FilesDialog.confirm(requireContext(), "Hapus?", message, "Hapus") {
+        MolinaDialog.confirm(requireContext(), "Hapus?", message, "Hapus") {
             runOp("delete", entry.isDirectory, path) { storage.delete(path) }
         }
     }
@@ -486,7 +487,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     private fun confirmDeleteSelection() {
         val paths = selection.snapshot()
         if (paths.isEmpty()) return
-        FilesDialog.confirm(
+        MolinaDialog.confirm(
             requireContext(),
             title = "Hapus ${paths.size} item?",
             message = "Item terpilih dan seluruh isinya akan dihapus permanen.",

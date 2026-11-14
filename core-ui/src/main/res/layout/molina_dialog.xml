@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- molina-patch26b: dialog hitam pekat, bingkai abu-putih (selaras dialog Berkas baru Terminal) -->
+<!-- molina-patch26d: dialog bersama, dipindah dari :files -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_files_dialog"
+    android:background="@drawable/molina_bg_dialog"
     android:orientation="vertical"
     android:padding="20dp">
 
@@ -30,7 +30,7 @@
         android:layout_height="44dp"
         android:layout_marginTop="14dp"
         android:autofillHints="none"
-        android:background="@drawable/bg_files_box"
+        android:background="@drawable/molina_bg_box"
         android:imeOptions="actionDone"
         android:importantForAutofill="no"
         android:inputType="text"
