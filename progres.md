@@ -101,3 +101,4 @@
 - [x] Patch 28b: Jalankan drawer mode Pintar (RunMode.SMART, bawaan): tab Debian dengan folder sama dipakai ulang, jika belum ada buka tab baru; opsi baru di Setelan > Terminal
 - [ ] Verifikasi CI Patch 27 + 28b (kompilasi :terminal, :settings, :app; jvm-tests :terminal-proot)
 - [x] Patch 27b: label ⋮ header drawer jadi 'Jalankan di terminal' (string drawer_run_in_terminal); ⋮ per folder tetap 'cd ke terminal + jadikan folder utama'
+- [x] Patch 27c: label menu drawer disingkat: folder/header = 'cd', berkas = 'Jalankan' (eksekusi sesuai ekstensi sh/py/js/pl/rb); string drawer_run_in_terminal dibuang

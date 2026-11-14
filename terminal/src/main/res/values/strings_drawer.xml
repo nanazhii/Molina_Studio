@@ -5,8 +5,7 @@
     <string name="drawer_more">Opsi</string>
     <string name="drawer_cd">cd ke folder ini</string>
     <string name="drawer_set_root">Jadikan folder utama</string>
-    <string name="drawer_cd_root">cd ke terminal + jadikan folder utama</string>
-    <string name="drawer_run_in_terminal">Jalankan di terminal</string>
+    <string name="drawer_cd_root">cd</string>
     <string name="drawer_new_dir_here">Folder baru di sini</string>
     <string name="drawer_new_file_here">Berkas baru di sini</string>
     <string name="drawer_nano">Edit di nano</string>

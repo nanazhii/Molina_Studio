@@ -478,7 +478,7 @@ internal class FileDrawerView(
     /** Titik tiga di header drawer: satu aksi, cd terminal ke folder utama (Folder baru/Berkas baru ada di bilah bawah). */
     private fun showHeaderMenu(anchor: View) {
         val menu = PopupMenu(context, anchor)
-        menu.menu.add(0, ID_CD_ROOT, 0, context.getString(R.string.drawer_run_in_terminal))
+        menu.menu.add(0, ID_CD_ROOT, 0, context.getString(R.string.drawer_cd_root))
         menu.setOnMenuItemClickListener { item ->
             if (item.itemId == ID_CD_ROOT) cdAndSetRoot(currentRoot())
             true
