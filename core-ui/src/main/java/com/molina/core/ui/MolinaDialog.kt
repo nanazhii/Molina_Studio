@@ -93,7 +93,15 @@ object MolinaDialog {
      * Dialog hitam pekat dengan isi bebas [content] di bawah judul. [onPositive] mengembalikan true untuk menutup
      * dialog; false membiarkannya terbuka (mis. input belum valid).
      */
-    fun form(context: Context, title: String, positive: String, content: android.view.View, onPositive: () -> Boolean) {
+    fun form(
+        context: Context,
+        title: String,
+        positive: String,
+        content: android.view.View,
+        onPositive: () -> Boolean,
+        /** Dipanggil bila dialog ditutup TANPA submit (Batal, Back, ketuk di luar). 26k4:e47 */
+        onCancel: () -> Unit = {},
+    ) {
         val dialog = Dialog(context)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         val view = LayoutInflater.from(context).inflate(R.layout.molina_dialog, null, false)
@@ -104,7 +112,14 @@ object MolinaDialog {
         val ok = view.findViewById<TextView>(R.id.dlg_ok)
         ok.text = positive
         view.findViewById<android.view.View>(R.id.dlg_cancel).setOnClickListener { dialog.dismiss() }
-        ok.setOnClickListener { if (onPositive()) dialog.dismiss() }
+        var submitted = false // 26k4:e48
+        ok.setOnClickListener {
+            if (onPositive()) {
+                submitted = true
+                dialog.dismiss()
+            }
+        }
+        dialog.setOnDismissListener { if (!submitted) onCancel() }
         dialog.setContentView(view)
         dialog.window?.apply {
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))

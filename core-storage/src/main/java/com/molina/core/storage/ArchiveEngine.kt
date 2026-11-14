@@ -72,7 +72,7 @@ internal class ArchiveCtl(
     }
 }
 
-internal class ExtractOutcome(val dir: File?, val files: Int, val renamed: Int, val skipped: Int, val cancelled: Boolean, val bytes: Long = 0L) // molina-patch26k2c
+internal class ExtractOutcome(val dir: File?, val files: Int, val renamed: Int, val skipped: Int, val cancelled: Boolean, val bytes: Long = 0L, val replaced: Int = 0) // molina-patch26k2c // 26k4:e02
 
 internal class CompressOutcome(val file: File?, val entries: Int, val skipped: Int, val cancelled: Boolean, val bytes: Long = 0L) // molina-patch26k2d
 
@@ -246,7 +246,7 @@ internal object ArchiveEngine {
     // ------------------------------------------------------------------ ekstrak
 
     /** Penulis hasil: memvalidasi nama, menjaga jalur di dalam [base], tidak menimpa, memeriksa ruang kosong. */
-    private class Sink(val base: File, val only: Set<String>?, val ctl: ArchiveCtl, val limit: Int, val flatten: Boolean = false) { // 26k3:sink
+    private class Sink(val base: File, val only: Set<String>?, val ctl: ArchiveCtl, val limit: Int, val flatten: Boolean = false, val policy: ConflictPolicy = ConflictPolicy.RENAME) { // 26k3:sink // 26k4:e03
         private val createdFiles = ArrayList<File>()
         private val createdDirs = ArrayList<File>()
         var files = 0
@@ -254,6 +254,10 @@ internal object ArchiveEngine {
         var skipped = 0
         var dirs = 0
         var bytes = 0L // molina-patch26k2e
+        var replaced = 0 // 26k4:e04
+        var picked = 0
+        private val createdPaths = HashSet<String>()
+        private val backups = ArrayList<Pair<File, File>>()
         private var entries = 0
         private var sinceCheck = 0L
 
@@ -283,6 +287,7 @@ internal object ArchiveEngine {
         }
 
         fun dir(clean: String) {
+            picked++ // 26k4:e05
             if (flatten) return // 26k3:dir (mode rata: folder tidak dibuat)
             val d = ArchiveNames.safeTarget(base, clean)
                 ?: throw ArchiveException(ArchiveFailure.UNSAFE_ENTRY, "Entri arsip tidak aman")
@@ -290,27 +295,51 @@ internal object ArchiveEngine {
             dirs++
         }
 
-        /** Tentukan berkas keluaran (nama unik bila bentrok) dan catat agar bisa dibatalkan. */
-        fun reserve(clean: String): File {
+        /**
+         * Tentukan berkas keluaran dan catat agar bisa dibatalkan. Bila nama sudah ada, [policy] menentukan:
+         * RENAME = nama unik; SKIP = null (dilewati, dihitung ke skipped); OVERWRITE = berkas lama dipindah ke
+         * cadangan dan baru dihapus oleh [commit]. Folder, tautan simbolik, dan berkas hasil operasi ini sendiri
+         * tidak pernah ditimpa (jatuh ke RENAME). 26k4:e06
+         */
+        fun reserve(clean: String): File? {
+            picked++
             var out = ArchiveNames.safeTarget(base, if (flatten) clean.substringAfterLast('/') else clean) // 26k3:reserve
                 ?: throw ArchiveException(ArchiveFailure.UNSAFE_ENTRY, "Entri arsip tidak aman")
             val parent = out.parentFile ?: throw ArchiveException(ArchiveFailure.UNSAFE_ENTRY, "Entri arsip tidak aman")
             ensureDir(parent)
             if (NameRules.present(out)) {
-                out = NameRules.unique(parent, out.name)
-                renamed++
+                val ours = out.path in createdPaths
+                when {
+                    policy == ConflictPolicy.SKIP -> {
+                        skipped++
+                        return null
+                    }
+                    policy == ConflictPolicy.OVERWRITE && !ours && out.isFile && !isLink(out) -> {
+                        backup(parent, out)
+                        replaced++
+                    }
+                    else -> {
+                        out = NameRules.unique(parent, out.name)
+                        renamed++
+                    }
+                }
             }
             createdFiles.add(out)
+            createdPaths.add(out.path)
             files++
             return out
         }
 
         /**
+         * Tulis isi [src] ke entri [clean]. [declared]        /**
          * Tulis isi [src] ke entri [clean]. [declared] = ukuran di header (-1 = tidak diketahui): isi yang melebihinya
          * dianggap arsip rusak/berbahaya. [byteProgress]: laporkan byte keluaran (tar/gz melaporkan byte terkompresi).
          */
         fun write(clean: String, mtime: Long, src: InputStream, declared: Long, byteProgress: Boolean) {
-            val out = reserve(clean)
+            val out = reserve(clean) ?: run { // 26k4:e07
+                if (byteProgress && declared > 0) ctl.add(declared)
+                return
+            }
             var entryBytes = 0L
             try {
                 out.outputStream().buffered(64 * 1024).use { o ->
@@ -340,9 +369,32 @@ internal object ArchiveEngine {
         }
 
         /** Hapus berkas yang dibuat operasi ini, lalu folder yang dibuatnya bila sudah kosong. */
-        fun rollback() {
+        fun rollback() { // 26k4:e08
             for (f in createdFiles.asReversed()) f.delete()
+            for ((orig, bak) in backups.asReversed()) {
+                orig.delete()
+                bak.renameTo(orig)
+            }
+            backups.clear()
             for (d in createdDirs.sortedByDescending { it.path.length }) d.delete()
+        }
+
+        /** Operasi sukses seluruhnya: cadangan berkas yang diganti (OVERWRITE) dihapus. */
+        fun commit() {
+            for ((_, bak) in backups) bak.delete()
+            backups.clear()
+        }
+
+        /** Pindahkan berkas lama ke cadangan sementara di folder yang sama (rename atomik, nama pendek anti 255 byte). */
+        private fun backup(parent: File, out: File) {
+            var i = 0
+            var bak: File
+            do {
+                bak = File(parent, ".molina-bak-" + System.nanoTime().toString(36) + "-" + i)
+                i++
+            } while (NameRules.present(bak))
+            if (!out.renameTo(bak)) throw ArchiveException(ArchiveFailure.IO, "Gagal mengamankan berkas lama")
+            backups.add(Pair(out, bak))
         }
     }
 
@@ -355,6 +407,7 @@ internal object ArchiveEngine {
         only: Set<String>?,
         ctl: ArchiveCtl,
         flatten: Boolean = false, // 26k3:param
+        policy: ConflictPolicy = ConflictPolicy.RENAME, // 26k4:e09
     ): ExtractOutcome {
         val fmt = requireArchive(file)
         if (!destDir.isDirectory || !destDir.canWrite()) throw fail(ArchiveFailure.IO, "Folder tujuan tidak bisa ditulisi")
@@ -365,7 +418,7 @@ internal object ArchiveEngine {
         }
         val base = if (named) ArchiveNames.uniqueFolder(destDir, folder) else destDir
         if (named && !base.mkdirs()) throw fail(ArchiveFailure.IO, "Gagal membuat folder hasil")
-        val sink = Sink(base, only, ctl, maxEntries, flatten) // 26k3:ctor
+        val sink = Sink(base, only, ctl, maxEntries, flatten, policy) // 26k3:ctor // 26k4:e10
 
         fun undo() {
             if (named) base.deleteRecursively() else sink.rollback()
@@ -377,7 +430,7 @@ internal object ArchiveEngine {
                 fmt.isTar -> extractTar(file, fmt, sink)
                 else -> extractSingle(file, fmt, sink)
             }
-            if (only != null && sink.files == 0 && sink.dirs == 0) {
+            if (only != null && sink.picked == 0) { // 26k4:e11
                 throw fail(ArchiveFailure.NO_MATCH, "Tidak ada entri terpilih yang cocok di arsip")
             }
         } catch (e: ArchiveCancelled) {
@@ -390,8 +443,9 @@ internal object ArchiveEngine {
             undo()
             throw mapReadError(e, fmt, password)
         }
+        sink.commit() // 26k4:e12
         ctl.report()
-        return ExtractOutcome(base, sink.files, sink.renamed, sink.skipped, false, sink.bytes) // molina-patch26k2g
+        return ExtractOutcome(base, sink.files, sink.renamed, sink.skipped, false, sink.bytes, sink.replaced) // molina-patch26k2g
     }
 
     private fun checkDeclaredSpace(base: File, total: Long) {
@@ -471,6 +525,137 @@ internal object ArchiveEngine {
             val clean = sink.accept(ArchiveNames.stem(file.name), false) ?: return
             sink.write(clean, 0L, ins, -1L, false)
         }
+    }
+
+    // ------------------------------------------------------------------ uji arsip (26k4:e13)
+
+    private class TestAcc {
+        var entries = 0
+        var bytes = 0L
+        var started = false
+    }
+
+    /**
+     * Uji arsip: membaca dan mendekode SEMUA entri ke sink kosong (tanpa menulis ke disk) sehingga CRC/checksum
+     * diverifikasi pustaka (zip4j, commons-compress 7z, gz/bz2/xz). Arsip rusak menjadi HASIL ([ArchiveTestResult.failure]
+     * = CORRUPT, [ArchiveTestResult.badIndex] = indeks entri pertama yang gagal), bukan exception. Kata sandi
+     * dibutuhkan/salah, memori kurang, dan format tak didukung dilempar sebagai [ArchiveException].
+     * Catatan: ZIP bersandi dengan entri rusak bisa dilaporkan sebagai kata sandi salah oleh zip4j.
+     */
+    fun test(file: File, password: String?, ctl: ArchiveCtl): ArchiveTestResult {
+        val fmt = requireArchive(file)
+        val pw = password?.takeIf { it.isNotEmpty() }
+        val acc = TestAcc()
+        val checksummed = fmt != ArchiveFormat.TAR
+        try {
+            when {
+                fmt == ArchiveFormat.ZIP -> testZip(file, pw, ctl, acc)
+                fmt == ArchiveFormat.SEVEN_Z -> test7z(file, pw, ctl, acc)
+                fmt.isTar -> testTar(file, fmt, ctl, acc)
+                else -> testSingle(file, fmt, ctl, acc)
+            }
+        } catch (e: ArchiveCancelled) {
+            return ArchiveTestResult(acc.entries, acc.bytes, null, -1, checksummed, cancelled = true)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: OutOfMemoryError) {
+            throw fail(ArchiveFailure.OUT_OF_MEMORY, "Memori tidak cukup untuk menguji arsip ini")
+        } catch (e: Exception) {
+            val mapped = mapReadError(e, fmt, pw)
+            if (mapped.reason != ArchiveFailure.CORRUPT) throw mapped
+            val bad = if (acc.started) acc.entries else -1
+            return ArchiveTestResult(acc.entries, acc.bytes, ArchiveFailure.CORRUPT, bad, checksummed)
+        }
+        ctl.report()
+        return ArchiveTestResult(acc.entries, acc.bytes, null, -1, checksummed)
+    }
+
+    /** Baca [ins] sampai habis tanpa menyimpan; [declared] = ukuran di header (-1 = tidak diketahui). */
+    private fun readAll(ins: InputStream, ctl: ArchiveCtl, acc: TestAcc, declared: Long, progress: Boolean) {
+        val buf = ByteArray(IO_BUFFER)
+        var read = 0L
+        while (true) {
+            ctl.check()
+            val n = ins.read(buf)
+            if (n < 0) break
+            read += n
+            acc.bytes += n
+            if (declared >= 0 && read > declared) throw fail(ArchiveFailure.CORRUPT, "Isi entri melebihi ukuran di header arsip")
+            if (progress) ctl.add(n.toLong())
+        }
+        if (declared >= 0 && read < declared) throw fail(ArchiveFailure.CORRUPT, "Isi entri kurang dari ukuran di header arsip")
+    }
+
+    private fun drain(ins: InputStream, ctl: ArchiveCtl) {
+        val buf = ByteArray(IO_BUFFER)
+        while (true) {
+            ctl.check()
+            if (ins.read(buf) < 0) break
+        }
+    }
+
+    private fun testZip(file: File, pw: String?, ctl: ArchiveCtl, acc: TestAcc) {
+        val zf = ZipFile(file)
+        if (!zf.isValidZipFile) throw fail(ArchiveFailure.CORRUPT, "Arsip rusak atau tidak lengkap")
+        val headers = zf.fileHeaders
+        if (headers.any { it.isEncrypted }) {
+            if (pw == null) throw fail(ArchiveFailure.NEED_PASSWORD, "Arsip butuh kata sandi")
+            zf.setPassword(pw.toCharArray())
+        }
+        if (headers.size > maxEntries) throw fail(ArchiveFailure.TOO_MANY_ENTRIES, "Arsip memuat terlalu banyak entri")
+        ctl.total = headers.sumOf { if (it.isDirectory) 0L else it.uncompressedSize.coerceAtLeast(0L) }
+        for (h in headers) {
+            ctl.check()
+            acc.started = true
+            if (!h.isDirectory) zf.getInputStream(h).use { readAll(it, ctl, acc, h.uncompressedSize, true) }
+            acc.entries++
+        }
+    }
+
+    private fun test7z(file: File, pw: String?, ctl: ArchiveCtl, acc: TestAcc) {
+        open7z(file, pw).use { sz ->
+            var total = 0L
+            for (en in sz.entries) {
+                if (!en.isDirectory && !en.isAntiItem && en.hasStream()) total += en.size.coerceAtLeast(0L)
+            }
+            ctl.total = total
+            var seen = 0
+            while (true) {
+                val en = sz.nextEntry ?: break
+                ctl.check()
+                if (en.isAntiItem) continue
+                seen++
+                if (seen > maxEntries) throw fail(ArchiveFailure.TOO_MANY_ENTRIES, "Arsip memuat terlalu banyak entri")
+                acc.started = true
+                if (!en.isDirectory && en.hasStream()) readAll(sz.getInputStream(en), ctl, acc, en.size, true)
+                acc.entries++
+            }
+        }
+    }
+
+    private fun testTar(file: File, fmt: ArchiveFormat, ctl: ArchiveCtl, acc: TestAcc) {
+        ctl.total = file.length() // kemajuan = byte terkompresi yang sudah terbaca (Counting)
+        openStream(file, fmt, ctl).use { raw ->
+            val tin = TarArchiveInputStream(raw)
+            while (true) {
+                val en = tin.nextEntry ?: break
+                ctl.check()
+                if (acc.entries >= maxEntries) throw fail(ArchiveFailure.TOO_MANY_ENTRIES, "Arsip memuat terlalu banyak entri")
+                acc.started = true
+                if (en.isFile) readAll(tin, ctl, acc, -1L, false)
+                acc.entries++
+            }
+            drain(raw, ctl) // sisa aliran dibaca agar trailer gz/bz2/xz ikut diverifikasi
+        }
+    }
+
+    private fun testSingle(file: File, fmt: ArchiveFormat, ctl: ArchiveCtl, acc: TestAcc) {
+        ctl.total = file.length()
+        openStream(file, fmt, ctl).use { ins ->
+            acc.started = true
+            readAll(ins, ctl, acc, -1L, false)
+        }
+        acc.entries = 1
     }
 
     // ------------------------------------------------------------------ pembuka aliran

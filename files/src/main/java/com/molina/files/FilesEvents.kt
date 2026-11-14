@@ -176,11 +176,12 @@ internal object FilesEvents {
         encrypted: Boolean,
         destPath: String,
         logger: MolinaLogger = MolinaLog.logger,
+        policy: String = "rename", // 26k4:e33
     ) = MolinaEvents.behavior(
         AREA, "archive-start",
         fields = linkedMapOf(
             "op" to op, "format" to format, "count" to count.toString(),
-            "encrypted" to encrypted.toString(), "depth" to depth(destPath).toString(),
+            "encrypted" to encrypted.toString(), "depth" to depth(destPath).toString(), "policy" to policy, // 26k4:e34
         ),
         logger = logger,
     )
@@ -194,11 +195,13 @@ internal object FilesEvents {
         bytes: Long,
         destPath: String,
         logger: MolinaLogger = MolinaLog.logger,
+        replaced: Int = 0, // 26k4:e35
     ) = MolinaEvents.behavior(
         AREA, "archive-done",
         fields = linkedMapOf(
             "op" to op, "ok" to ok.toString(), "renamed" to renamed.toString(), "skipped" to skipped.toString(),
             "cancelled" to cancelled.toString(), "bytes" to bytes.toString(), "depth" to depth(destPath).toString(),
+            "replaced" to replaced.toString(), // 26k4:e36
         ),
         logger = logger,
     )
@@ -225,6 +228,62 @@ internal object FilesEvents {
         val level = if (reason != null && reason in ARCHIVE_WARN) LogLevel.WARN else LogLevel.ERROR
         MolinaEvents.bug(AREA, "archive-failed", error.message, fields = fields, level = level, logger = logger)
     }
+
+    // 26k4:e37
+    /** Ringkasan ekstrak banyak arsip. Tanpa nama/path/kata sandi. */
+    fun archiveBatch(
+        total: Int,
+        ok: Int,
+        failed: Int,
+        needPassword: Int,
+        cancelled: Boolean,
+        files: Int,
+        renamed: Int,
+        skipped: Int,
+        replaced: Int,
+        bytes: Long,
+        destPath: String,
+        logger: MolinaLogger = MolinaLog.logger,
+    ) = MolinaEvents.behavior(
+        AREA, "archive-batch",
+        fields = linkedMapOf(
+            "total" to total.toString(), "ok" to ok.toString(), "failed" to failed.toString(),
+            "needpw" to needPassword.toString(), "cancelled" to cancelled.toString(), "files" to files.toString(),
+            "renamed" to renamed.toString(), "skipped" to skipped.toString(), "replaced" to replaced.toString(),
+            "bytes" to bytes.toString(), "depth" to depth(destPath).toString(),
+        ),
+        logger = logger,
+    )
+
+    /** Hasil Uji arsip. [badIndex] = indeks entri pertama yang rusak (0-based, -1 = tidak ada/struktur tak terbaca); tanpa nama. */
+    fun archiveTested(
+        format: String,
+        ok: Boolean,
+        entries: Int,
+        bytes: Long,
+        reason: String,
+        badIndex: Int,
+        checksummed: Boolean,
+        cancelled: Boolean,
+        destPath: String,
+        logger: MolinaLogger = MolinaLog.logger,
+    ) = MolinaEvents.behavior(
+        AREA, "archive-test",
+        fields = linkedMapOf(
+            "format" to format, "ok" to ok.toString(), "entries" to entries.toString(), "bytes" to bytes.toString(),
+            "bad" to badIndex.toString(), "reason" to reason, "checksummed" to checksummed.toString(),
+            "cancelled" to cancelled.toString(), "depth" to depth(destPath).toString(),
+        ),
+        logger = logger,
+    )
+
+    /** Klip "Ekstrak ke…" dipasang/dibatalkan. [action] = set | clear. */
+    fun archiveClip(action: String, count: Int, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "archive-clip",
+            fields = linkedMapOf("action" to action, "count" to count.toString()),
+            logger = logger,
+        )
 
     fun permissionMissing(path: String, logger: MolinaLogger = MolinaLog.logger) =
         MolinaEvents.behavior(AREA, "permission-missing", fields = mapOf("depth" to depth(path).toString()), logger = logger)

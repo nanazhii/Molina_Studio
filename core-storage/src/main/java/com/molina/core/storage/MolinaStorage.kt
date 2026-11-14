@@ -102,7 +102,35 @@ interface MolinaStorage {
         onProgress: (ArchiveProgress) -> Unit = {},
         /** true = semua berkas ke folder tujuan tanpa subfolder (nama bentrok diberi nomor). */
         flatten: Boolean = false, // 26k3:iface
+        /** Kebijakan bila berkas hasil sudah ada (lihat [ConflictPolicy]). 26k4:e14 */
+        policy: ConflictPolicy = ConflictPolicy.RENAME,
     ): MolinaResult<ExtractResult>
+
+    /**
+     * Uji arsip: mendekode semua entri tanpa menulis ke disk. Arsip rusak = Success dengan failure terisi;
+     * sandi dibutuhkan/salah = Failure dengan ArchiveException(NEED_PASSWORD / WRONG_PASSWORD).
+     */
+    suspend fun testArchive(
+        relative: String,
+        password: String? = null,
+        cancel: CancelToken = CancelToken(),
+        onProgress: (ArchiveProgress) -> Unit = {},
+    ): MolinaResult<ArchiveTestResult>
+
+    /**
+     * Ekstrak banyak arsip ke satu [destRelative]. Satu arsip gagal tidak menghentikan yang lain; tiap arsip
+     * atomik (gagal/batal = hasil arsip itu dihapus, arsip yang sudah selesai tetap). Tanpa kata sandi: arsip
+     * bersandi dilaporkan di [ArchiveBatchResult.needPassword]. [onItem] menerima (indeks 0-based, jumlah).
+     */
+    suspend fun extractArchives(
+        relatives: List<String>,
+        destRelative: String,
+        target: ExtractTarget,
+        policy: ConflictPolicy = ConflictPolicy.RENAME,
+        cancel: CancelToken = CancelToken(),
+        onItem: (index: Int, count: Int) -> Unit = { _, _ -> },
+        onProgress: (ArchiveProgress) -> Unit = {},
+    ): MolinaResult<ArchiveBatchResult>
 
     /** Kompres [relatives] menjadi satu arsip di [destRelative]. Isi Sampah dilewati dan dihitung di skipped. */
     suspend fun compressItems(
@@ -295,16 +323,63 @@ class LocalMolinaStorage(
         cancel: CancelToken,
         onProgress: (ArchiveProgress) -> Unit,
         flatten: Boolean, // 26k3:override
+        policy: ConflictPolicy, // 26k4:e15
     ): MolinaResult<ExtractResult> = withContext(dispatchers.io) {
         onResolved(relative) { src ->
             onResolved(destRelative) { dest ->
                 archiveCatching {
                     val ctl = ArchiveCtl(ArchiveKind.EXTRACT, { cancel.isCancelled || !isActive }, onProgress)
-                    val out = ArchiveEngine.extract(src, dest, target, password, only, ctl, flatten) // 26k3:call
-                    ExtractResult(out.dir?.let { relativeOf(it) } ?: "", out.files, out.renamed, out.skipped, out.cancelled, out.bytes) // molina-patch26k2i
+                    val out = ArchiveEngine.extract(src, dest, target, password, only, ctl, flatten, policy) // 26k3:call // 26k4:e16
+                    ExtractResult(out.dir?.let { relativeOf(it) } ?: "", out.files, out.renamed, out.skipped, out.cancelled, out.bytes, out.replaced) // molina-patch26k2i // 26k4:e17
                 }
             }
         }
+    }
+
+    // 26k4:e18
+    override suspend fun testArchive(
+        relative: String,
+        password: String?,
+        cancel: CancelToken,
+        onProgress: (ArchiveProgress) -> Unit,
+    ): MolinaResult<ArchiveTestResult> = withContext(dispatchers.io) {
+        onResolved(relative) { f ->
+            archiveCatching {
+                val ctl = ArchiveCtl(ArchiveKind.EXTRACT, { cancel.isCancelled || !isActive }, onProgress)
+                ArchiveEngine.test(f, password, ctl)
+            }
+        }
+    }
+
+    override suspend fun extractArchives(
+        relatives: List<String>,
+        destRelative: String,
+        target: ExtractTarget,
+        policy: ConflictPolicy,
+        cancel: CancelToken,
+        onItem: (Int, Int) -> Unit,
+        onProgress: (ArchiveProgress) -> Unit,
+    ): MolinaResult<ArchiveBatchResult> = withContext(dispatchers.io) {
+        val items = ArrayList<ArchiveBatchItem>(relatives.size)
+        var cancelled = false
+        for ((i, rel) in relatives.withIndex()) {
+            if (cancel.isCancelled || !isActive) {
+                cancelled = true
+                break
+            }
+            onItem(i, relatives.size)
+            when (val r = extractArchive(rel, destRelative, target, null, null, cancel, onProgress, false, policy)) {
+                is MolinaResult.Success -> {
+                    items.add(ArchiveBatchItem(rel, r.value, null))
+                    if (r.value.cancelled) {
+                        cancelled = true
+                        break
+                    }
+                }
+                is MolinaResult.Failure -> items.add(ArchiveBatchItem(rel, null, r.error))
+            }
+        }
+        MolinaResult.Success(ArchiveBatchResult(items, relatives.size, cancelled))
     }
 
     override suspend fun compressItems(

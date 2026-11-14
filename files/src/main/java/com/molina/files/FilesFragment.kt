@@ -86,6 +86,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     )
     private val selection = FilesSelection()
     private var clip: FilesClip? = null
+    private var archiveClip: ArchiveClip? = null // 26k4:e49
     private var swipeHelper: ItemTouchHelper? = null
 
     private var views: Views? = null
@@ -198,6 +199,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         outState.putBoolean(KEY_DEEP, options.deep)
         outState.putBoolean(KEY_SEL_ACTIVE, selection.active)
         outState.putStringArrayList(KEY_SEL_KEYS, ArrayList(selection.snapshot()))
+        archiveClip?.let { outState.putStringArrayList(KEY_ACLIP_PATHS, ArrayList(it.paths)) } // 26k4:e50
         clip?.let {
             outState.putString(KEY_CLIP_KIND, it.kind.name)
             outState.putStringArrayList(KEY_CLIP_PATHS, ArrayList(it.paths))
@@ -234,6 +236,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         val kind = runCatching { TransferKind.valueOf(b.getString(KEY_CLIP_KIND).orEmpty()) }.getOrNull()
         val paths = b.getStringArrayList(KEY_CLIP_PATHS).orEmpty()
         clip = if (kind != null && kind != TransferKind.DELETE && paths.isNotEmpty()) FilesClip(kind, paths) else null
+        archiveClip = b.getStringArrayList(KEY_ACLIP_PATHS)?.takeIf { it.isNotEmpty() }?.let { ArchiveClip(it) } // 26k4:e51
     }
 
     /** Kunci item = path relatif terhadap root Molina (juga untuk hasil pencarian sampai subfolder). */
@@ -366,6 +369,10 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             m.add(Menu.NONE, MENU_DELETE_PERM_SELECTED, 2, "Hapus permanen").isEnabled = canAct
             m.add(Menu.NONE, MENU_SHARE, 2, "Bagikan").isEnabled = canAct
             m.add(Menu.NONE, MENU_COMPRESS, 2, "Kompres\u2026").isEnabled = canAct // 26k2:menu-sel
+            if (selectionAllArchives()) { // 26k4:e52
+                m.add(Menu.NONE, MENU_EXTRACT_SELECTED, 2, "Ekstrak terpilih\u2026").isEnabled = canAct
+                m.add(Menu.NONE, MENU_EXTRACT_TO, 2, "Ekstrak terpilih ke\u2026").isEnabled = canAct
+            }
             m.add(Menu.NONE, MENU_PROPS, 3, "Properti").isEnabled = selection.count > 0
             m.add(Menu.NONE, MENU_SELECT_ALL, 3, "Pilih semua")
             m.add(Menu.NONE, MENU_SELECT_DONE, 4, "Selesai memilih")
@@ -377,6 +384,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                     MENU_DELETE_PERM_SELECTED -> confirmDeleteSelection()
                     MENU_SHARE -> shareEntries(selection.snapshot().toList())
                     MENU_COMPRESS -> promptCompress(selection.snapshot().toList()) // 26k2:click-sel
+                    MENU_EXTRACT_SELECTED -> promptExtractOptions(selection.snapshot().toList(), currentPath) // 26k4:e53
+                    MENU_EXTRACT_TO -> setArchiveClip(selection.snapshot().toList())
                     MENU_PROPS -> showProperties(selection.snapshot().toList())
                     MENU_SELECT_ALL -> selectAllVisible()
                     MENU_SELECT_DONE -> exitSelection("menu")
@@ -497,6 +506,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             popup.menu.add(Menu.NONE, MENU_EXTRACT_HERE, 3, "Ekstrak di sini")
             popup.menu.add(Menu.NONE, MENU_EXTRACT_FOLDER, 3, "Ekstrak ke folder")
             popup.menu.add(Menu.NONE, MENU_EXTRACT_SUBS, 3, "Ekstrak subtitle di sini")
+            popup.menu.add(Menu.NONE, MENU_EXTRACT_TO, 3, "Ekstrak ke\u2026") // 26k4:e54
+            popup.menu.add(Menu.NONE, MENU_TEST, 3, "Uji arsip")
         }
         popup.menu.add(Menu.NONE, MENU_COMPRESS, 3, "Kompres\u2026")
         popup.menu.add(Menu.NONE, MENU_PROPS, 5, "Properti")
@@ -515,6 +526,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                 MENU_EXTRACT_HERE -> extractEntry(entry, ArchiveOp.EXTRACT, ExtractTarget.HERE) // 26k2:click-entry
                 MENU_EXTRACT_FOLDER -> extractEntry(entry, ArchiveOp.EXTRACT, ExtractTarget.NAMED_FOLDER)
                 MENU_EXTRACT_SUBS -> extractEntry(entry, ArchiveOp.EXTRACT_SUBS, ExtractTarget.HERE)
+                MENU_EXTRACT_TO -> setArchiveClip(listOf(keyOf(entry))) // 26k4:e55
+                MENU_TEST -> testEntry(entry)
                 MENU_COMPRESS -> promptCompress(listOf(keyOf(entry)))
             }
             true
@@ -868,18 +881,26 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         val paths = selection.snapshot()
         if (paths.isEmpty()) return
         clip = FilesClip(kind, paths)
+        archiveClip = null // 26k4:e56
         FilesEvents.clip("set", kind, paths.size)
         exitSelection("op")
         applyClip()
     }
 
-    private fun clearClip() {
+    private fun clearClip() { // 26k4:e57
         clip?.let { FilesEvents.clip("clear", it.kind, it.paths.size) }
+        archiveClip?.let { FilesEvents.archiveClip("clear", it.paths.size) }
         clip = null
+        archiveClip = null
         applyClip()
     }
 
     private fun pasteHere() {
+        val pending = archiveClip // 26k4:e58
+        if (pending != null) {
+            promptExtractOptions(pending.paths, currentPath, fromClip = true)
+            return
+        }
         val c = clip ?: return
         if (!FilesTransfer.start(c.kind, c.paths, currentPath)) notifyBusy()
     }
@@ -925,22 +946,94 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         }
     }
 
-    private fun promptArchivePassword(request: ArchiveRequest, wrong: Boolean) {
+    // --- 26k4:e61 Ekstrak banyak arsip, "Ekstrak ke…", Uji arsip, antrean kata sandi
+
+    private var passwordPrompting = false
+
+    private fun selectionAllArchives(): Boolean {
+        val keys = selection.snapshot()
+        return keys.isNotEmpty() && keys.all { !isFolder(it) && ArchiveNames.detect(it.substringAfterLast('/')) != null }
+    }
+
+    /** Opsi tujuan + kebijakan timpa, lalu ekstrak [paths] ke [dest]. [fromClip]: klip "Ekstrak ke…" dikosongkan setelah mulai. */
+    private fun promptExtractOptions(paths: List<String>, dest: String, fromClip: Boolean = false) {
         val ctx = context ?: return
+        if (paths.isEmpty()) return
+        ArchiveDialogs.extractOptions(ctx, paths.size) { target, policy ->
+            if (selection.active) exitSelection("op")
+            val request = ArchiveRequest(ArchiveOp.EXTRACT, paths, dest, target, policy = policy)
+            if (FilesArchive.start(request)) {
+                if (fromClip) {
+                    archiveClip = null
+                    applyClip()
+                }
+            } else {
+                notifyBusy()
+            }
+        }
+    }
+
+    private fun setArchiveClip(paths: List<String>) {
+        if (paths.isEmpty()) return
+        clip = null
+        archiveClip = ArchiveClip(paths)
+        FilesEvents.archiveClip("set", paths.size)
+        exitSelection("op")
+        applyClip()
+    }
+
+    private fun testEntry(entry: FileEntry) {
+        val path = keyOf(entry)
+        startArchive(ArchiveRequest(ArchiveOp.TEST, listOf(path), BrowserPath.parent(path)))
+    }
+
+    /** Arsip bersandi dari ekstrak banyak arsip: minta kata sandi satu per satu; Batal = lewati arsip itu. */
+    private fun promptNextPassword() {
+        if (passwordPrompting || FilesArchive.isRunning) return
+        val next = FilesArchive.passwordQueue.firstOrNull() ?: return
+        promptArchivePassword(next, wrong = false, queued = true)
+    }
+
+    private fun promptArchivePassword(request: ArchiveRequest, wrong: Boolean, queued: Boolean = false) {
+        val ctx = context ?: return
+        passwordPrompting = true
+        val name = request.sources.firstOrNull()?.substringAfterLast('/').orEmpty()
+        val others = if (queued) (FilesArchive.passwordQueue.size - 1).coerceAtLeast(0) else 0
+        val message = buildString {
+            append(if (wrong) "Coba lagi dengan kata sandi yang benar." else "Masukkan kata sandi untuk membuka arsip ini.")
+            if (name.isNotEmpty()) append("\n").append(name)
+            if (others > 0) append("\nMasih ada ").append(others).append(" arsip bersandi lain.")
+        }
+        fun dequeue() {
+            if (queued) FilesArchive.passwordQueue.removeFirstOrNull()
+        }
         ArchiveDialogs.password(
             ctx,
             title = if (wrong) "Kata sandi salah" else "Arsip bersandi",
-            message = if (wrong) "Coba lagi dengan kata sandi yang benar." else "Masukkan kata sandi untuk membuka arsip ini.",
-        ) { pw -> startArchive(request, pw) }
+            message = message,
+            onCancel = {
+                passwordPrompting = false
+                dequeue()
+                promptNextPassword()
+            },
+            onSubmit = { pw ->
+                passwordPrompting = false
+                dequeue()
+                startArchive(request, pw)
+            },
+        )
     }
 
     private fun renderArchive(state: ArchiveState) {
         val v = views ?: return
         when (state) {
-            ArchiveState.Idle -> if (!FilesTransfer.transferRunning) v.progress.visibility = View.GONE
+            ArchiveState.Idle -> { // 26k4:e63
+                if (!FilesTransfer.transferRunning) v.progress.visibility = View.GONE
+                promptNextPassword()
+            }
             is ArchiveState.Running -> {
                 v.progress.visibility = View.VISIBLE
-                v.progressText.text = ArchiveText.progressLine(state.op, state.progress, state.cancelling)
+                v.progressText.text = ArchiveText.runningLine(state) // 26k4:e64
                 v.progressBar.setProgressCompat(((state.progress?.fraction ?: 0f) * 100).toInt(), true)
                 v.progressCancel.isEnabled = !state.cancelling
             }
@@ -953,7 +1046,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         applyClip()
     }
 
-    private fun onArchiveFinished(state: ArchiveState.Finished) {
+    private fun onArchiveFinished(state: ArchiveState.Finished) { // 26k4:e62
         val request = state.request
         val reason = state.error?.let { ArchiveText.reasonOf(it) }
         val needsPassword = reason == ArchiveFailure.NEED_PASSWORD || reason == ArchiveFailure.WRONG_PASSWORD
@@ -961,16 +1054,23 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             promptArchivePassword(request, wrong = reason == ArchiveFailure.WRONG_PASSWORD)
             return
         }
-        val root = view
-        if (root != null) {
-            val bar = Snackbar.make(root, ArchiveText.finished(state), Snackbar.LENGTH_LONG)
-            val opened = state.extract
-                ?.takeIf { !it.cancelled && it.destRelative.isNotEmpty() && request.target == ExtractTarget.NAMED_FOLDER }
-                ?.destRelative
-            if (opened != null) bar.setAction("Buka") { navigate(opened) }
-            bar.show()
+        val ctx = context
+        val test = state.test
+        if (test != null && !test.cancelled && ctx != null) {
+            MolinaDialog.info(ctx, ArchiveText.TEST_TITLE, ArchiveText.testSummary(test), "Tutup")
+        } else {
+            val root = view
+            if (root != null) {
+                val bar = Snackbar.make(root, ArchiveText.finished(state), Snackbar.LENGTH_LONG)
+                val opened = state.extract
+                    ?.takeIf { !it.cancelled && it.destRelative.isNotEmpty() && request.target == ExtractTarget.NAMED_FOLDER }
+                    ?.destRelative
+                if (opened != null) bar.setAction("Buka") { navigate(opened) }
+                bar.show()
+            }
         }
-        load(currentPath)
+        if (request.op != ArchiveOp.TEST) load(currentPath)
+        promptNextPassword()
     }
 
     private fun notifyBusy() {
@@ -1015,11 +1115,18 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     private fun applyClip() {
         val v = views ?: return
         val c = clip
-        v.clipBar.visibility = if (c == null) View.GONE else View.VISIBLE
-        if (c != null) v.clipText.text = TransferText.clipLabel(c.kind, c.paths.size)
+        val ac = archiveClip // 26k4:e59
+        v.clipBar.visibility = if (c == null && ac == null) View.GONE else View.VISIBLE
+        if (c != null) {
+            v.clipText.text = TransferText.clipLabel(c.kind, c.paths.size)
+            v.clipPaste.text = "Tempel"
+        } else if (ac != null) {
+            v.clipText.text = ArchiveText.clipLabel(ac.paths.size)
+            v.clipPaste.text = "Ekstrak di sini"
+        }
         v.clipPaste.isEnabled = !FilesTransfer.isRunning
         // molina-patch26g: pil disembunyikan saat bilah Tempel atau panel progres tampil
-        v.pill.visibility = if (c == null && v.progress.visibility != View.VISIBLE) View.VISIBLE else View.GONE
+        v.pill.visibility = if (c == null && ac == null && v.progress.visibility != View.VISIBLE) View.VISIBLE else View.GONE // 26k4:e60
     }
 
     private fun updateBack() {
@@ -1181,6 +1288,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         const val KEY_SEL_KEYS = "sel_keys"
         const val KEY_CLIP_KIND = "clip_kind"
         const val KEY_CLIP_PATHS = "clip_paths"
+        const val KEY_ACLIP_PATHS = "aclip_paths" // 26k4:e66
         const val QUERY_DEBOUNCE_MS = 250L
 
         const val GROUP_SORT = 1
@@ -1214,6 +1322,9 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         const val MENU_EXTRACT_FOLDER = 24
         const val MENU_EXTRACT_SUBS = 25
         const val MENU_COMPRESS = 26
+        const val MENU_EXTRACT_TO = 27 // 26k4:e65
+        const val MENU_TEST = 28
+        const val MENU_EXTRACT_SELECTED = 29
         const val TRASH_TAG = "trash"
         const val UNDO_MS = 6000
     }

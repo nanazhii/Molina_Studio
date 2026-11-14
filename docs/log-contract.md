@@ -166,8 +166,11 @@ Tag `Molina/files`. Path tidak pernah dicatat: hanya `depth` (jumlah segmen path
 | `files.transfer-start` | BEHAV | salin/pindah/hapus massal dimulai | `op` (copy/move/delete-batch), `count`, `depth` |
 | `files.transfer-done` | BEHAV | operasi massal selesai (termasuk dibatalkan atau sebagian gagal) | `op`, `ok`, `failed`, `skipped`, `cancelled`, `depth` |
 | `files.copy-failed` / `files.move-failed` / `files.delete-batch-failed` | BUG (W untuk galat nama/dilindungi/tujuan tidak valid) | tujuan tidak valid atau minimal satu item gagal (galat item pertama yang dicatat) | `kind`, `error`, `depth`, `errno` |
-| `files.archive-start` | BEHAV | Ekstrak/Kompres dimulai (tanpa nama/path/kata sandi) | `op` (extract/extract-subs/compress), `format`, `count`, `encrypted`, `depth` |
-| `files.archive-done` | BEHAV | Ekstrak/Kompres selesai (termasuk dibatalkan) | `op`, `ok`, `renamed`, `skipped`, `cancelled`, `bytes`, `depth` |
+| `files.archive-start` | BEHAV | Ekstrak/Kompres dimulai (tanpa nama/path/kata sandi) | `op` (extract/extract-subs/compress/test), `format`, `count`, `encrypted`, `depth`, `policy` (rename/skip/overwrite) |
+| `files.archive-done` | BEHAV | Ekstrak/Kompres selesai (termasuk dibatalkan) | `op`, `ok`, `renamed`, `skipped`, `cancelled`, `bytes`, `depth`, `replaced` |
+| `files.archive-batch` | BEHAV | Ekstrak banyak arsip selesai (tanpa nama/path/kata sandi); arsip bersandi dihitung di `needpw`, bukan `failed` | `total`, `ok`, `failed`, `needpw`, `cancelled`, `files`, `renamed`, `skipped`, `replaced`, `bytes`, `depth` |
+| `files.archive-test` | BEHAV | Uji arsip selesai; `bad` = indeks entri pertama rusak (0-based; -1 = tidak ada atau struktur tak terbaca), `reason` = none atau CORRUPT; `checksummed`=false untuk TAR polos | `format`, `ok`, `entries`, `bytes`, `bad`, `reason`, `checksummed`, `cancelled`, `depth` |
+| `files.archive-clip` | BEHAV | Klip "Ekstrak ke…" dipasang/dibatalkan | `action` (set/clear), `count` |
 | `files.archive-failed` | BUG (W untuk kata sandi, nama, format, tidak ada yang cocok) | Ekstrak/Kompres gagal; `reason` = alasan arsip (NEED_PASSWORD, WRONG_PASSWORD, CORRUPT, NO_SPACE, ...) | `op`, `kind`, `reason`, `error`, `depth`, `errno` |
 <!-- 26k2:docs -->
 

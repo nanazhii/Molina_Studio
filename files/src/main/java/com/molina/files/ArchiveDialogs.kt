@@ -16,6 +16,8 @@ import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.molina.core.storage.ArchiveFormat
+import com.molina.core.storage.ConflictPolicy // 26k4:e43
+import com.molina.core.storage.ExtractTarget
 import com.molina.core.storage.ArchiveNames
 import com.molina.core.ui.MolinaDialog
 import com.molina.core.ui.R as UiR
@@ -72,7 +74,7 @@ internal object ArchiveDialogs {
     }
 
     /** Minta kata sandi arsip. [onSubmit] menerima kata sandi (tidak kosong); tidak pernah dicatat atau disimpan. */
-    fun password(context: Context, title: String, message: String, onSubmit: (String) -> Unit) {
+    fun password(context: Context, title: String, message: String, onCancel: () -> Unit = {}, onSubmit: (String) -> Unit) { // 26k4:e44
         val box = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
         box.addView(
             TextView(context).apply {
@@ -94,7 +96,46 @@ internal object ArchiveDialogs {
                 true
             }
         }
-        MolinaDialog.form(context, title, "Buka", box, submit)
+        MolinaDialog.form(context, title, "Buka", box, submit, onCancel) // 26k4:e45
+    }
+
+    /**
+     * Opsi Ekstrak untuk banyak arsip atau "Ekstrak ke…": tujuan (di sini / folder bernama arsip) dan kebijakan bila
+     * berkas sudah ada. Pilihan Timpa selalu diikuti dialog konfirmasi. 26k4:e46
+     */
+    fun extractOptions(context: Context, count: Int, onSubmit: (ExtractTarget, ConflictPolicy) -> Unit) {
+        var target = ArchiveOptions.TARGETS.first()
+        var policy = ArchiveOptions.POLICIES.first()
+        val box = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+        box.addView(label(context, "Tujuan"))
+        box.addView(
+            radioRow(context, ArchiveOptions.TARGETS.map { ArchiveOptions.targetLabel(it) }, 0) { i ->
+                target = ArchiveOptions.TARGETS[i]
+            },
+        )
+        box.addView(label(context, "Jika berkas sudah ada"))
+        box.addView(
+            radioRow(context, ArchiveOptions.POLICIES.map { ArchiveOptions.policyLabel(it) }, 0) { i ->
+                policy = ArchiveOptions.POLICIES[i]
+            },
+        )
+        val submit: () -> Boolean = {
+            val chosenTarget = target
+            val chosenPolicy = policy
+            if (chosenPolicy == ConflictPolicy.OVERWRITE) {
+                MolinaDialog.confirm(
+                    context,
+                    "Timpa berkas yang sudah ada?",
+                    ArchiveText.overwriteWarning(),
+                    "Timpa",
+                ) { onSubmit(chosenTarget, chosenPolicy) }
+            } else {
+                onSubmit(chosenTarget, chosenPolicy)
+            }
+            true
+        }
+        val title = if (count > 1) "Ekstrak $count arsip" else "Ekstrak arsip"
+        MolinaDialog.form(context, title, "Ekstrak", box, submit)
     }
 
     /**

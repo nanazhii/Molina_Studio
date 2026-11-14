@@ -105,6 +105,8 @@ data class ExtractResult(
     val cancelled: Boolean,
     /** Total byte yang ditulis ke disk. molina-patch26k2a */
     val bytes: Long = 0L,
+    /** Berkas lama yang diganti (ConflictPolicy.OVERWRITE). 26k4:e01 */
+    val replaced: Int = 0,
 )
 
 /** [outputRelative]: arsip hasil (relatif terhadap root); kosong bila [cancelled]. */

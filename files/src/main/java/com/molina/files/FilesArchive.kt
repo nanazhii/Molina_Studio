@@ -4,7 +4,10 @@ package com.molina.files
 import com.molina.core.common.ErrorKind
 import com.molina.core.common.MolinaError
 import com.molina.core.common.MolinaResult
+import com.molina.core.storage.ArchiveBatchResult // 26k4:e19
 import com.molina.core.storage.ArchiveException
+import com.molina.core.storage.ArchiveTestResult
+import com.molina.core.storage.ConflictPolicy
 import com.molina.core.storage.ArchiveFailure
 import com.molina.core.storage.ArchiveFormat
 import com.molina.core.storage.ArchiveNames
@@ -26,7 +29,7 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 /** EXTRACT_SUBS: hanya berkas subtitle dari arsip, langsung ke folder arsip (satu ketukan dari menu). */
-internal enum class ArchiveOp { EXTRACT, EXTRACT_SUBS, COMPRESS }
+internal enum class ArchiveOp { EXTRACT, EXTRACT_SUBS, COMPRESS, TEST } // 26k4:e20
 
 /**
  * Permintaan operasi arsip. Sengaja TIDAK memuat kata sandi: kata sandi hanya dilewatkan ke
@@ -43,6 +46,8 @@ internal data class ArchiveRequest(
     val baseName: String = "",
     /** Ekstrak rata: semua berkas ke [destPath] tanpa subfolder (dipakai Ekstrak subtitle). */
     val flatten: Boolean = false, // 26k3:request
+    /** Kebijakan bila berkas hasil sudah ada. 26k4:e22 */
+    val policy: ConflictPolicy = ConflictPolicy.RENAME,
 ) {
     /** extract | extract-subs | compress (untuk log). */
     val opName: String
@@ -50,6 +55,7 @@ internal data class ArchiveRequest(
             ArchiveOp.EXTRACT -> "extract"
             ArchiveOp.EXTRACT_SUBS -> "extract-subs"
             ArchiveOp.COMPRESS -> "compress"
+            ArchiveOp.TEST -> "test" // 26k4:e21
         }
 
     /** Label format huruf kecil untuk log (zip, 7z, tar.gz, ...); tanpa nama berkas. */
@@ -68,6 +74,9 @@ internal sealed interface ArchiveState {
         val op: ArchiveOp,
         val progress: ArchiveProgress?,
         val cancelling: Boolean,
+        /** Ekstrak banyak arsip: arsip ke-[index] (0-based) dari [count]. 26k4:e23 */
+        val index: Int = 0,
+        val count: Int = 1,
     ) : ArchiveState
 
     data class Finished(
@@ -76,6 +85,9 @@ internal sealed interface ArchiveState {
         val extract: ExtractResult?,
         val compress: CompressResult?,
         val error: MolinaError?,
+        /** Hasil ekstrak banyak arsip / Uji arsip. 26k4:e24 */
+        val batch: ArchiveBatchResult? = null,
+        val test: ArchiveTestResult? = null,
     ) : ArchiveState
 }
 
@@ -92,6 +104,12 @@ internal object FilesArchive {
 
     val state: StateFlow<ArchiveState> get() = mutableState
 
+    /**
+     * Arsip bersandi dari ekstrak banyak arsip yang menunggu kata sandi (tanpa kata sandi; hanya permintaan).
+     * Di singleton agar bertahan saat rotasi. Hanya diakses dari main thread. 26k4:e25
+     */
+    val passwordQueue: ArrayDeque<ArchiveRequest> = ArrayDeque()
+
     val isRunning: Boolean get() = mutableState.value is ArchiveState.Running
 
     /**
@@ -104,7 +122,10 @@ internal object FilesArchive {
         token = cancel
         val pw = password?.takeIf { it.isNotEmpty() }
         mutableState.value = ArchiveState.Running(request.op, null, false)
-        FilesEvents.archiveStart(request.opName, request.sources.size, request.formatLabel, pw != null, request.destPath)
+        FilesEvents.archiveStart(
+            request.opName, request.sources.size, request.formatLabel, pw != null, request.destPath,
+            policy = ArchiveOptions.policyName(request.policy), // 26k4:e26
+        )
         val onProgress: (ArchiveProgress) -> Unit = { p ->
             mutableState.update { if (it is ArchiveState.Running) it.copy(progress = p) else it }
         }
@@ -130,9 +151,23 @@ internal object FilesArchive {
                 val options = CompressOptions(req.format ?: ArchiveFormat.ZIP, req.level, req.baseName, pw)
                 finishCompress(req, storage.compressItems(req.sources, req.destPath, options, cancel, onProgress))
             }
-            ArchiveOp.EXTRACT -> {
-                val r = storage.extractArchive(req.sources.first(), req.destPath, req.target, pw, null, cancel, onProgress)
-                finishExtract(req, r)
+            ArchiveOp.EXTRACT -> { // 26k4:e27
+                if (req.sources.size > 1) {
+                    val onItem: (Int, Int) -> Unit = { i, n ->
+                        mutableState.update { if (it is ArchiveState.Running) it.copy(index = i, count = n) else it }
+                    }
+                    when (val b = storage.extractArchives(req.sources, req.destPath, req.target, req.policy, cancel, onItem, onProgress)) {
+                        is MolinaResult.Failure -> finish(req, null, null, b.error)
+                        is MolinaResult.Success -> finish(req, null, null, null, batch = b.value)
+                    }
+                } else {
+                    val r = storage.extractArchive(req.sources.first(), req.destPath, req.target, pw, null, cancel, onProgress, false, req.policy)
+                    finishExtract(req, r)
+                }
+            }
+            ArchiveOp.TEST -> when (val t = storage.testArchive(req.sources.first(), pw, cancel, onProgress)) {
+                is MolinaResult.Failure -> finish(req, null, null, t.error)
+                is MolinaResult.Success -> finish(req, null, null, null, test = t.value)
             }
             ArchiveOp.EXTRACT_SUBS -> {
                 val archive = req.sources.first()
@@ -163,18 +198,42 @@ internal object FilesArchive {
         is MolinaResult.Failure -> finish(req, null, null, r.error)
     }
 
-    private fun finish(req: ArchiveRequest, extract: ExtractResult?, compress: CompressResult?, error: MolinaError?) {
+    private fun finish(
+        req: ArchiveRequest,
+        extract: ExtractResult?,
+        compress: CompressResult?,
+        error: MolinaError?,
+        batch: ArchiveBatchResult? = null, // 26k4:e28
+        test: ArchiveTestResult? = null,
+    ) {
         token = null
+        batch?.let { b ->
+            for (rel in b.needPassword) {
+                passwordQueue.addLast(ArchiveRequest(ArchiveOp.EXTRACT, listOf(rel), req.destPath, req.target, policy = req.policy))
+            }
+        }
         val id = ++seq
         when {
+            batch != null -> { // 26k4:e29
+                for (item in batch.items) item.error?.let { FilesEvents.archiveFailed(req.opName, it, req.destPath) }
+                FilesEvents.archiveBatch(
+                    batch.total, batch.succeeded, batch.failed, batch.needPassword.size, batch.cancelled,
+                    batch.files, batch.renamed, batch.skipped, batch.replaced, batch.bytes, req.destPath,
+                )
+            }
+            test != null -> FilesEvents.archiveTested(
+                req.formatLabel, test.ok, test.entries, test.bytes, test.failure?.name ?: "none",
+                test.badIndex, test.checksummed, test.cancelled, req.destPath,
+            )
             extract != null -> FilesEvents.archiveDone(
                 req.opName, extract.files, extract.renamed, extract.skipped, extract.cancelled, extract.bytes, req.destPath,
+                replaced = extract.replaced, // 26k4:e32
             )
             compress != null -> FilesEvents.archiveDone(
                 req.opName, compress.entries, 0, compress.skipped, compress.cancelled, compress.bytes, req.destPath,
             )
             error != null -> FilesEvents.archiveFailed(req.opName, error, req.destPath)
         }
-        mutableState.value = ArchiveState.Finished(id, req, extract, compress, error)
+        mutableState.value = ArchiveState.Finished(id, req, extract, compress, error, batch, test) // 26k4:e30
     }
 }

@@ -30,13 +30,13 @@ class FilesArchiveEventsTest {
         val e = sink.entries.single()
         assertEquals("Molina/files", e.tag)
         assertEquals(LogLevel.INFO, e.level)
-        assertEquals("[BEHAV:files.archive-start] | op=extract format=zip count=1 encrypted=true depth=2", e.message)
+        assertEquals("[BEHAV:files.archive-start] | op=extract format=zip count=1 encrypted=true depth=2 policy=rename", e.message) // 26k4:e70
     }
 
     @Test fun selesaiMemuatJumlahUkuranDanTanpaPath() {
         FilesEvents.archiveDone("compress", 5, 0, 1, false, 1_048_576L, "", logger)
         assertEquals(
-            "[BEHAV:files.archive-done] | op=compress ok=5 renamed=0 skipped=1 cancelled=false bytes=1048576 depth=0",
+            "[BEHAV:files.archive-done] | op=compress ok=5 renamed=0 skipped=1 cancelled=false bytes=1048576 depth=0 replaced=0", // 26k4:e71
             sink.entries.single().message,
         )
     }

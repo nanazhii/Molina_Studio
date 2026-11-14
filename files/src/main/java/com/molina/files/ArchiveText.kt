@@ -2,7 +2,9 @@
 package com.molina.files
 
 import com.molina.core.common.MolinaError
+import com.molina.core.storage.ArchiveBatchResult // 26k4:e38
 import com.molina.core.storage.ArchiveException
+import com.molina.core.storage.ArchiveTestResult
 import com.molina.core.storage.ArchiveFailure
 import com.molina.core.storage.ArchiveProgress
 import com.molina.core.storage.CompressResult
@@ -14,6 +16,7 @@ internal object ArchiveText {
         ArchiveOp.EXTRACT -> "Mengekstrak"
         ArchiveOp.EXTRACT_SUBS -> "Mengekstrak subtitle"
         ArchiveOp.COMPRESS -> "Mengompres"
+        ArchiveOp.TEST -> "Menguji arsip" // 26k4:e39
     }
 
     /** Baris progres, mis. "Mengekstrak 45% \u00B7 12.0 MB". Total ekstrak tar = ukuran arsip (byte terkompresi). */
@@ -71,8 +74,62 @@ internal object ArchiveText {
         return sb.toString()
     }
 
+    // 26k4:e40
+    const val TEST_TITLE = "Uji arsip"
+
+    /** Baris progres; ekstrak banyak arsip diawali "Arsip i/n". */
+    fun runningLine(s: ArchiveState.Running): String {
+        val base = progressLine(s.op, s.progress, s.cancelling)
+        if (s.cancelling || s.count <= 1) return base
+        return "Arsip ${s.index + 1}/${s.count} \u00B7 $base"
+    }
+
+    fun clipLabel(count: Int): String = if (count > 1) "Ekstrak $count arsip ke\u2026" else "Ekstrak arsip ke\u2026"
+
+    fun overwriteWarning(): String =
+        "Berkas yang sudah ada dengan nama sama akan diganti isi arsip. Berkas lama disimpan sementara dan baru " +
+            "dihapus setelah seluruh ekstrak berhasil; bila gagal atau dibatalkan, berkas lama dikembalikan. " +
+            "Folder tidak ikut diganti."
+
+    /** Ringkasan ekstrak banyak arsip: N diekstrak, M gagal, K butuh kata sandi (bagian bernilai 0 dihilangkan). */
+    fun batchSummary(b: ArchiveBatchResult): String {
+        val sb = StringBuilder()
+        if (b.cancelled) sb.append("Dibatalkan. ${b.succeeded} dari ${b.total} arsip sudah diekstrak") else sb.append("${b.succeeded} arsip diekstrak")
+        if (b.bytes > 0) sb.append(" \u00B7 ").append(FileSizeFormat.format(b.bytes))
+        if (b.failed > 0) {
+            sb.append(", ${b.failed} gagal")
+            b.firstError?.let { sb.append(" (").append(error(it, ArchiveOp.EXTRACT)).append(")") }
+        }
+        val npw = b.needPassword.size
+        if (npw > 0) sb.append(", $npw butuh kata sandi")
+        if (b.renamed > 0) sb.append(", ${b.renamed} diberi nama baru")
+        if (b.skipped > 0) sb.append(", ${b.skipped} dilewati")
+        if (b.replaced > 0) sb.append(", ${b.replaced} diganti")
+        return sb.toString()
+    }
+
+    /** Isi dialog hasil Uji arsip. Tanpa nama berkas. */
+    fun testSummary(r: ArchiveTestResult): String {
+        if (r.cancelled) return "Pengujian dibatalkan"
+        val f = r.failure
+        if (f == null) {
+            val sb = StringBuilder("Arsip utuh \u00B7 ${r.entries} entri \u00B7 ${FileSizeFormat.format(r.bytes)}")
+            if (!r.checksummed) sb.append("\nTAR polos tidak punya checksum isi: hanya struktur dan ukuran yang diperiksa.")
+            return sb.toString()
+        }
+        val sb = StringBuilder(failure(f))
+        if (r.badIndex >= 0) {
+            sb.append("\nEntri pertama yang rusak: nomor ${r.badIndex + 1} (setelah ${r.badIndex} entri utuh)")
+        } else {
+            sb.append("\nStruktur arsip tidak terbaca")
+        }
+        return sb.toString()
+    }
+
     fun finished(state: ArchiveState.Finished): String {
         val req = state.request
+        state.batch?.let { return batchSummary(it) }
+        state.test?.let { return testSummary(it) }
         state.extract?.let { return extractSummary(it, req.op == ArchiveOp.EXTRACT_SUBS) }
         state.compress?.let { return compressSummary(it) }
         return state.error?.let { error(it, req.op) } ?: "Operasi gagal"
