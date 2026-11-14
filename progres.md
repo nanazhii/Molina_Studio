@@ -137,3 +137,7 @@
 - [ ] Uji perangkat Android 8: ubah sortir lalu tutup-buka aplikasi (sortir bertahan); buka folder X lalu keluar-masuk Berkas (langsung di X); hapus folder X lalu buka (jatuh ke root); putar layar tidak mengubah folder
 - [ ] Catatan root penuh sdcard: perlu proteksi folder sistem (Android/, dst.) di LocalMolinaStorage.protectedPaths dan penyatuan root FilesTransfer sebelum DEFAULT_ROOT diganti
 - [ ] Berikutnya: panel kiri (Favorit, Terakhir, Penyimpanan/Debian)
+- [x] Patch 26f: laci kiri Berkas (tombol di header; Favorit = folder standar + favorit pengguna terikat root, Penyimpanan = Molina + Debian nonaktif); toggle Favorit di ⋮ folder/header; aksen ★ emas dan item aktif hijau muda; event files.favorite + log-contract; belum dikompilasi (tanpa Android SDK)
+- [ ] Verifikasi CI Patch 26f (kompilasi :files, jvm-tests FilesNavTest dan FilesEventsTest)
+- [ ] Uji perangkat Android 8: tombol ☰ membuka laci; ketuk latar atau Back menutup; ketuk Cinema/Molina pindah folder dan item aktif hijau; Tambah ke Favorit dari ⋮ folder lalu muncul di laci; tekan lama favorit menghapusnya; putar layar menutup laci; Debian menampilkan penjelasan
+- [ ] Berikutnya: Patch 26g (pil melayang + menu Alat + ikon status Debian), Patch 26h (Sampah + Urungkan), Patch 26i (multi-root agar Debian bisa dijelajahi, menunggu keputusan)
