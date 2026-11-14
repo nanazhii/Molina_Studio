@@ -1,11 +1,14 @@
-// molina-patch34
-package com.molina.terminal
+// molina-patch35
+package com.molina.core.ui
+
+import android.graphics.Color
 
 /**
- * Jenis berkas menurut ekstensi, dipakai drawer untuk mewarnai dan melambangkan ikon berkas
- * (warna + lambang kecil, agar mudah dibedakan sekilas). Tanpa ekstensi / tidak dikenal = [OTHER].
+ * Jenis berkas menurut ekstensi + warna bersama (satu sumber untuk drawer Terminal, Berkas, dan Cinema).
+ * [color] = warna ikon/lambang; [nameColor] = warna teks nama (putih dicampur sedikit [color], tetap tenang).
+ * Tanpa ekstensi / tidak dikenal = [OTHER] (putih polos).
  */
-internal enum class FileKind(val color: Int) {
+enum class FileKind(val color: Int) {
     SHELL(0xFF00E676.toInt()),    // hijau Molina, lambang ">_"
     CODE(0xFF448AFF.toInt()),     // biru, lambang "<>"
     MARKUP(0xFFFF9800.toInt()),   // oranye, lambang "</>"
@@ -18,7 +21,12 @@ internal enum class FileKind(val color: Int) {
     TEXT(0xFFB0BEC5.toInt()),     // abu-abu, lambang tiga baris teks
     OTHER(0xFFFFFFFF.toInt());    // putih polos (gaya lama)
 
+    /** Warna teks nama berkas: putih yang sedikit condong ke warna jenisnya. */
+    val nameColor: Int = mix(Color.WHITE, color, NAME_TINT)
+
     companion object {
+        private const val NAME_TINT = 0.28f
+
         private val BY_EXT: Map<String, FileKind> = buildMap {
             fun add(kind: FileKind, vararg exts: String) = exts.forEach { put(it, kind) }
             add(SHELL, "sh", "bash", "zsh", "fish")
@@ -40,4 +48,13 @@ internal enum class FileKind(val color: Int) {
             return BY_EXT[name.substring(dot + 1).lowercase()] ?: OTHER
         }
     }
+}
+
+private fun mix(base: Int, tint: Int, t: Float): Int {
+    fun ch(shift: Int): Int {
+        val a = (base shr shift) and 0xFF
+        val b = (tint shr shift) and 0xFF
+        return (a + (b - a) * t).toInt().coerceIn(0, 255)
+    }
+    return (0xFF shl 24) or (ch(16) shl 16) or (ch(8) shl 8) or ch(0)
 }

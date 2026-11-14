@@ -1,5 +1,6 @@
 package com.molina.files
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,7 @@ import com.molina.core.storage.FileEntry
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.molina.core.ui.FileKind
 import com.molina.core.ui.R as UiR
 
 private object FileEntryDiff : DiffUtil.ItemCallback<FileEntry>() {
@@ -82,12 +84,14 @@ internal class FilesAdapter(
         holder.info.text = where +
             if (entry.isDirectory) "Folder \u00B7 $date" else FileSizeFormat.format(entry.sizeBytes) + " \u00B7 $date"
         holder.icon.setImageResource(if (entry.isDirectory) R.drawable.ic_files_folder else R.drawable.ic_files_file)
+        val kind = if (entry.isDirectory) FileKind.OTHER else FileKind.of(entry.name)
         val tint = when {
-            entry.isDirectory -> UiR.color.molina_tab_brand
-            entry.extension.lowercase(Locale.ROOT) in VIDEO_EXT -> UiR.color.molina_cinema_accent
-            else -> UiR.color.molina_on_surface_variant
+            entry.isDirectory -> ContextCompat.getColor(ctx, UiR.color.molina_tab_brand)
+            kind != FileKind.OTHER -> kind.color
+            else -> ContextCompat.getColor(ctx, UiR.color.molina_on_surface_variant)
         }
-        ImageViewCompat.setImageTintList(holder.icon, ColorStateList.valueOf(ContextCompat.getColor(ctx, tint)))
+        ImageViewCompat.setImageTintList(holder.icon, ColorStateList.valueOf(tint))
+        holder.name.setTextColor(if (entry.isDirectory) Color.WHITE else kind.nameColor)
         holder.itemView.alpha = if (entry.isHidden) 0.6f else 1f
         val picked = selectionActive && keyOf(entry) in selectedKeys
         holder.itemView.isActivated = picked

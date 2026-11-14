@@ -44,6 +44,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.molina.core.ui.FileKind
 import com.molina.core.ui.R as UiR
 import com.molina.log.MolinaEvents
 import com.molina.terminal.proot.DebianLayout
@@ -441,7 +442,9 @@ internal class FileDrawerView(
             h.row.alpha = if (e.hidden) 0.6f else 1f
             h.arrow.text = if (e.isDir) (if (item.expanded) "\u25BE" else "\u25B8") else ""
             h.icon.isDir = e.isDir
-            h.icon.kind = if (e.isDir) FileKind.OTHER else FileKind.of(e.name)
+            val kind = if (e.isDir) FileKind.OTHER else FileKind.of(e.name)
+            h.icon.kind = kind
+            h.name.setTextColor(kind.nameColor)
             h.name.text = e.name
             h.row.setOnClickListener { onRowTap(item) }
             h.more.setOnClickListener { showRowMenu(it, e) }
