@@ -154,3 +154,4 @@
 - [ ] Porting tambahan teridentifikasi: opsi sortir 'Terakhir diputar dulu' (playedFirst) + chip peringkat; MediaInfo (durasi/resolusi/bitrate) di Properti; poster sidecar untuk thumbnail
 - [ ] Keputusan Patch 26k: ikuti pola lama zip4j (ZIP/sandi) + commons-compress + xz (7z/tar); verifikasi lisensi dan pin di docs/provenance.md
 - [ ] Ditunda: edit isi ZIP, pratinjau gambar dari ZIP, arsip di Debian (menunggu 26i)
+- [x] Keputusan Patch 26k: zip4j + commons-compress + xz disetujui (pola repo lama); pin lisensi di docs/provenance.md
