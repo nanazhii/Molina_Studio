@@ -88,3 +88,6 @@
 - [x] Patch 20: Header Terminal bergaya Molina-Studio (bingkai hijau, ikon folder buka drawer, kotak path bobot 1 sampai ⋮, titik status sesi hijau/merah); header drawer disamakan (path melebar, ⋮: Segarkan/Folder baru/Berkas baru); showTerminalMenu(below=true). Belum dikompilasi di sandbox
 - [ ] Verifikasi CI Patch 20 (kompilasi terminal)
 - [ ] Uji perangkat: kotak path memenuhi lebar sampai ⋮ (portrait dan landscape); ⋮ header membuka menu di bawah header; titik status merah saat proot gagal; path header ikut berubah saat Jadikan folder utama
+- [x] Patch 25: dialog Berkas baru di drawer Terminal bergaya repo lama (hitam pekat, bingkai abu-putih, kolom nama + ekstensi dropdown, bawaan skrip.sh, tombol Batal/Buat/Buka di nano, baris Folder path shell). Menu titik tiga folder tidak berubah. Belum dikompilasi
+- [ ] Verifikasi CI Patch 25 (kompilasi terminal)
+- [ ] Uji perangkat: Berkas baru dari bilah bawah, dari ⋮ header, dan dari ⋮ folder; Buat = berkas kosong muncul di tree; Buka di nano = nano terbuka di berkas baru; ekstensi dropdown; Enter di keyboard; berkas yang sudah ada memunculkan galat
