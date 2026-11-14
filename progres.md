@@ -129,3 +129,6 @@
 - [ ] Verifikasi CI Patch 26e-h (kompilasi :files dan :core-ui, jvm-tests BrowserPathTest)
 - [ ] Uji perangkat Android 8: orb abu di root; ketuk segmen breadcrumb loncat folder; ikon cari buka/tutup kolom; putar layar dengan kueri aktif; Mode Pilih menampilkan 'N dipilih'
 - [x] Keputusan Penjelajah: Buka dengan, ketuk berkas teks, dan Pratinjau ditunda ke tahap akhir; Terminal, Editor, dan menu Alat (salin path, vault, script, nano, Code) dihapus dari desain. Antrean porting: Favorit/Terakhir/Prefs, Recycle Bin, Properti/Bagikan, Arsip, Thumbnail+Putar ke Cinema
+- [x] Patch 26e-1: logika Favorit/Terakhir/Prefs Penjelajah diporting ke :core-storage (KeyValueStore + SharedPrefsKeyValueStore, ExplorerFavorites, ExplorerRecent maks. 5, ExplorerPrefs + applyTo(ListOptions)); 23 tes JVM lulus di sandbox; SharedPrefsKeyValueStore belum dikompilasi (tanpa Android SDK); UI belum terhubung
+- [ ] Verifikasi CI Patch 26e-1 (kompilasi :core-storage, jvm-tests ExplorerFavoritesTest/ExplorerRecentTest/ExplorerPrefsTest)
+- [ ] Berikutnya: Patch 26e-2 (hubungkan Prefs ke FilesFragment: sortir/tersembunyi diingat dan folder terakhir dibuka), lalu panel kiri Favorit/Terakhir
