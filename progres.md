@@ -144,3 +144,9 @@
 - [x] Push 26h lengkap bertahap: core-storage (TrashBin + API Sampah) di b13a25a; MolinaPaths.TRASH_DIR/paths.trash menyusul di commit berikutnya
 - [ ] Verifikasi CI setelah commit core-common (kompilasi :core-storage, :files; jvm-tests TrashBinTest dan LocalMolinaStorageTrashTest)
 - [ ] Tambahkan patch_*.py ke .gitignore agar skrip patch lokal tidak ter-commit
+- [x] Patch 26h (Sampah + Urungkan) diverifikasi CI dan uji perangkat
+- [x] Koreksi: Cari sampai subfolder sudah ada di Berkas baru (MENU_DEEP), tidak perlu diporting
+- [x] Patch 26g: pil melayang Berkas (Segarkan, Urut, Pilih, Alat, titik status Debian kuning); pil disembunyikan saat bilah Tempel/progres tampil; event files.pill + log-contract + tes; belum dikompilasi (tanpa Android SDK)
+- [ ] Verifikasi CI Patch 26g (kompilasi :files, jvm-tests FilesEventsTest)
+- [ ] Uji perangkat Android 8: pil tampil di bawah tengah; Segarkan memuat ulang; Urut membuka menu sortir dan pilihan tersimpan; Pilih masuk/keluar Mode Pilih (ikon hijau); Alat membuka menu header; titik Debian menampilkan penjelasan; pil hilang saat Tempel/progres; baris terakhir tidak tertutup; laci terbuka meredupkan pil; putar layar
+- [ ] Berikutnya: Properti + Bagikan, lalu Arsip (ZIP/7z/tar), Thumbnail + Putar ke Cinema, Patch 26i (multi-root Debian, menunggu keputusan)
