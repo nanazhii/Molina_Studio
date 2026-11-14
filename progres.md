@@ -163,3 +163,4 @@
 - [ ] Verifikasi lisensi zip4j, commons-compress, xz dari POM; catat di docs/provenance.md; hasilkan gradle/verification-metadata.xml
 - [ ] Patch 26k-2: UI Arsip di :files (menu item Ekstrak/Kompres, dialog sandi, kemajuan + batal via pola FilesTransfer, ArchiveKind terpisah dari TransferKind, event log files.archive-*)
 - Patch 27: bingkai header terminal/drawer/panel drawer putih-abu (`molina_header_frame` #9AA0A8, 1dp); tombol kembali drawer 30dp (glyph 22sp); kotak path + titik tiga drawer 34dp; header terminal hanya breadcrumb path (Internal > ...) tanpa user@localhost:. Menunggu hasil CI.
+- Patch 28: pil tab sesi dan tombol + mengikuti header (radius 8dp, bingkai putih-abu `molina_header_frame` 1dp; pil idle tetap redup); tinggi pil 28→24dp, bilah tab 36→30dp, tombol ✕ 20dp, tombol + 32dp; margin atas bingkai terminal 6→2dp. Menunggu hasil CI.

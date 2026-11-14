@@ -53,7 +53,7 @@ internal class NanoKeysView(
     private val blue = color(UiR.color.molina_key_blue)
     private val red = color(UiR.color.molina_key_red)
     private val amber = color(R.color.molina_nano_fix)
-    private val frame = color(R.color.molina_nano_frame)
+    private val frame = color(UiR.color.molina_header_frame)
     private val plain = color(UiR.color.molina_on_surface)
     private val black = color(UiR.color.molina_extrakey_bg)
 
@@ -81,8 +81,8 @@ internal class NanoKeysView(
         visibility = GONE
         setPadding(dp(6), dp(1), dp(6), dp(1))
 
-        scroller.background = rounded(black, frame, 2, 12)
-        scroller.setPadding(dp(3), dp(3), dp(3), dp(3))
+        scroller.background = rounded(black, frame, 1, 8)
+        scroller.setPadding(dp(2), dp(2), dp(2), dp(2))
         addView(scroller, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(2) })
 
         val tag = TextView(context).apply {
@@ -100,29 +100,41 @@ internal class NanoKeysView(
         }
         arrowView.apply {
             setTextColor(frame)
-            textSize = 11f
+            textSize = 12f
             typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            background = rounded(black, frame, 1, 8)
+            contentDescription = context.getString(R.string.terminal_nano_handle)
+            isFocusable = false
+            isFocusableInTouchMode = false
+            setOnClickListener { toggle() }
         }
         handle = LinearLayout(context).apply {
             orientation = HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            minimumHeight = dp(24)
+            minimumHeight = dp(22)
             setPadding(dp(10), 0, dp(10), 0)
             background = rounded(black, frame, 1, 8)
             contentDescription = context.getString(R.string.terminal_nano_handle)
             isFocusable = false
             isFocusableInTouchMode = false
-            setOnClickListener {
-                if (forced) return@setOnClickListener
-                performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                setOpen(!isOpen())
-                refresh()
-            }
+            setOnClickListener { toggle() }
             addView(tag)
             addView(nameView, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(8); marginEnd = dp(8) })
-            addView(arrowView)
         }
-        addView(handle, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        val handleRow = LinearLayout(context).apply {
+            orientation = HORIZONTAL
+            addView(handle, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
+            addView(arrowView, LayoutParams(dp(32), LayoutParams.MATCH_PARENT).apply { marginStart = dp(4) })
+        }
+        addView(handleRow, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+    }
+
+    private fun toggle() {
+        if (forced) return
+        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        setOpen(!isOpen())
+        refresh()
     }
 
     override fun onAttachedToWindow() {
@@ -195,10 +207,12 @@ internal class NanoKeysView(
         }
         val tint = if (forced) amber else frame
         (handle.background as? GradientDrawable)?.setStroke(dp(1), tint)
-        (scroller.background as? GradientDrawable)?.setStroke(dp(2), if (forced) amber else frame)
+        (scroller.background as? GradientDrawable)?.setStroke(dp(1), if (forced) amber else frame)
         (handle.getChildAt(0) as? TextView)?.setTextColor(tint)
         arrowView.setTextColor(tint)
-        arrowView.text = if (forced) "" else if (open) "\u25BE" else "\u25B4"
+        (arrowView.background as? GradientDrawable)?.setStroke(dp(1), tint)
+        arrowView.visibility = if (forced) GONE else VISIBLE // prompt wajib: tombol drop tidak dipakai
+        arrowView.text = if (open) "\u25BE" else "\u25B4"
         visibility = VISIBLE
     }
 
@@ -231,13 +245,17 @@ internal class NanoKeysView(
         setColorFilter(k.tint)
         contentDescription = context.getString(k.desc)
         scaleType = ImageView.ScaleType.CENTER_INSIDE
-        setPadding(dp(9), dp(7), dp(9), dp(7))
+        setPadding(dp(8), dp(5), dp(8), dp(5))
         isFocusable = false
         isFocusableInTouchMode = false
         background = keyBackground(k.tint, strong = false)
         setOnClickListener {
             performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             send(k.seq)
+            if (AUTO_COLLAPSE) {
+                setOpen(false)
+                refresh()
+            }
         }
     }
 
@@ -247,7 +265,7 @@ internal class NanoKeysView(
     private fun labelText(text: String, tint: Int, seq: String, strong: Boolean): TextView = TextView(context).apply {
         this.text = text
         gravity = Gravity.CENTER
-        textSize = 13f
+        textSize = 12f
         typeface = Typeface.DEFAULT_BOLD
         maxLines = 1
         setTextColor(tint)
@@ -265,12 +283,12 @@ internal class NanoKeysView(
     private fun keyBackground(tint: Int, strong: Boolean): RippleDrawable {
         val content = GradientDrawable().apply {
             setColor(ColorUtils.setAlphaComponent(tint, if (strong) 0x55 else 0x22))
-            cornerRadius = dp(8).toFloat()
+            cornerRadius = dp(6).toFloat()
             setStroke(dp(1), ColorUtils.setAlphaComponent(tint, if (strong) 0xFF else 0x88))
         }
         val mask = GradientDrawable().apply {
             setColor(Color.WHITE)
-            cornerRadius = dp(8).toFloat()
+            cornerRadius = dp(6).toFloat()
         }
         return RippleDrawable(ColorStateList.valueOf(ColorUtils.setAlphaComponent(tint, 0x55)), content, mask)
     }
@@ -287,9 +305,12 @@ internal class NanoKeysView(
 
     private companion object {
         const val POLL_MS = 300L
-        const val KEY_W = 44
-        const val PROMPT_W = 96
-        const val RUN_W = 84
-        const val KEY_H = 36
+        const val KEY_W = 38
+        const val PROMPT_W = 84
+        const val RUN_W = 76
+        const val KEY_H = 28
+
+        /** [NANO-AUTOCOLLAPSE] drop-up menutup sendiri setelah tombol edit diketuk, agar layar nano kembali lega. */
+        const val AUTO_COLLAPSE = true
     }
 }
