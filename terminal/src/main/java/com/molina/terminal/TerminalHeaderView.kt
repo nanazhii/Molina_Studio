@@ -39,7 +39,7 @@ internal class TerminalHeaderView(
         val frame = GradientDrawable()
         frame.setColor(ContextCompat.getColor(context, UiR.color.molina_extrakey_bg))
         frame.cornerRadius = dp(8).toFloat()
-        frame.setStroke(dp(2), ContextCompat.getColor(context, UiR.color.molina_key_green))
+        frame.setStroke(dp(1), ContextCompat.getColor(context, UiR.color.molina_header_frame))
         background = frame
 
         val folder = FrameLayout(context)
@@ -87,15 +87,35 @@ internal class TerminalHeaderView(
         render()
     }
 
-    /** Path aktif terminal, mis. user@localhost:/sdcard; null bila sesi tidak melaporkannya. */
+    /** Path aktif terminal, mis. user@localhost:/sdcard (ditampilkan "Internal"); null bila sesi tidak melaporkannya. */
     fun setCwd(label: String?) {
         cwdLabel = label
         render()
     }
 
     private fun render() {
-        val label = cwdLabel ?: rootLabel
+        val label = prettyPath(cwdLabel ?: rootLabel)
         if (pathBox.text.toString() != label) pathBox.text = label
+    }
+
+    /**
+     * [PATH-ONLY] Tampilkan hanya path berbentuk breadcrumb, tanpa prompt user@host:
+     * "user@localhost:/sdcard/Molina" -> "Internal > Molina"; path lain di Debian -> "Debian > root > ...".
+     * Label yang sudah berbentuk "Internal/Molina" (cadangan dari drawer) ikut dirapikan.
+     */
+    private fun prettyPath(raw: String): String {
+        var p = raw.trim()
+        val at = p.indexOf("@localhost:")
+        if (at >= 0) p = p.substring(at + "@localhost:".length)
+        p = p.trimEnd('/')
+        val segs: List<String> = when {
+            p.isEmpty() -> return "/"
+            p == "Internal" || p.startsWith("Internal/") -> listOf("Internal") + p.removePrefix("Internal").split('/').filter { it.isNotEmpty() }
+            p == "/sdcard" || p.startsWith("/sdcard/") -> listOf("Internal") + p.removePrefix("/sdcard").split('/').filter { it.isNotEmpty() }
+            p.startsWith("/") -> listOf("Debian") + p.split('/').filter { it.isNotEmpty() }
+            else -> p.split('/').filter { it.isNotEmpty() }
+        }
+        return segs.joinToString(" > ")
     }
 
     fun setStatus(color: Int) {

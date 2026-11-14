@@ -30,4 +30,6 @@
     <!-- molina-patch19 -->
     <color name="molina_tab_dot_shell">#FFB300</color>
     <color name="molina_terminal_frame">#3C3F47</color>
+    <!-- molina-patch27: bingkai header terminal & drawer putih-abu (ganti hijau tebal) -->
+    <color name="molina_header_frame">#9AA0A8</color>
 </resources>

@@ -103,7 +103,7 @@ internal class FileDrawerView(
     private val panel = DrawerPanel(
         context,
         ContextCompat.getColor(context, UiR.color.molina_surface),
-        ColorUtils.setAlphaComponent(ContextCompat.getColor(context, UiR.color.molina_key_green), 0x99),
+        ContextCompat.getColor(context, UiR.color.molina_header_frame),
         dp(16),
         dp(1),
     ) { close() }
@@ -162,11 +162,11 @@ internal class FileDrawerView(
         val headerFrame = GradientDrawable()
         headerFrame.setColor(Color.TRANSPARENT)
         headerFrame.cornerRadius = dp(8).toFloat()
-        headerFrame.setStroke(dp(2), ContextCompat.getColor(context, UiR.color.molina_key_green))
+        headerFrame.setStroke(dp(1), ContextCompat.getColor(context, UiR.color.molina_header_frame))
         header.background = headerFrame
 
         back.text = "\u2039"
-        back.textSize = 26f
+        back.textSize = 22f
         back.gravity = Gravity.CENTER
         back.setTextColor(white)
         back.contentDescription = context.getString(R.string.drawer_up)
@@ -176,7 +176,7 @@ internal class FileDrawerView(
         ring.setStroke(dp(1), dim)
         back.background = ring
         back.setOnClickListener { currentRoot().parentFile?.let { setRoot(it) } }
-        header.addView(back, LinearLayout.LayoutParams(dp(36), dp(36)))
+        header.addView(back, LinearLayout.LayoutParams(dp(30), dp(30)))
 
         // [HEADER-FILL] kotak path melebar (bobot 1) sampai tombol titik tiga
         val box = LinearLayout(context)
@@ -200,7 +200,7 @@ internal class FileDrawerView(
         pathText.ellipsize = TextUtils.TruncateAt.MIDDLE
         box.addView(title)
         box.addView(pathText)
-        val boxLp = LinearLayout.LayoutParams(0, dp(40), 1f)
+        val boxLp = LinearLayout.LayoutParams(0, dp(34), 1f)
         boxLp.marginStart = dp(4)
         boxLp.marginEnd = dp(4)
         header.addView(box, boxLp)
@@ -208,7 +208,7 @@ internal class FileDrawerView(
         val headerMenu = HeaderDotsView(context)
         headerMenu.contentDescription = context.getString(R.string.drawer_more)
         headerMenu.setOnClickListener { showHeaderMenu(it) }
-        header.addView(headerMenu, LinearLayout.LayoutParams(dp(40), dp(40)))
+        header.addView(headerMenu, LinearLayout.LayoutParams(dp(34), dp(34)))
 
         val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
         headerLp.setMargins(dp(6), dp(6), dp(6), dp(4))
