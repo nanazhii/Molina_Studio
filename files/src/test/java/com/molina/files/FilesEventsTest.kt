@@ -3,6 +3,8 @@ package com.molina.files
 
 import com.molina.core.common.ErrorKind
 import com.molina.core.common.MolinaError
+import com.molina.core.storage.BatchResult
+import com.molina.core.storage.TransferKind
 import com.molina.log.LogEntry
 import com.molina.log.LogLevel
 import com.molina.log.LogSink
@@ -126,6 +128,51 @@ class FilesEventsTest {
         assertEquals(
             "[BUG:files.create-folder-failed] Nama sudah dipakai | kind=ALREADY_EXISTS error=none depth=1",
             sink.entries.first().message,
+        )
+    }
+
+    // molina-patch26c
+    @Test
+    fun selectionAndClipEventsHaveNoPaths() {
+        FilesEvents.selection("enter", "swipe", 1, logger)
+        FilesEvents.clip("set", TransferKind.MOVE, 3, logger)
+        FilesEvents.clip("clear", null, 0, logger)
+        assertEquals(
+            listOf(
+                "[BEHAV:files.select] | action=enter via=swipe count=1",
+                "[BEHAV:files.clip] | action=set mode=move count=3",
+                "[BEHAV:files.clip] | action=clear mode=none count=0",
+            ),
+            sink.entries.map { it.message },
+        )
+    }
+
+    @Test
+    fun transferEventsCarryCountsOnly() {
+        FilesEvents.transferStart(TransferKind.COPY, 4, "Movies/2024", logger)
+        FilesEvents.transferDone(BatchResult(TransferKind.DELETE, 2, 1, 0, false, null), "", logger)
+        assertEquals(
+            listOf(
+                "[BEHAV:files.transfer-start] | op=copy count=4 depth=2",
+                "[BEHAV:files.transfer-done] | op=delete-batch ok=2 failed=1 skipped=0 cancelled=false depth=0",
+            ),
+            sink.entries.map { it.message },
+        )
+    }
+
+    @Test
+    fun transferFailureUsesOperationCode() {
+        FilesEvents.transferFailed(
+            TransferKind.MOVE,
+            MolinaError(ErrorKind.PROTECTED, "Folder ini dilindungi", IOException("EACCES")),
+            "Movies",
+            logger,
+        )
+        val e = sink.entries.single()
+        assertEquals(LogLevel.WARN, e.level)
+        assertEquals(
+            "[BUG:files.move-failed] Folder ini dilindungi | kind=PROTECTED error=IOException depth=1 errno=EACCES",
+            e.message,
         )
     }
 }

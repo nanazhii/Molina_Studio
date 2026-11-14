@@ -3,6 +3,8 @@ package com.molina.files
 
 import com.molina.core.common.ErrorKind
 import com.molina.core.common.MolinaError
+import com.molina.core.storage.BatchResult
+import com.molina.core.storage.TransferKind
 import com.molina.log.LogLevel
 import com.molina.log.MolinaEvents
 import com.molina.log.MolinaLog
@@ -48,6 +50,51 @@ internal object FilesEvents {
             ),
             logger = logger,
         )
+
+    // molina-patch26c
+    /** [action]: enter | add | remove | all | exit; [via]: swipe | tap | menu | back | op. Tanpa nama/path. */
+    fun selection(action: String, via: String, count: Int, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "select",
+            fields = mapOf("action" to action, "via" to via, "count" to count.toString()),
+            logger = logger,
+        )
+
+    /** [action]: set | clear (papan klip internal Salin/Pindah). */
+    fun clip(action: String, kind: TransferKind?, count: Int, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "clip",
+            fields = linkedMapOf("action" to action, "mode" to (kind?.opName() ?: "none"), "count" to count.toString()),
+            logger = logger,
+        )
+
+    fun transferStart(kind: TransferKind, count: Int, destPath: String, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "transfer-start",
+            fields = mapOf("op" to kind.opName(), "count" to count.toString(), "depth" to depth(destPath).toString()),
+            logger = logger,
+        )
+
+    fun transferDone(r: BatchResult, destPath: String, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "transfer-done",
+            fields = mapOf(
+                "op" to r.kind.opName(), "ok" to r.succeeded.toString(), "failed" to r.failed.toString(),
+                "skipped" to r.skipped.toString(), "cancelled" to r.cancelled.toString(),
+                "depth" to depth(destPath).toString(),
+            ),
+            logger = logger,
+        )
+
+    /** Kode kegagalan memakai [opName]: files.copy-failed | files.move-failed | files.delete-batch-failed. */
+    fun transferFailed(kind: TransferKind, error: MolinaError, path: String, logger: MolinaLogger = MolinaLog.logger) =
+        failed(kind.opName(), error, path, logger)
+
+    private fun TransferKind.opName(): String = when (this) {
+        TransferKind.COPY -> "copy"
+        TransferKind.MOVE -> "move"
+        TransferKind.DELETE -> "delete-batch"
+    }
 
     fun permissionMissing(path: String, logger: MolinaLogger = MolinaLog.logger) =
         MolinaEvents.behavior(AREA, "permission-missing", fields = mapOf("depth" to depth(path).toString()), logger = logger)

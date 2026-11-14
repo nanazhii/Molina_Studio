@@ -23,4 +23,12 @@ object FilesErrorText {
         ErrorKind.IO -> "Operasi gagal (periksa izin tulis)"
         else -> of(kind)
     }
+
+    // molina-patch26c
+    /** Teks galat untuk salin/pindah/hapus massal. */
+    fun forTransfer(kind: ErrorKind): String = when (kind) {
+        ErrorKind.INVALID_PATH -> "Tujuan berada di dalam folder yang disalin atau dipindah"
+        ErrorKind.PROTECTED -> "Folder standar Molina dilindungi"
+        else -> forOp(kind)
+    }
 }

@@ -32,6 +32,33 @@ interface MolinaStorage {
 
     /** Menghapus item (rekursif). Root dan folder standar dilindungi. */
     suspend fun delete(relative: String): MolinaResult<Unit>
+
+    // molina-patch26c
+    /**
+     * Menyalin [sources] ke folder [destRelative]. Nama bentrok diberi nomor, tidak menimpa. Folder tidak
+     * bisa disalin ke dalam dirinya sendiri. Hasil sebagian tetap dikembalikan saat [cancel] dipicu.
+     */
+    suspend fun copy(
+        sources: List<String>,
+        destRelative: String,
+        cancel: CancelToken = CancelToken(),
+        onProgress: (TransferProgress) -> Unit = {},
+    ): MolinaResult<BatchResult>
+
+    /** Memindahkan [sources] ke [destRelative]. Root dan folder standar dilindungi. */
+    suspend fun move(
+        sources: List<String>,
+        destRelative: String,
+        cancel: CancelToken = CancelToken(),
+        onProgress: (TransferProgress) -> Unit = {},
+    ): MolinaResult<BatchResult>
+
+    /** Menghapus banyak item sekaligus (rekursif). Root dan folder standar dilindungi. */
+    suspend fun deleteAll(
+        relatives: List<String>,
+        cancel: CancelToken = CancelToken(),
+        onProgress: (TransferProgress) -> Unit = {},
+    ): MolinaResult<BatchResult>
 }
 
 class LocalMolinaStorage(
@@ -92,6 +119,68 @@ class LocalMolinaStorage(
         withContext(dispatchers.io) {
             onResolved(relative) { FileOperations.delete(it, protectedPaths) { !isActive } }
         }
+
+    // molina-patch26c
+    override suspend fun copy(
+        sources: List<String>,
+        destRelative: String,
+        cancel: CancelToken,
+        onProgress: (TransferProgress) -> Unit,
+    ): MolinaResult<BatchResult> = withContext(dispatchers.io) {
+        onTransferInputs(sources, destRelative) { files, dest ->
+            TransferOperations.copy(files, dest, { cancel.isCancelled || !isActive }, onProgress)
+        }
+    }
+
+    override suspend fun move(
+        sources: List<String>,
+        destRelative: String,
+        cancel: CancelToken,
+        onProgress: (TransferProgress) -> Unit,
+    ): MolinaResult<BatchResult> = withContext(dispatchers.io) {
+        onTransferInputs(sources, destRelative) { files, dest ->
+            TransferOperations.move(files, dest, protectedPaths, { cancel.isCancelled || !isActive }, onProgress)
+        }
+    }
+
+    override suspend fun deleteAll(
+        relatives: List<String>,
+        cancel: CancelToken,
+        onProgress: (TransferProgress) -> Unit,
+    ): MolinaResult<BatchResult> = withContext(dispatchers.io) {
+        when (val files = resolveAll(relatives)) {
+            is MolinaResult.Failure -> files
+            is MolinaResult.Success ->
+                TransferOperations.deleteAll(files.value, protectedPaths, { cancel.isCancelled || !isActive }, onProgress)
+        }
+    }
+
+    private inline fun onTransferInputs(
+        sources: List<String>,
+        destRelative: String,
+        block: (List<File>, File) -> MolinaResult<BatchResult>,
+    ): MolinaResult<BatchResult> {
+        val files = when (val r = resolveAll(sources)) {
+            is MolinaResult.Failure -> return r
+            is MolinaResult.Success -> r.value
+        }
+        return when (val dest = PathGuard.resolveInside(paths.root, destRelative)) {
+            is MolinaResult.Failure -> dest
+            is MolinaResult.Success -> block(files, dest.value)
+        }
+    }
+
+    /** Menyelesaikan semua path relatif; satu path tidak valid menggagalkan seluruh permintaan. */
+    private fun resolveAll(relatives: List<String>): MolinaResult<List<File>> {
+        val out = ArrayList<File>(relatives.size)
+        for (rel in relatives) {
+            when (val r = PathGuard.resolveInside(paths.root, rel)) {
+                is MolinaResult.Failure -> return r
+                is MolinaResult.Success -> out += r.value
+            }
+        }
+        return MolinaResult.Success(out)
+    }
 
     private inline fun <T> onResolved(relative: String, block: (File) -> MolinaResult<T>): MolinaResult<T> =
         when (val resolved = PathGuard.resolveInside(paths.root, relative)) {

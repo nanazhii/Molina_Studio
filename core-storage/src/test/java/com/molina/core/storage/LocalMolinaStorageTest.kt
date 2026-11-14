@@ -126,4 +126,50 @@ class LocalMolinaStorageTest {
         assertEquals(ErrorKind.PROTECTED, s.delete("").errorOrNull()?.kind)
         assertTrue(File(root, "logs").isDirectory && File(root, "terminal").isDirectory)
     }
+
+    // molina-patch26c
+    @Test fun salinPindahHapusMassalLewatRelatif() = runBlocking {
+        val root = File(tmp.root, "Molina")
+        val s = storage(root)
+        s.ensureLayout()
+        File(root, "a.txt").writeText("A")
+        File(root, "b.txt").writeText("B")
+        File(root, "tujuan").mkdir()
+        val copied = s.copy(listOf("a.txt", "b.txt"), "tujuan").getOrNull()!!
+        assertEquals(2, copied.succeeded)
+        assertTrue(File(root, "a.txt").exists() && File(root, "tujuan/a.txt").exists())
+        val moved = s.move(listOf("a.txt"), "tujuan").getOrNull()!!
+        assertEquals(1, moved.succeeded)
+        assertTrue(!File(root, "a.txt").exists() && File(root, "tujuan/a (1).txt").exists())
+        val deleted = s.deleteAll(listOf("b.txt", "tujuan")).getOrNull()!!
+        assertEquals(2, deleted.succeeded)
+        assertTrue(!File(root, "b.txt").exists() && !File(root, "tujuan").exists())
+    }
+
+    @Test fun pindahDanHapusMassalMenolakFolderStandar() = runBlocking {
+        val root = File(tmp.root, "Molina")
+        val s = storage(root)
+        s.ensureLayout()
+        File(root, "tujuan").mkdir()
+        assertEquals(ErrorKind.PROTECTED, s.move(listOf("logs"), "tujuan").getOrNull()!!.firstError?.kind)
+        assertEquals(ErrorKind.PROTECTED, s.deleteAll(listOf("logs", "terminal")).getOrNull()!!.firstError?.kind)
+        assertTrue(File(root, "logs").isDirectory && File(root, "terminal").isDirectory)
+    }
+
+    @Test fun massalMenolakPathKeluarDariRoot() = runBlocking {
+        val root = File(tmp.root, "Molina")
+        val s = storage(root)
+        s.ensureLayout()
+        assertEquals(ErrorKind.INVALID_PATH, s.copy(listOf("../luar"), "").errorOrNull()?.kind)
+        assertEquals(ErrorKind.INVALID_PATH, s.deleteAll(listOf("../luar")).errorOrNull()?.kind)
+        assertEquals(ErrorKind.INVALID_PATH, s.copy(listOf("a"), "../luar").errorOrNull()?.kind)
+    }
+
+    @Test fun salinFolderRootKeSubfolderDitolak() = runBlocking {
+        val root = File(tmp.root, "Molina")
+        val s = storage(root)
+        s.ensureLayout()
+        val r = s.copy(listOf(""), "logs").getOrNull()!!
+        assertEquals(ErrorKind.INVALID_PATH, r.firstError?.kind)
+    }
 }

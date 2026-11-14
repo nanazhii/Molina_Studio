@@ -150,6 +150,11 @@ Tag `Molina/files`. Path tidak pernah dicatat: hanya `depth` (jumlah segmen path
 | `files.list-failed` | BUG (W untuk NOT_FOUND/INVALID_PATH/INVALID_NAME/ALREADY_EXISTS/PROTECTED) | folder gagal dibaca | `kind`, `error`, `depth`, `errno` |
 | `files.create-folder-failed` / `files.create-file-failed` / `files.rename-failed` / `files.delete-failed` | BUG (W untuk galat nama/dilindungi) | operasi tulis gagal | `kind`, `error`, `depth`, `errno` |
 | `files.layout-failed` | BUG | folder standar Molina gagal dibuat | `kind`, `error`, `depth`, `errno` |
+| `files.select` | BEHAV | Mode Pilih berubah (tanpa nama/path) | `action` (enter/add/remove/all/exit), `via` (swipe/tap/menu/back/nav/op), `count` |
+| `files.clip` | BEHAV | papan klip Salin/Pindah diisi atau dikosongkan | `action` (set/clear), `mode` (copy/move/none), `count` |
+| `files.transfer-start` | BEHAV | salin/pindah/hapus massal dimulai | `op` (copy/move/delete-batch), `count`, `depth` |
+| `files.transfer-done` | BEHAV | operasi massal selesai (termasuk dibatalkan atau sebagian gagal) | `op`, `ok`, `failed`, `skipped`, `cancelled`, `depth` |
+| `files.copy-failed` / `files.move-failed` / `files.delete-batch-failed` | BUG (W untuk galat nama/dilindungi/tujuan tidak valid) | tujuan tidak valid atau minimal satu item gagal (galat item pertama yang dicatat) | `kind`, `error`, `depth`, `errno` |
 
 `files.list-failed` dengan `kind=PERMISSION_DENIED` padahal izin sudah diberikan berarti penyebabnya
 di luar dialog izin (mis. path bukan milik Molina atau volume dicabut); lihat `errno`.
