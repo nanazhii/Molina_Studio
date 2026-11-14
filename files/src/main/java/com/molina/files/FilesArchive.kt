@@ -41,6 +41,8 @@ internal data class ArchiveRequest(
     val format: ArchiveFormat? = null,
     val level: Int = 0,
     val baseName: String = "",
+    /** Ekstrak rata: semua berkas ke [destPath] tanpa subfolder (dipakai Ekstrak subtitle). */
+    val flatten: Boolean = false, // 26k3:request
 ) {
     /** extract | extract-subs | compress (untuk log). */
     val opName: String
@@ -142,7 +144,7 @@ internal object FilesArchive {
                             val none = ArchiveException(ArchiveFailure.NO_MATCH, "Tidak ada subtitle di arsip")
                             finish(req, null, null, MolinaError(ErrorKind.IO, none.message.orEmpty(), none))
                         } else {
-                            val r = storage.extractArchive(archive, req.destPath, ExtractTarget.HERE, pw, names, cancel, onProgress)
+                            val r = storage.extractArchive(archive, req.destPath, ExtractTarget.HERE, pw, names, cancel, onProgress, req.flatten) // 26k3:subs
                             finishExtract(req, r)
                         }
                     }

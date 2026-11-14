@@ -100,6 +100,8 @@ interface MolinaStorage {
         only: Set<String>? = null,
         cancel: CancelToken = CancelToken(),
         onProgress: (ArchiveProgress) -> Unit = {},
+        /** true = semua berkas ke folder tujuan tanpa subfolder (nama bentrok diberi nomor). */
+        flatten: Boolean = false, // 26k3:iface
     ): MolinaResult<ExtractResult>
 
     /** Kompres [relatives] menjadi satu arsip di [destRelative]. Isi Sampah dilewati dan dihitung di skipped. */
@@ -292,12 +294,13 @@ class LocalMolinaStorage(
         only: Set<String>?,
         cancel: CancelToken,
         onProgress: (ArchiveProgress) -> Unit,
+        flatten: Boolean, // 26k3:override
     ): MolinaResult<ExtractResult> = withContext(dispatchers.io) {
         onResolved(relative) { src ->
             onResolved(destRelative) { dest ->
                 archiveCatching {
                     val ctl = ArchiveCtl(ArchiveKind.EXTRACT, { cancel.isCancelled || !isActive }, onProgress)
-                    val out = ArchiveEngine.extract(src, dest, target, password, only, ctl)
+                    val out = ArchiveEngine.extract(src, dest, target, password, only, ctl, flatten) // 26k3:call
                     ExtractResult(out.dir?.let { relativeOf(it) } ?: "", out.files, out.renamed, out.skipped, out.cancelled, out.bytes) // molina-patch26k2i
                 }
             }

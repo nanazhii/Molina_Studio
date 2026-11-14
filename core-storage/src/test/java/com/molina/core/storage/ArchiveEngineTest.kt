@@ -311,6 +311,25 @@ class ArchiveEngineTest {
         assertEquals("halo", File(dest, "catatan.txt").readText())
     }
 
+    // 26k3:test
+    @Test fun ekstrakRataMembuangFolderDanMenamaiUlangBentrokan() {
+        val t = tarOf("s.tar", listOf("Subs/a.srt" to "1", "Subs/Pt/a.srt" to "2", "x/b.srt" to "3"))
+        val dest = dir("dest")
+        val r = ArchiveEngine.extract(t, dest, ExtractTarget.HERE, null, null, ctl(), flatten = true)
+        assertEquals(3, r.files)
+        assertEquals(1, r.renamed)
+        assertEquals(setOf("a.srt", "a (1).srt", "b.srt"), dest.listFiles()!!.map { it.name }.toSet())
+        assertTrue(dest.listFiles()!!.none { it.isDirectory })
+    }
+
+    @Test fun ekstrakRataTetapMenolakEntriTidakAman() {
+        val t = tarOf("j.tar", listOf("ok/a.srt" to "1", "../jahat.srt" to "2"))
+        val dest = dir("dest")
+        assertReason(ArchiveFailure.UNSAFE_ENTRY) { ArchiveEngine.extract(t, dest, ExtractTarget.HERE, null, null, ctl(), flatten = true) }
+        assertFalse(File(tmp.root, "jahat.srt").exists())
+        assertTrue(dest.listFiles()!!.isEmpty())
+    }
+
     @Test fun daftarIsiBisaDibatalkan() {
         val archive = compress(listOf(sample()), dir("out"), ArchiveFormat.TAR_GZ).file!!
         try {

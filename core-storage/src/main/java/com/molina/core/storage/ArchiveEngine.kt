@@ -246,7 +246,7 @@ internal object ArchiveEngine {
     // ------------------------------------------------------------------ ekstrak
 
     /** Penulis hasil: memvalidasi nama, menjaga jalur di dalam [base], tidak menimpa, memeriksa ruang kosong. */
-    private class Sink(val base: File, val only: Set<String>?, val ctl: ArchiveCtl, val limit: Int) {
+    private class Sink(val base: File, val only: Set<String>?, val ctl: ArchiveCtl, val limit: Int, val flatten: Boolean = false) { // 26k3:sink
         private val createdFiles = ArrayList<File>()
         private val createdDirs = ArrayList<File>()
         var files = 0
@@ -283,6 +283,7 @@ internal object ArchiveEngine {
         }
 
         fun dir(clean: String) {
+            if (flatten) return // 26k3:dir (mode rata: folder tidak dibuat)
             val d = ArchiveNames.safeTarget(base, clean)
                 ?: throw ArchiveException(ArchiveFailure.UNSAFE_ENTRY, "Entri arsip tidak aman")
             ensureDir(d)
@@ -291,7 +292,7 @@ internal object ArchiveEngine {
 
         /** Tentukan berkas keluaran (nama unik bila bentrok) dan catat agar bisa dibatalkan. */
         fun reserve(clean: String): File {
-            var out = ArchiveNames.safeTarget(base, clean)
+            var out = ArchiveNames.safeTarget(base, if (flatten) clean.substringAfterLast('/') else clean) // 26k3:reserve
                 ?: throw ArchiveException(ArchiveFailure.UNSAFE_ENTRY, "Entri arsip tidak aman")
             val parent = out.parentFile ?: throw ArchiveException(ArchiveFailure.UNSAFE_ENTRY, "Entri arsip tidak aman")
             ensureDir(parent)
@@ -353,6 +354,7 @@ internal object ArchiveEngine {
         password: String?,
         only: Set<String>?,
         ctl: ArchiveCtl,
+        flatten: Boolean = false, // 26k3:param
     ): ExtractOutcome {
         val fmt = requireArchive(file)
         if (!destDir.isDirectory || !destDir.canWrite()) throw fail(ArchiveFailure.IO, "Folder tujuan tidak bisa ditulisi")
@@ -363,7 +365,7 @@ internal object ArchiveEngine {
         }
         val base = if (named) ArchiveNames.uniqueFolder(destDir, folder) else destDir
         if (named && !base.mkdirs()) throw fail(ArchiveFailure.IO, "Gagal membuat folder hasil")
-        val sink = Sink(base, only, ctl, maxEntries)
+        val sink = Sink(base, only, ctl, maxEntries, flatten) // 26k3:ctor
 
         fun undo() {
             if (named) base.deleteRecursively() else sink.rollback()

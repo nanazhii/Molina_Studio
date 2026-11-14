@@ -906,7 +906,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     /** Ekstrak ke folder tempat arsip berada (juga untuk hasil pencarian sampai subfolder). */
     private fun extractEntry(entry: FileEntry, op: ArchiveOp, target: ExtractTarget) {
         val path = keyOf(entry)
-        startArchive(ArchiveRequest(op, listOf(path), BrowserPath.parent(path), target))
+        startArchive(ArchiveRequest(op, listOf(path), BrowserPath.parent(path), target, flatten = op == ArchiveOp.EXTRACT_SUBS)) // 26k3:frag
     }
 
     private fun promptCompress(paths: List<String>) {
