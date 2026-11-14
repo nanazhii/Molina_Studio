@@ -1,6 +1,7 @@
 package com.molina.files
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.Editable
@@ -37,6 +38,7 @@ import com.molina.core.storage.ExplorerFavorites
 import com.molina.core.storage.ExplorerPrefs
 import com.molina.core.storage.ExplorerRecent
 import com.molina.core.storage.FileEntry
+import com.molina.core.storage.FileProps
 import com.molina.core.storage.ListOptions
 import com.molina.core.storage.ListResult
 import com.molina.core.storage.LocalMolinaStorage
@@ -358,6 +360,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             m.add(Menu.NONE, MENU_MOVE, 1, "Pindah").isEnabled = canAct
             m.add(Menu.NONE, MENU_DELETE_SELECTED, 2, "Hapus").isEnabled = canAct
             m.add(Menu.NONE, MENU_DELETE_PERM_SELECTED, 2, "Hapus permanen").isEnabled = canAct
+            m.add(Menu.NONE, MENU_SHARE, 2, "Bagikan").isEnabled = canAct
+            m.add(Menu.NONE, MENU_PROPS, 3, "Properti").isEnabled = selection.count > 0
             m.add(Menu.NONE, MENU_SELECT_ALL, 3, "Pilih semua")
             m.add(Menu.NONE, MENU_SELECT_DONE, 4, "Selesai memilih")
             popup.setOnMenuItemClickListener { item ->
@@ -366,6 +370,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                     MENU_MOVE -> setClip(TransferKind.MOVE)
                     MENU_DELETE_SELECTED -> trashSelection()
                     MENU_DELETE_PERM_SELECTED -> confirmDeleteSelection()
+                    MENU_SHARE -> shareEntries(selection.snapshot().toList())
+                    MENU_PROPS -> showProperties(selection.snapshot().toList())
                     MENU_SELECT_ALL -> selectAllVisible()
                     MENU_SELECT_DONE -> exitSelection("menu")
                 }
@@ -378,6 +384,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         m.add(Menu.NONE, MENU_NEW_FOLDER, 1, "Folder baru")
         m.add(Menu.NONE, MENU_NEW_FILE, 2, "Berkas baru")
         m.add(Menu.NONE, MENU_SELECT, 3, "Pilih")
+        m.add(Menu.NONE, MENU_PROPS_HERE, 4, "Properti folder")
         if (!BrowserPath.isRoot(currentPath) && !FilesNav.isBuiltIn(currentPath)) {
             m.add(Menu.NONE, MENU_FAV_HERE, 5, favLabel(currentPath))
         }
@@ -400,6 +407,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                 MENU_NEW_FOLDER -> promptCreate(folder = true)
                 MENU_NEW_FILE -> promptCreate(folder = false)
                 MENU_SELECT -> enterSelectionFromMenu()
+                MENU_PROPS_HERE -> showProperties(listOf(currentPath))
                 MENU_FAV_HERE -> toggleFavorite(currentPath)
                 MENU_DESC -> applyOptions(options.copy(ascending = !options.ascending))
                 MENU_FOLDERS_FIRST -> applyOptions(options.copy(foldersFirst = !options.foldersFirst))
@@ -449,10 +457,6 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     }
 
     private fun bindPill(v: Views) {
-        v.pillRefresh.setOnClickListener {
-            FilesEvents.pill("refresh")
-            load(currentPath)
-        }
         v.pillSort.setOnClickListener {
             FilesEvents.pill("sort")
             showSortMenu(it)
@@ -482,6 +486,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         popup.menu.add(Menu.NONE, MENU_RENAME, 0, "Ganti nama")
         popup.menu.add(Menu.NONE, MENU_DELETE, 1, "Hapus")
         popup.menu.add(Menu.NONE, MENU_DELETE_PERM, 1, "Hapus permanen")
+        if (!entry.isDirectory) popup.menu.add(Menu.NONE, MENU_SHARE, 2, "Bagikan")
+        popup.menu.add(Menu.NONE, MENU_PROPS, 5, "Properti")
         val favPath = keyOf(entry)
         if (entry.isDirectory && !FilesNav.isBuiltIn(favPath)) {
             popup.menu.add(Menu.NONE, MENU_FAV, 2, favLabel(favPath))
@@ -492,10 +498,113 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                 MENU_DELETE -> trashEntry(entry)
                 MENU_DELETE_PERM -> promptDelete(entry)
                 MENU_FAV -> toggleFavorite(keyOf(entry))
+                MENU_SHARE -> shareEntries(listOf(keyOf(entry)))
+                MENU_PROPS -> showProperties(listOf(keyOf(entry)))
             }
             true
         }
         popup.show()
+    }
+
+    // --- Properti dan Bagikan (molina-patch26j)
+
+    private var propsJob: Job? = null
+
+    private fun snack(text: String) {
+        view?.let { Snackbar.make(it, text, Snackbar.LENGTH_LONG).show() }
+    }
+
+    private fun showProperties(paths: List<String>) {
+        if (paths.isEmpty()) return
+        propsJob?.cancel()
+        propsJob = viewLifecycleOwner.lifecycleScope.launch {
+            when (val r = storage.properties(paths)) {
+                is MolinaResult.Failure -> {
+                    FilesEvents.failed("props", r.error, paths.first())
+                    snack(FilesErrorText.forOp(r.error.kind))
+                }
+                is MolinaResult.Success -> presentProperties(r.value)
+            }
+        }
+    }
+
+    private fun presentProperties(items: List<FileProps>) {
+        if (items.isEmpty()) return
+        val scope = if (items.size > 1) "multi" else if (items[0].isDirectory) "folder" else "file"
+        FilesEvents.props(scope, items.size, items[0].path)
+        val hashTarget = items.singleOrNull()?.takeIf { !it.isDirectory && !it.isSymlink }
+        val body = PropsText.body(items)
+        var hashJob: Job? = null
+        MolinaDialog.info(
+            context = requireContext(),
+            title = PropsText.title(items),
+            message = body,
+            positive = "Tutup",
+            secondary = if (hashTarget != null) "SHA-256" else null,
+            onSecondary = { handle ->
+                if (hashTarget != null && hashJob?.isActive != true) {
+                    handle.setMessage(body + "\n\nSHA-256: menghitung…")
+                    hashJob = viewLifecycleOwner.lifecycleScope.launch { computeHash(hashTarget, body, handle) }
+                }
+            },
+            onDismiss = { hashJob?.cancel() },
+        )
+    }
+
+    private suspend fun computeHash(target: FileProps, body: String, handle: MolinaDialog.Info) {
+        var lastPct = -1
+        try {
+            val r = storage.sha256(target.path) { done, total ->
+                val pct = if (total > 0) (done * 100 / total).toInt() else 0
+                if (pct != lastPct) {
+                    lastPct = pct
+                    handle.setMessage(body + "\n\nSHA-256: menghitung… " + pct + "%")
+                }
+            }
+            when (r) {
+                is MolinaResult.Success -> {
+                    FilesEvents.propsHash("ok")
+                    handle.setMessage(body + "\n\nSHA-256:\n" + r.value)
+                }
+                is MolinaResult.Failure -> {
+                    FilesEvents.failed("hash", r.error, target.path)
+                    handle.setMessage(body + "\n\nSHA-256 gagal: " + FilesErrorText.forOp(r.error.kind))
+                }
+            }
+        } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+            FilesEvents.propsHash("cancelled")
+            throw e
+        }
+    }
+
+    private fun shareEntries(paths: List<String>) {
+        if (paths.isEmpty()) return
+        viewLifecycleOwner.lifecycleScope.launch {
+            when (val r = storage.shareTargets(paths)) {
+                is MolinaResult.Failure -> {
+                    FilesEvents.failed("share", r.error, paths.first())
+                    snack(FilesErrorText.forOp(r.error.kind))
+                }
+                is MolinaResult.Success -> {
+                    val targets = r.value
+                    if (targets.files.isEmpty()) {
+                        snack("Folder tidak bisa dibagikan. Pilih berkas")
+                        return@launch
+                    }
+                    try {
+                        startActivity(FilesShare.chooser(requireContext(), targets.files))
+                        FilesEvents.share(targets.files.size, targets.skipped)
+                        if (targets.skipped > 0) snack("${targets.skipped} item dilewati (folder)")
+                    } catch (e: ActivityNotFoundException) {
+                        FilesEvents.failed("share", MolinaError(ErrorKind.IO, "Tidak ada aplikasi untuk berbagi", e), paths.first())
+                        snack("Tidak ada aplikasi untuk berbagi")
+                    } catch (e: IllegalArgumentException) {
+                        FilesEvents.failed("share", MolinaError(ErrorKind.INVALID_PATH, "Berkas di luar jalur FileProvider", e), paths.first())
+                        snack("Berkas ini tidak bisa dibagikan")
+                    }
+                }
+            }
+        }
     }
 
     // --- Sampah (molina-patch26h)
@@ -962,7 +1071,6 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         val navList: LinearLayout = root.findViewById(R.id.files_nav_list)
         // molina-patch26g
         val pill: View = root.findViewById(R.id.files_pill)
-        val pillRefresh: ImageButton = root.findViewById(R.id.files_pill_refresh)
         val pillSort: ImageButton = root.findViewById(R.id.files_pill_sort)
         val pillSelect: ImageButton = root.findViewById(R.id.files_pill_select)
         val pillMore: ImageButton = root.findViewById(R.id.files_pill_more)
@@ -1007,6 +1115,9 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         const val NAV_ANIM_MS = 180L
         const val MENU_DELETE_PERM_SELECTED = 18
         const val MENU_DELETE_PERM = 19
+        const val MENU_PROPS = 20
+        const val MENU_SHARE = 21
+        const val MENU_PROPS_HERE = 22
         const val TRASH_TAG = "trash"
         const val UNDO_MS = 6000
     }

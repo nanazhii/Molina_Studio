@@ -76,6 +76,22 @@ class FilesEventsTest {
         assertEquals("[BEHAV:files.favorite] | action=add depth=2", e.message)
     }
 
+    // molina-patch26j
+    @Test
+    fun propsHashAndShareCarryNoNames() {
+        FilesEvents.props("folder", 1, "Movies/2024", logger)
+        FilesEvents.propsHash("ok", logger)
+        FilesEvents.share(2, 1, logger)
+        assertEquals(
+            listOf(
+                "[BEHAV:files.props] | scope=folder count=1 depth=2",
+                "[BEHAV:files.props-hash] | result=ok",
+                "[BEHAV:files.share] | count=2 skipped=1",
+            ),
+            sink.entries.map { it.message },
+        )
+    }
+
     // molina-patch26g
     @Test
     fun pillHasActionOnly() {

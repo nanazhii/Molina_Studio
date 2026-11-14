@@ -71,11 +71,32 @@ internal object FilesEvents {
         )
 
     // molina-patch26g
-    /** [action]: refresh | sort | select | tools | debian. Tombol pil melayang; tanpa path. */
+    /** [action]: sort | select | tools | debian. Tombol pil melayang; tanpa path. */
     fun pill(action: String, logger: MolinaLogger = MolinaLog.logger) =
         MolinaEvents.behavior(
             AREA, "pill",
             fields = mapOf("action" to action),
+            logger = logger,
+        )
+
+    // molina-patch26j
+    /** [scope]: file | folder | multi. Tanpa nama/path; hanya jenis, jumlah, dan kedalaman. */
+    fun props(scope: String, count: Int, path: String, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "props",
+            fields = mapOf("scope" to scope, "count" to count.toString(), "depth" to depth(path).toString()),
+            logger = logger,
+        )
+
+    /** [result]: ok | cancelled. SHA-256 dihitung dari dialog Properti. */
+    fun propsHash(result: String, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(AREA, "props-hash", fields = mapOf("result" to result), logger = logger)
+
+    /** [count] berkas dibagikan, [skipped] dilewati (folder/Sampah). Tanpa nama/path. */
+    fun share(count: Int, skipped: Int, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "share",
+            fields = mapOf("count" to count.toString(), "skipped" to skipped.toString()),
             logger = logger,
         )
 

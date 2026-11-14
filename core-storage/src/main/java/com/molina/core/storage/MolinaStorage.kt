@@ -76,6 +76,16 @@ interface MolinaStorage {
 
     /** Membersihkan item Sampah yang lebih tua dari batas simpan (30 hari). */
     suspend fun purgeExpiredTrash(now: Long = System.currentTimeMillis()): MolinaResult<Int>
+
+    // molina-patch26j
+    /** Properti item; folder dihitung rekursif. Urutan hasil sama dengan [relatives]. */
+    suspend fun properties(relatives: List<String>): MolinaResult<List<FileProps>>
+
+    /** SHA-256 heksadesimal sebuah berkas biasa. [onProgress] menerima (selesai, total) byte dari thread IO. */
+    suspend fun sha256(relative: String, onProgress: (Long, Long) -> Unit = { _, _ -> }): MolinaResult<String>
+
+    /** Berkas yang boleh dibagikan; folder dan isi Sampah dilewati dan dihitung di [ShareTargets.skipped]. */
+    suspend fun shareTargets(relatives: List<String>): MolinaResult<ShareTargets>
 }
 
 class LocalMolinaStorage(
@@ -198,6 +208,47 @@ class LocalMolinaStorage(
 
     override suspend fun purgeExpiredTrash(now: Long): MolinaResult<Int> =
         withContext(dispatchers.io) { bin.purgeExpired(now) }
+
+    // molina-patch26j
+    override suspend fun properties(relatives: List<String>): MolinaResult<List<FileProps>> =
+        withContext(dispatchers.io) {
+            when (val files = resolveAll(relatives)) {
+                is MolinaResult.Failure -> files
+                is MolinaResult.Success -> molinaCatching {
+                    files.value.mapIndexed { i, f ->
+                        if (!f.exists()) throw FileNotFoundException()
+                        PropsReader.read(f, relatives[i], { !isActive })
+                    }
+                }
+            }
+        }
+
+    override suspend fun sha256(relative: String, onProgress: (Long, Long) -> Unit): MolinaResult<String> =
+        withContext(dispatchers.io) {
+            onResolved(relative) { f ->
+                molinaCatching {
+                    if (!f.exists()) throw FileNotFoundException()
+                    PropsReader.sha256(f, { !isActive }, onProgress)
+                }
+            }
+        }
+
+    override suspend fun shareTargets(relatives: List<String>): MolinaResult<ShareTargets> =
+        withContext(dispatchers.io) {
+            when (val files = resolveAll(relatives)) {
+                is MolinaResult.Failure -> files
+                is MolinaResult.Success -> molinaCatching {
+                    val trash = paths.trash.canonicalFile.path
+                    val ok = ArrayList<File>()
+                    var skipped = 0
+                    for (f in files.value) {
+                        val inTrash = f.path == trash || f.path.startsWith(trash + File.separator)
+                        if (f.isFile && !inTrash) ok.add(f) else skipped++
+                    }
+                    ShareTargets(ok, skipped)
+                }
+            }
+        }
 
     private inline fun onTransferInputs(
         sources: List<String>,

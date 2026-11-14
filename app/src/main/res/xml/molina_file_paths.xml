@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-patch26j: Bagikan dari Berkas. Hanya folder root Molina yang bisa dibagikan.
+     Bila root nanti diganti (mis. full sdcard), path ini wajib disesuaikan. -->
+<paths>
+    <external-path name="molina_root" path="Molina/" />
+</paths>

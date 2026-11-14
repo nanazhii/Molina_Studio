@@ -254,15 +254,6 @@
         android:paddingEnd="6dp">
 
         <ImageButton
-            android:id="@+id/files_pill_refresh"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Segarkan"
-            android:src="@drawable/ic_files_refresh"
-            app:tint="@android:color/white" />
-
-        <ImageButton
             android:id="@+id/files_pill_sort"
             android:layout_width="44dp"
             android:layout_height="44dp"

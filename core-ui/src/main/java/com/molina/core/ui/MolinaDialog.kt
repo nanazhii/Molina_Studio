@@ -35,6 +35,59 @@ object MolinaDialog {
         show(context, title, message, false, "", false, positive) { onConfirm() }
     }
 
+    // molina-patch26j
+    /** Pegangan dialog info: pesan bisa diperbarui dari thread mana pun. */
+    class Info internal constructor(private val dialog: Dialog, private val message: TextView) {
+        fun setMessage(text: String) {
+            message.post { message.text = text }
+        }
+
+        fun dismiss() = dialog.dismiss()
+    }
+
+    /**
+     * Dialog informasi hitam pekat. [secondary] (opsional) menjadi tombol kiri dan tidak menutup dialog;
+     * [onDismiss] dipanggil saat dialog tertutup dengan cara apa pun. Teks bisa diseleksi dan disalin.
+     */
+    fun info(
+        context: Context,
+        title: String,
+        message: String,
+        positive: String,
+        secondary: String? = null,
+        onSecondary: (Info) -> Unit = {},
+        onDismiss: () -> Unit = {},
+    ): Info {
+        val dialog = Dialog(context)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val view = LayoutInflater.from(context).inflate(R.layout.molina_dialog, null, false)
+        view.findViewById<TextView>(R.id.dlg_title).text = title
+        val msg = view.findViewById<TextView>(R.id.dlg_message)
+        msg.text = message
+        msg.setTextIsSelectable(true)
+        msg.visibility = android.view.View.VISIBLE
+        val ok = view.findViewById<TextView>(R.id.dlg_ok)
+        ok.text = positive
+        ok.setOnClickListener { dialog.dismiss() }
+        val info = Info(dialog, msg)
+        val second = view.findViewById<TextView>(R.id.dlg_cancel)
+        if (secondary != null) {
+            second.text = secondary
+            second.setOnClickListener { onSecondary(info) }
+        } else {
+            second.visibility = android.view.View.GONE
+        }
+        dialog.setOnDismissListener { onDismiss() }
+        dialog.setContentView(view)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.show()
+        dialog.window?.setLayout(
+            (context.resources.displayMetrics.widthPixels * 0.9f).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+        )
+        return info
+    }
+
     private fun show(
         context: Context,
         title: String,
