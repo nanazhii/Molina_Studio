@@ -97,3 +97,6 @@
 - [ ] Verifikasi CI Patch 26b (kompilasi :files: FilesFragment, FilesAdapter, FilesDialog, layout; jvm-tests files)
 - [ ] Uji perangkat Android 8: tab Berkas; cari nama dan Cari sampai subfolder; sortir + Menurun; Tampilkan tersembunyi; Folder baru/Berkas baru di folder aktif; Ganti nama berkas (blok tanpa ekstensi); Hapus folder berisi; hapus logs/terminal/cinema harus ditolak (dilindungi); Back menutup pencarian lalu naik folder; putar layar mempertahankan kueri dan sortir
 - [ ] Berikutnya: Patch 26c (salin/pindah/hapus multi-pilih dengan progres + batal; FilesDialog dan header dipindah ke :core-ui agar dipakai bersama dialog Berkas baru Terminal)
+- [x] Patch 27: cd senyap dari drawer Terminal (hook cwd.req di prompt.sh + ShellPrompt.requestCd/CD_KEYS); ⋮ header drawer jadi satu aksi 'cd ke terminal + jadikan folder utama' (⋮ folder digabung); header path Terminal dipangkas ke ~34dp
+- [x] Patch 28b: Jalankan drawer mode Pintar (RunMode.SMART, bawaan): tab Debian dengan folder sama dipakai ulang, jika belum ada buka tab baru; opsi baru di Setelan > Terminal
+- [ ] Verifikasi CI Patch 27 + 28b (kompilasi :terminal, :settings, :app; jvm-tests :terminal-proot)
