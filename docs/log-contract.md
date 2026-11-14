@@ -179,3 +179,8 @@ CRASH harus menampilkan `[CRASH:uncaught] ... thread=main root=java.lang.Runtime
 trace; (3) Tentang > Salin laporan masalah harus memuat "Crash terbaru" dan "Urutan perilaku sebelum crash"
 yang berakhir di `debug.crash-trigger` lalu `CRASH uncaught`. Area crash uji adalah `settings`.
 
+<!-- molina-patch30 -->
+### Jalankan otomatis dari drawer (Patch 30)
+- BEHAV `term.drawer.op` op=`run_nano` fields: `tab`=`active|new`, `auto`=`1|0` (0 = tab shell Android, berkas dijalankan langsung)
+- BEHAV `term.drawer.op` op=`auto_run_sent` fields: `waited_ms` (RUN/Alt+R terkirim setelah judul `nano: ` + layar alternatif terdeteksi)
+- BUG `term.drawer.auto-run-timeout` fields: `waited_ms` (nano tidak siap dalam 12 dtk, RUN tidak dikirim)

@@ -80,6 +80,8 @@ internal class FileDrawerView(
         fun activateSessionAt(guestDir: String): Boolean
         /** Buka baris tombol nano (drop-up) agar tombol RUN terlihat. */
         fun showNanoKeys()
+        /** [RUN-AUTO] Tunggu nano terbuka di sesi aktif, lalu kirim RUN (Alt+R) otomatis. */
+        fun autoRunNano()
         fun runMode(): RunMode
         fun runLogEnabled(): Boolean
         fun onRootChanged(path: String)
@@ -530,35 +532,36 @@ internal class FileDrawerView(
         return true
     }
 
-    /** Tombol Jalankan: ikut setelan (tanya / sesi aktif / sesi baru). */
-    private fun runFlow(f: File) {
-        when (host.runMode()) {
-            RunMode.SMART -> runSmart(f)
-            RunMode.ACTIVE -> runInActive(f)
-            RunMode.NEW -> runInNew(f)
-            RunMode.ASK -> runDialog(f)
+    /** Tombol Jalankan: selalu tanya dulu (sesi baru / sesi aktif / batal). */ // molina-patch30
+    private fun runFlow(f: File) = runDialog(f)
+
+    /**
+     * [RUN-AUTO] Jalankan = alur sama seperti Edit di nano, tetapi RUN (Alt+R) dikirim otomatis begitu nano siap.
+     * Sesi aktif: nano dibuka dengan path berkas, folder kerja sesi tidak diubah. Sesi shell Android tidak punya
+     * nano Molina, jadi berkas dijalankan langsung seperti sebelumnya.
+     */
+    private fun runActiveAuto(f: File) {
+        if (!host.isProotSession()) { runInActive(f); return }
+        if (editInNano(f)) {
+            host.showNanoKeys()
+            host.autoRunNano()
+            MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run_nano", "tab" to "active", "auto" to "1"))
+            close()
         }
     }
 
-    /**
-     * [RUN-NANO] Jalankan = buka berkas di nano: tab dengan folder sama dipakai ulang, bila belum ada buka tab baru.
-     * Pengguna lalu menekan RUN di bilah nano; molina-run memeriksa dan memperbaiki header/penutup skrip sesuai ekstensi.
-     * Sesi tanpa Debian (shell Android) tidak punya nano Molina, jadi berkas langsung dijalankan seperti sebelumnya.
-     */
-    private fun runSmart(f: File) {
-        val guestDir = f.parentFile?.let { DrawerFs.shellPath(it, true) }
-        if (guestDir != null && host.activateSessionAt(guestDir)) {
-            if (editInNano(f)) {
-                host.showNanoKeys()
-                MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run_nano", "tab" to "reuse"))
-                close()
-            }
-            return
-        }
+    /** [RUN-AUTO] Sesi baru: tab baru, cd ke folder berkas, nano, lalu RUN otomatis (tab non-Debian: jalankan langsung). */
+    private fun runNewAuto(f: File) {
         if (nanoLine(f, true) == null && nanoLine(f, false) == null) { toast(R.string.drawer_not_visible); return }
-        if (host.runInNewSession { proot -> nanoLine(f, proot) }) {
-            host.showNanoKeys()
-            MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run_nano", "tab" to "new"))
+        var proot = false
+        if (host.runInNewSession { p -> proot = p; nanoLine(f, p) }) {
+            if (proot) {
+                host.showNanoKeys()
+                host.autoRunNano()
+            } else if (host.runLogEnabled()) {
+                toast(R.string.drawer_run_log_note)
+            }
+            MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run_nano", "tab" to "new", "auto" to if (proot) "1" else "0"))
             close()
         }
     }
@@ -573,13 +576,13 @@ internal class FileDrawerView(
         return "cd " + DrawerFs.quote(d) + " && nano " + DrawerFs.quote(p) + "\r"
     }
 
-    /** Dialog opsi Jalankan: sesi aktif, sesi baru, atau batal. */
+    /** Dialog opsi Jalankan: sesi baru, sesi aktif (ikut path aktif), atau batal. */
     private fun runDialog(f: File) {
         AlertDialog.Builder(context)
             .setTitle(context.getString(R.string.drawer_run_title, f.name))
             .setItems(
-                arrayOf(context.getString(R.string.drawer_run_active), context.getString(R.string.drawer_run_new)),
-            ) { _, which -> if (which == 0) runInActive(f) else runInNew(f) }
+                arrayOf(context.getString(R.string.drawer_run_new), context.getString(R.string.drawer_run_active)),
+            ) { _, which -> if (which == 0) runNewAuto(f) else runActiveAuto(f) }
             .setNegativeButton(R.string.terminal_tab_cancel, null)
             .show()
     }
@@ -607,15 +610,6 @@ internal class FileDrawerView(
         MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run"))
         if (host.runLogEnabled()) toast(R.string.drawer_run_log_note)
         close()
-    }
-
-    private fun runInNew(f: File) {
-        if (runLine(f, true) == null && runLine(f, false) == null) { toast(R.string.drawer_not_visible); return }
-        if (host.runInNewSession { proot -> runLine(f, proot) }) {
-            MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run_new"))
-            if (host.runLogEnabled()) toast(R.string.drawer_run_log_note)
-            close()
-        }
     }
 
     // ---------- operasi berkas ----------

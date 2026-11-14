@@ -21,6 +21,8 @@ import com.molina.core.ui.R as UiR
 import com.molina.terminal.core.PtyTerminalSession
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.molina.log.MolinaEvents
+import com.molina.terminal.proot.NanoProtocol
 import com.molina.terminal.proot.ProotCompat
 import com.molina.terminal.proot.RootfsPin
 import com.molina.terminal.view.TerminalView
@@ -161,6 +163,30 @@ class TerminalFragment : Fragment() {
                     holder.nanoKeysOpen = true
                     (owner as? NanoKeysStateOwner)?.nanoKeysOpen = true
                     nanoKeys?.refresh()
+                }
+                // molina-patch30
+                override fun autoRunNano() {
+                    val s = holder.session ?: return
+                    fun nanoUp(): Boolean {
+                        val em = s.getEmulator() ?: return false
+                        return NanoProtocol.isEditorTitle(em.title?.trim()) && em.isAlternateBufferActive
+                    }
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        var waited = 0L
+                        while (waited < 12000L && s.isRunning && !nanoUp()) {
+                            delay(100)
+                            waited += 100
+                        }
+                        if (s.isRunning && nanoUp()) {
+                            delay(300)
+                            if (s.isRunning && nanoUp()) {
+                                s.write(NanoProtocol.Seq.RUN)
+                                MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "auto_run_sent", "waited_ms" to waited.toString()))
+                                return@launch
+                            }
+                        }
+                        MolinaEvents.bug("term", "drawer.auto-run-timeout", "RUN otomatis nano tidak terkirim", fields = mapOf("waited_ms" to waited.toString()))
+                    }
                 }
                 override fun runMode(): RunMode = (owner as? RunPrefsOwner)?.runMode ?: RunMode.ASK
                 override fun runLogEnabled(): Boolean = (owner as? RunPrefsOwner)?.runLogEnabled == true

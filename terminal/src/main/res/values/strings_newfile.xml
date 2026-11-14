@@ -7,7 +7,7 @@
     <string name="newfile_open_nano">Buka di nano</string>
     <string name="drawer_run">Jalankan</string>
     <string name="drawer_run_title">Jalankan %1$s</string>
-    <string name="drawer_run_active">Jalankan di sesi aktif</string>
-    <string name="drawer_run_new">Jalankan di sesi baru</string>
+    <string name="drawer_run_active">Sesi aktif</string>
+    <string name="drawer_run_new">Sesi baru</string>
     <string name="drawer_run_log_note">Keluaran dicatat di Molina/run-logs</string>
 </resources>
