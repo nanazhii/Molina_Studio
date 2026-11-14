@@ -51,6 +51,15 @@ class FilesEventsTest {
         assertEquals("[BEHAV:files.restore] | depth=2", e.message)
     }
 
+    // molina-patch26f
+    @Test
+    fun favoriteHasActionAndDepthOnly() {
+        FilesEvents.favorite("add", "Movies/2024", logger)
+        val e = sink.entries.single()
+        assertEquals(LogLevel.INFO, e.level)
+        assertEquals("[BEHAV:files.favorite] | action=add depth=2", e.message)
+    }
+
     @Test
     fun permissionEventsAreBehaviorNotBug() {
         FilesEvents.permissionMissing("", logger)

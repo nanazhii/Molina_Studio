@@ -1,226 +1,274 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- molina-patch26b; molina-patch26c: bilah Tempel dan panel progres -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/molina_bg"
-    android:orientation="vertical">
+    android:background="@color/molina_bg">
 
+    <!-- molina-patch26f: isi lama dibungkus; laci kiri di bawah -->
     <LinearLayout
-        android:id="@+id/files_header"
+        android:id="@+id/files_content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="8dp"
-        android:background="@drawable/bg_files_header_old"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="6dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <ImageButton
-            android:id="@+id/files_up"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="@drawable/bg_files_orb"
-            android:contentDescription="Naik satu folder"
-            android:src="@drawable/ic_files_back" />
-
-        <FrameLayout
-            android:layout_width="0dp"
-            android:layout_height="32dp"
-            android:layout_marginStart="6dp"
-            android:layout_marginEnd="4dp"
-            android:layout_weight="1">
-
-            <LinearLayout
-                android:id="@+id/files_crumbs"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_files_crumbs"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp" />
-
-            <TextView
-                android:id="@+id/files_title"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_files_crumbs"
-                android:ellipsize="end"
-                android:gravity="center_vertical"
-                android:maxLines="1"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:textColor="@android:color/white"
-                android:textSize="13sp"
-                android:visibility="gone" />
-        </FrameLayout>
-
-        <ImageButton
-            android:id="@+id/files_search_btn"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Cari"
-            android:src="@drawable/ic_files_search"
-            app:tint="@android:color/white" />
-
-        <ImageButton
-            android:id="@+id/files_menu"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Menu berkas"
-            android:src="@drawable/ic_files_more"
-            app:tint="@android:color/white" />
-    </LinearLayout>
-
-    <EditText
-        android:id="@+id/files_search"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:autofillHints="none"
-        android:background="@drawable/molina_bg_box"
-        android:hint="Cari nama…"
-        android:visibility="gone"
-        android:imeOptions="actionSearch"
-        android:importantForAutofill="no"
-        android:inputType="text"
-        android:maxLines="1"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textColor="@android:color/white"
-        android:textColorHint="@color/molina_tab_muted"
-        android:textSize="14sp" />
-
-    <TextView
-        android:id="@+id/files_status"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingStart="16dp"
-        android:paddingTop="4dp"
-        android:paddingEnd="16dp"
-        android:textColor="@color/molina_tab_muted"
-        android:textSize="12sp"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/files_message"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:textColor="@android:color/white"
-        android:visibility="gone" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/files_retry"
-        style="@style/Widget.Material3.Button.OutlinedButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="Coba lagi"
-        android:visibility="gone" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/files_list"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingBottom="8dp" />
-
-    <LinearLayout
-        android:id="@+id/files_clip_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="8dp"
-        android:background="@drawable/molina_bg_box"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingEnd="4dp"
-        android:visibility="gone">
-
-        <TextView
-            android:id="@+id/files_clip_text"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:id="@+id/files_header"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_files_header_old"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <ImageButton
+                android:id="@+id/files_nav_btn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Buka panel kiri"
+                android:src="@drawable/ic_files_menu"
+                app:tint="@android:color/white" />
+
+            <ImageButton
+                android:id="@+id/files_up"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_files_orb"
+                android:contentDescription="Naik satu folder"
+                android:src="@drawable/ic_files_back" />
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1">
+
+                <LinearLayout
+                    android:id="@+id/files_crumbs"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_files_crumbs"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/files_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_files_crumbs"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <ImageButton
+                android:id="@+id/files_search_btn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Cari"
+                android:src="@drawable/ic_files_search"
+                app:tint="@android:color/white" />
+
+            <ImageButton
+                android:id="@+id/files_menu"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Menu berkas"
+                android:src="@drawable/ic_files_more"
+                app:tint="@android:color/white" />
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/files_search"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:autofillHints="none"
+            android:background="@drawable/molina_bg_box"
+            android:hint="Cari nama…"
+            android:visibility="gone"
+            android:imeOptions="actionSearch"
+            android:importantForAutofill="no"
+            android:inputType="text"
             android:maxLines="1"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:textColor="@android:color/white"
+            android:textColorHint="@color/molina_tab_muted"
             android:textSize="14sp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/files_clip_paste"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/files_status"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tempel"
-            android:textColor="@color/molina_key_green" />
+            android:paddingStart="16dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="16dp"
+            android:textColor="@color/molina_tab_muted"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/files_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:textColor="@android:color/white"
+            android:visibility="gone" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/files_clip_cancel"
-            style="@style/Widget.Material3.Button.TextButton"
+            android:id="@+id/files_retry"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Batal"
-            android:textColor="@color/molina_on_surface_variant" />
+            android:layout_marginStart="16dp"
+            android:text="Coba lagi"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/files_list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/files_clip_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/molina_bg_box"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="4dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/files_clip_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@android:color/white"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/files_clip_paste"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tempel"
+                android:textColor="@color/molina_key_green" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/files_clip_cancel"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Batal"
+                android:textColor="@color/molina_on_surface_variant" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/files_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/molina_bg_box"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/files_progress_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/files_progress_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:max="100"
+                    app:indicatorColor="@color/molina_key_green"
+                    app:trackColor="@color/files_progress_track" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/files_progress_cancel"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Batal"
+                android:textColor="@color/molina_cinema_accent" />
+        </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/files_progress"
+    <View
+        android:id="@+id/files_nav_scrim"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="8dp"
-        android:background="@drawable/molina_bg_box"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="12dp"
+        android:layout_height="match_parent"
+        android:background="@color/files_nav_scrim"
+        android:clickable="true"
+        android:focusable="false"
+        android:visibility="gone" />
+
+    <ScrollView
+        android:id="@+id/files_nav"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_files_nav"
+        android:clickable="true"
+        android:elevation="8dp"
+        android:fillViewport="true"
+        android:focusable="false"
+        android:paddingTop="24dp"
         android:visibility="gone">
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:id="@+id/files_nav_list"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/files_progress_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="@android:color/white"
-                android:textSize="13sp" />
-
-            <com.google.android.material.progressindicator.LinearProgressIndicator
-                android:id="@+id/files_progress_bar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:max="100"
-                app:indicatorColor="@color/molina_key_green"
-                app:trackColor="@color/files_progress_track" />
-        </LinearLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/files_progress_cancel"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="Batal"
-            android:textColor="@color/molina_cinema_accent" />
-    </LinearLayout>
-</LinearLayout>
+            android:orientation="vertical"
+            android:paddingStart="4dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="4dp"
+            android:paddingBottom="8dp" />
+    </ScrollView>
+</FrameLayout>

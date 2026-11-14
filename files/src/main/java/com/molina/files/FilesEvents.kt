@@ -40,6 +40,15 @@ internal object FilesEvents {
             logger = logger,
         )
 
+    // molina-patch26f
+    /** [action]: add | remove. Hanya kedalaman path, tanpa nama folder. */
+    fun favorite(action: String, path: String, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "favorite",
+            fields = mapOf("action" to action, "depth" to depth(path).toString()),
+            logger = logger,
+        )
+
     // molina-patch26b
     /** [name]: create-folder | create-file | rename | delete. Tanpa nama/path; hanya jenis dan kedalaman. */
     fun op(name: String, directory: Boolean, path: String, logger: MolinaLogger = MolinaLog.logger) =

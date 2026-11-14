@@ -3,4 +3,10 @@
 <resources>
     <color name="files_row_selected">#332ECC71</color>
     <color name="files_progress_track">#33FFFFFF</color>
+    <!-- molina-patch26f: laci kiri -->
+    <color name="files_nav_bg">#0E1114</color>
+    <color name="files_nav_line">#33FFFFFF</color>
+    <color name="files_nav_scrim">#99000000</color>
+    <color name="files_nav_active">#69F0AE</color>
+    <color name="files_star_gold">#E0A800</color>
 </resources>

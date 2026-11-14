@@ -33,6 +33,7 @@ import com.molina.core.common.MolinaError
 import com.molina.core.common.MolinaPaths
 import com.molina.core.common.MolinaResult
 import com.molina.core.common.getOrNull
+import com.molina.core.storage.ExplorerFavorites
 import com.molina.core.storage.ExplorerPrefs
 import com.molina.core.storage.ExplorerRecent
 import com.molina.core.storage.FileEntry
@@ -67,6 +68,11 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     private val explorerStore by lazy { SharedPrefsKeyValueStore(requireContext()) }
     private val explorerPrefs by lazy { ExplorerPrefs(explorerStore) }
     private val explorerRecent by lazy { ExplorerRecent(ScopedKeyValueStore(explorerStore, paths.root.path)) }
+    // molina-patch26f: favorit memakai path relatif, jadi terikat root seperti riwayat
+    private val explorerFavorites by lazy { ExplorerFavorites(ScopedKeyValueStore(explorerStore, paths.root.path)) }
+    private var navView: FilesNavView? = null
+    private var navBack: OnBackPressedCallback? = null
+    private var navOpen = false
     private val adapter = FilesAdapter(
         keyOf = { entry -> keyOf(entry) },
         onClick = { entry -> onEntryClick(entry) },
@@ -114,6 +120,17 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         v.clipCancel.setOnClickListener { clearClip() }
         v.progressCancel.setOnClickListener { FilesTransfer.cancel() }
         v.up.setOnClickListener { goUp() }
+        navView = FilesNavView(
+            list = v.navList,
+            onFolder = { path ->
+                closeNav()
+                navigate(path)
+            },
+            onRemove = { path -> toggleFavorite(path) },
+            onDebian = { notifyDebian() },
+        )
+        v.navBtn.setOnClickListener { openNav() }
+        v.navScrim.setOnClickListener { closeNav() }
         v.menu.setOnClickListener { showHeaderMenu(it) }
         v.searchBtn.setOnClickListener { toggleSearch() }
         v.search.visibility = if (options.query.isNotEmpty()) View.VISIBLE else View.GONE
@@ -139,6 +156,14 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         }
         backCallback = back
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, back)
+        // dipasang setelah callback utama agar Back menutup laci lebih dulu
+        val nb = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                closeNav()
+            }
+        }
+        navBack = nb
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, nb)
         applyClip()
         applySelection()
         viewLifecycleOwner.lifecycleScope.launch {
@@ -172,6 +197,9 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         queryJob?.cancel()
         queryJob = null
         backCallback = null
+        navOpen = false
+        navView = null
+        navBack = null
         swipeHelper?.attachToRecyclerView(null)
         swipeHelper = null
         views?.let { it.list.adapter = null }
@@ -341,6 +369,9 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         m.add(Menu.NONE, MENU_NEW_FOLDER, 1, "Folder baru")
         m.add(Menu.NONE, MENU_NEW_FILE, 2, "Berkas baru")
         m.add(Menu.NONE, MENU_SELECT, 3, "Pilih")
+        if (!BrowserPath.isRoot(currentPath) && !FilesNav.isBuiltIn(currentPath)) {
+            m.add(Menu.NONE, MENU_FAV_HERE, 5, favLabel(currentPath))
+        }
         val sorts = listOf(
             SortKey.NAME to "Urut: Nama", SortKey.DATE to "Urut: Tanggal",
             SortKey.SIZE to "Urut: Ukuran", SortKey.TYPE to "Urut: Tipe",
@@ -360,6 +391,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                 MENU_NEW_FOLDER -> promptCreate(folder = true)
                 MENU_NEW_FILE -> promptCreate(folder = false)
                 MENU_SELECT -> enterSelectionFromMenu()
+                MENU_FAV_HERE -> toggleFavorite(currentPath)
                 MENU_DESC -> applyOptions(options.copy(ascending = !options.ascending))
                 MENU_FOLDERS_FIRST -> applyOptions(options.copy(foldersFirst = !options.foldersFirst))
                 MENU_HIDDEN -> applyOptions(options.copy(showHidden = !options.showHidden))
@@ -384,14 +416,79 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         val popup = PopupMenu(requireContext(), anchor)
         popup.menu.add(Menu.NONE, MENU_RENAME, 0, "Ganti nama")
         popup.menu.add(Menu.NONE, MENU_DELETE, 1, "Hapus")
+        val favPath = keyOf(entry)
+        if (entry.isDirectory && !FilesNav.isBuiltIn(favPath)) {
+            popup.menu.add(Menu.NONE, MENU_FAV, 2, favLabel(favPath))
+        }
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 MENU_RENAME -> promptRename(entry)
                 MENU_DELETE -> promptDelete(entry)
+                MENU_FAV -> toggleFavorite(keyOf(entry))
             }
             true
         }
         popup.show()
+    }
+
+    // --- laci kiri (molina-patch26f)
+
+    private fun favLabel(path: String): String =
+        if (explorerFavorites.contains(path)) "Hapus dari Favorit" else "Tambah ke Favorit"
+
+    private fun toggleFavorite(path: String) {
+        val favorites = explorerFavorites
+        val had = favorites.contains(path)
+        val changed = if (had) favorites.remove(path) else favorites.add(path)
+        if (!changed) return
+        FilesEvents.favorite(if (had) "remove" else "add", path)
+        view?.let {
+            Snackbar.make(it, if (had) "Dihapus dari Favorit" else "Ditambahkan ke Favorit", Snackbar.LENGTH_SHORT).show()
+        }
+        if (navOpen) refreshNav()
+    }
+
+    /** Favorit dibaca dan dicek di IO (folder bisa sudah hilang), lalu laci digambar ulang di main. */
+    private fun refreshNav() {
+        val favorites = explorerFavorites
+        val current = currentPath
+        viewLifecycleOwner.lifecycleScope.launch {
+            val user = withContext(Dispatchers.IO) { favorites.load(::isFolder) }
+            navView?.render(FilesNav.build(user, current))
+        }
+    }
+
+    private fun openNav() {
+        val v = views ?: return
+        if (navOpen) return
+        navOpen = true
+        navBack?.isEnabled = true
+        refreshNav()
+        val width = NAV_WIDTH_DP * resources.displayMetrics.density
+        v.navScrim.alpha = 0f
+        v.navScrim.visibility = View.VISIBLE
+        v.navPanel.translationX = -width
+        v.navPanel.visibility = View.VISIBLE
+        v.navScrim.animate().alpha(1f).setDuration(NAV_ANIM_MS).start()
+        v.navPanel.animate().translationX(0f).setDuration(NAV_ANIM_MS).start()
+    }
+
+    private fun closeNav() {
+        val v = views ?: return
+        if (!navOpen) return
+        navOpen = false
+        navBack?.isEnabled = false
+        val width = NAV_WIDTH_DP * resources.displayMetrics.density
+        v.navScrim.animate().alpha(0f).setDuration(NAV_ANIM_MS)
+            .withEndAction { if (!navOpen) v.navScrim.visibility = View.GONE }.start()
+        v.navPanel.animate().translationX(-width).setDuration(NAV_ANIM_MS)
+            .withEndAction { if (!navOpen) v.navPanel.visibility = View.GONE }.start()
+    }
+
+    private fun notifyDebian() {
+        view?.let {
+            Snackbar.make(it, "Debian ada di luar root Molina, belum bisa dijelajahi dari Berkas", Snackbar.LENGTH_LONG).show()
+        }
     }
 
     // --- operasi
@@ -712,6 +809,10 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         val progressText: TextView = root.findViewById(R.id.files_progress_text)
         val progressBar: LinearProgressIndicator = root.findViewById(R.id.files_progress_bar)
         val progressCancel: MaterialButton = root.findViewById(R.id.files_progress_cancel)
+        val navBtn: ImageButton = root.findViewById(R.id.files_nav_btn)
+        val navScrim: View = root.findViewById(R.id.files_nav_scrim)
+        val navPanel: View = root.findViewById(R.id.files_nav)
+        val navList: LinearLayout = root.findViewById(R.id.files_nav_list)
     }
 
     private companion object {
@@ -746,5 +847,9 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         const val MENU_SELECT_ALL = 14
         const val MENU_SELECT_DONE = 15
         const val MENU_SORT_BASE = 100
+        const val MENU_FAV_HERE = 16
+        const val MENU_FAV = 17
+        const val NAV_WIDTH_DP = 240
+        const val NAV_ANIM_MS = 180L
     }
 }
