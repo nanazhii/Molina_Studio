@@ -76,6 +76,15 @@ class FilesEventsTest {
         assertEquals("[BEHAV:files.favorite] | action=add depth=2", e.message)
     }
 
+    // molina-patch26g
+    @Test
+    fun pillHasActionOnly() {
+        FilesEvents.pill("sort", logger)
+        val e = sink.entries.single()
+        assertEquals(LogLevel.INFO, e.level)
+        assertEquals("[BEHAV:files.pill] | action=sort", e.message)
+    }
+
     @Test
     fun permissionEventsAreBehaviorNotBug() {
         FilesEvents.permissionMissing("", logger)

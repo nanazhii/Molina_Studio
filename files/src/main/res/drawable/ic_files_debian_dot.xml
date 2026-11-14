@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-patch26g: titik status Debian (kuning = di luar root, belum bisa dijelajahi) -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="10dp"
+        android:height="10dp"
+        android:gravity="center">
+        <shape android:shape="oval">
+            <solid android:color="@color/files_debian_warn" />
+        </shape>
+    </item>
+</layer-list>

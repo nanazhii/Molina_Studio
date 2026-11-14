@@ -148,7 +148,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:clipToPadding="false"
-            android:paddingBottom="8dp" />
+            android:paddingBottom="80dp" />
 
         <LinearLayout
             android:id="@+id/files_clip_bar"
@@ -238,6 +238,65 @@
                 android:text="Batal"
                 android:textColor="@color/molina_cinema_accent" />
         </LinearLayout>
+    </LinearLayout>
+
+    <!-- molina-patch26g: pil melayang; di depan scrim agar ikut redup saat laci terbuka -->
+    <LinearLayout
+        android:id="@+id/files_pill"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_files_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp">
+
+        <ImageButton
+            android:id="@+id/files_pill_refresh"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Segarkan"
+            android:src="@drawable/ic_files_refresh"
+            app:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/files_pill_sort"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Urutkan"
+            android:src="@drawable/ic_files_sort"
+            app:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/files_pill_select"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Pilih"
+            android:src="@drawable/ic_files_check_on"
+            app:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/files_pill_more"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Alat"
+            android:src="@drawable/ic_files_more"
+            app:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/files_pill_debian"
+            android:layout_width="36dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Status Debian"
+            android:scaleType="center"
+            android:src="@drawable/ic_files_debian_dot" />
     </LinearLayout>
 
     <View

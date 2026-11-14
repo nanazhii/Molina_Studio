@@ -9,4 +9,7 @@
     <color name="files_nav_scrim">#99000000</color>
     <color name="files_nav_active">#69F0AE</color>
     <color name="files_star_gold">#E0A800</color>
+    <!-- molina-patch26g: pil melayang -->
+    <color name="files_pill_bg">#F20E1114</color>
+    <color name="files_debian_warn">#F2C94C</color>
 </resources>

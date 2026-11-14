@@ -70,6 +70,15 @@ internal object FilesEvents {
             logger = logger,
         )
 
+    // molina-patch26g
+    /** [action]: refresh | sort | select | tools | debian. Tombol pil melayang; tanpa path. */
+    fun pill(action: String, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "pill",
+            fields = mapOf("action" to action),
+            logger = logger,
+        )
+
     // molina-patch26b
     /** [name]: create-folder | create-file | rename | delete. Tanpa nama/path; hanya jenis dan kedalaman. */
     fun op(name: String, directory: Boolean, path: String, logger: MolinaLogger = MolinaLog.logger) =

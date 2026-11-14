@@ -137,6 +137,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         v.navBtn.setOnClickListener { openNav() }
         v.navScrim.setOnClickListener { closeNav() }
         v.menu.setOnClickListener { showHeaderMenu(it) }
+        bindPill(v)
         v.searchBtn.setOnClickListener { toggleSearch() }
         v.search.visibility = if (options.query.isNotEmpty()) View.VISIBLE else View.GONE
         v.retry.setOnClickListener { onRetry() }
@@ -412,6 +413,62 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             true
         }
         popup.show()
+    }
+
+    // molina-patch26g: pil melayang
+    private fun showSortMenu(anchor: View) {
+        val popup = PopupMenu(requireContext(), anchor)
+        val m = popup.menu
+        val sorts = listOf(
+            SortKey.NAME to "Nama", SortKey.DATE to "Tanggal",
+            SortKey.SIZE to "Ukuran", SortKey.TYPE to "Tipe",
+        )
+        sorts.forEachIndexed { i, (key, label) ->
+            m.add(GROUP_SORT, MENU_SORT_BASE + key.ordinal, i, label)
+        }
+        m.setGroupCheckable(GROUP_SORT, true, true)
+        m.findItem(MENU_SORT_BASE + options.sortKey.ordinal)?.isChecked = true
+        m.add(GROUP_FLAGS, MENU_DESC, 20, "Menurun").apply { isCheckable = true; isChecked = !options.ascending }
+        m.add(GROUP_FLAGS, MENU_FOLDERS_FIRST, 21, "Folder di atas").apply { isCheckable = true; isChecked = options.foldersFirst }
+        m.add(GROUP_FLAGS, MENU_HIDDEN, 22, "Tampilkan tersembunyi").apply { isCheckable = true; isChecked = options.showHidden }
+        m.add(GROUP_FLAGS, MENU_DEEP, 23, "Cari sampai subfolder").apply { isCheckable = true; isChecked = options.deep }
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                MENU_DESC -> applyOptions(options.copy(ascending = !options.ascending))
+                MENU_FOLDERS_FIRST -> applyOptions(options.copy(foldersFirst = !options.foldersFirst))
+                MENU_HIDDEN -> applyOptions(options.copy(showHidden = !options.showHidden))
+                MENU_DEEP -> applyOptions(options.copy(deep = !options.deep))
+                else -> {
+                    val key = SortKey.values().firstOrNull { MENU_SORT_BASE + it.ordinal == item.itemId }
+                    if (key != null) applyOptions(options.copy(sortKey = key))
+                }
+            }
+            true
+        }
+        popup.show()
+    }
+
+    private fun bindPill(v: Views) {
+        v.pillRefresh.setOnClickListener {
+            FilesEvents.pill("refresh")
+            load(currentPath)
+        }
+        v.pillSort.setOnClickListener {
+            FilesEvents.pill("sort")
+            showSortMenu(it)
+        }
+        v.pillSelect.setOnClickListener {
+            FilesEvents.pill("select")
+            if (selection.active) exitSelection("pill") else enterSelectionFromMenu()
+        }
+        v.pillMore.setOnClickListener {
+            FilesEvents.pill("tools")
+            showHeaderMenu(it)
+        }
+        v.pillDebian.setOnClickListener {
+            FilesEvents.pill("debian")
+            notifyDebian()
+        }
     }
 
     private fun applyOptions(next: ListOptions) {
@@ -751,6 +808,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     private fun applySelection() {
         adapter.setSelection(selection.active, selection.snapshot().toSet())
         showHeader(currentPath)
+        views?.pillSelect?.setColorFilter(if (selection.active) 0xFF69F0AE.toInt() else 0xFFFFFFFF.toInt())
     }
 
     private fun applyClip() {
@@ -759,6 +817,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         v.clipBar.visibility = if (c == null) View.GONE else View.VISIBLE
         if (c != null) v.clipText.text = TransferText.clipLabel(c.kind, c.paths.size)
         v.clipPaste.isEnabled = !FilesTransfer.isRunning
+        // molina-patch26g: pil disembunyikan saat bilah Tempel atau panel progres tampil
+        v.pill.visibility = if (c == null && v.progress.visibility != View.VISIBLE) View.VISIBLE else View.GONE
     }
 
     private fun updateBack() {
@@ -900,6 +960,13 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         val navScrim: View = root.findViewById(R.id.files_nav_scrim)
         val navPanel: View = root.findViewById(R.id.files_nav)
         val navList: LinearLayout = root.findViewById(R.id.files_nav_list)
+        // molina-patch26g
+        val pill: View = root.findViewById(R.id.files_pill)
+        val pillRefresh: ImageButton = root.findViewById(R.id.files_pill_refresh)
+        val pillSort: ImageButton = root.findViewById(R.id.files_pill_sort)
+        val pillSelect: ImageButton = root.findViewById(R.id.files_pill_select)
+        val pillMore: ImageButton = root.findViewById(R.id.files_pill_more)
+        val pillDebian: ImageButton = root.findViewById(R.id.files_pill_debian)
     }
 
     private companion object {
