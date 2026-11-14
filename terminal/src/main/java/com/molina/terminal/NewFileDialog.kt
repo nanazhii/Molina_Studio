@@ -47,12 +47,11 @@ internal object NewFileName {
 
 /**
  * Dialog "Berkas baru" dari drawer: hitam pekat, bingkai abu-putih, kolom nama + ekstensi (dropdown),
- * tombol Batal / Buat (berkas kosong) / Buka di nano. Nama bawaan skrip.sh. Pola dari repo lama, ditulis ulang.
+ * tombol Batal / Buka di nano. Nama bawaan skrip.sh. Pola dari repo lama, ditulis ulang.
  */
 internal fun showNewFileDialog(
     context: Context,
     folderLabel: String,
-    onCreate: (String) -> Unit,
     onNano: (String) -> Unit,
 ) {
     val density = context.resources.displayMetrics.density
@@ -152,9 +151,6 @@ internal fun showNewFileDialog(
         setOnClickListener { onClick() }
     }
     val cancel = button(R.string.terminal_tab_cancel, dim, false) { dialog.dismiss() }
-    val create = button(R.string.drawer_create, Color.WHITE, false) {
-        if (stem.text.isNotBlank()) { dialog.dismiss(); onCreate(name()) }
-    }
     val nano = button(R.string.newfile_open_nano, brand, true) {
         if (stem.text.isNotBlank()) { dialog.dismiss(); onNano(name()) }
     }
@@ -162,12 +158,10 @@ internal fun showNewFileDialog(
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.END
         addView(cancel)
-        addView(create)
         addView(nano)
     }
     fun refresh() {
         val ok = stem.text.isNotBlank()
-        create.alpha = if (ok) 1f else 0.4f
         nano.alpha = if (ok) 1f else 0.4f
     }
     stem.addTextChangedListener(object : TextWatcher {
@@ -202,4 +196,15 @@ internal fun showNewFileDialog(
     dialog.window?.setLayout(width, WindowManager.LayoutParams.WRAP_CONTENT)
     stem.requestFocus()
     stem.setSelection(0, stem.text.length)
+}
+
+// molina-patch26
+/** Interpreter untuk item "Jalankan" di menu berkas: pintasan dari buka di nano lalu run. */
+internal object RunnableFile {
+    private val MAP = mapOf(
+        "sh" to "bash", "py" to "python3", "js" to "node", "pl" to "perl", "rb" to "ruby",
+    )
+
+    fun interpreter(fileName: String): String? =
+        MAP[NewFileName.split(fileName).second.lowercase()]
 }

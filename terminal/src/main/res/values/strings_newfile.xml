@@ -5,4 +5,5 @@
     <string name="newfile_ext_hint">ekstensi</string>
     <string name="newfile_ext_none">(tanpa)</string>
     <string name="newfile_open_nano">Buka di nano</string>
+    <string name="drawer_run">Jalankan</string>
 </resources>

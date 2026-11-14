@@ -444,6 +444,7 @@ internal class FileDrawerView(
             m.add(0, ID_NEW_FILE, 3, context.getString(R.string.drawer_new_file_here))
         } else {
             m.add(0, ID_NANO, 0, context.getString(R.string.drawer_nano))
+            if (RunnableFile.interpreter(e.name) != null) m.add(0, ID_RUN, 1, context.getString(R.string.drawer_run))
         }
         m.add(0, ID_RENAME, 10, context.getString(R.string.drawer_rename))
         m.add(0, ID_COPY, 11, context.getString(R.string.drawer_copy_path))
@@ -458,6 +459,7 @@ internal class FileDrawerView(
                 ID_NEW_DIR -> newDirDialog(f)
                 ID_NEW_FILE -> newFileDialog(f)
                 ID_NANO -> if (editInNano(f)) close()
+                ID_RUN -> if (runFile(f)) close()
                 ID_RENAME -> renameDialog(f, e.isDir)
                 ID_COPY -> copyPath(f)
                 ID_INFO -> showInfo(f, e.isDir)
@@ -508,6 +510,14 @@ internal class FileDrawerView(
         val p = shellTarget(f) ?: return false
         host.send("nano " + DrawerFs.quote(p) + "\r")
         MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "nano"))
+        return true
+    }
+
+    private fun runFile(f: File): Boolean {
+        val interpreter = RunnableFile.interpreter(f.name) ?: return false
+        val p = shellTarget(f) ?: return false
+        host.send(interpreter + " " + DrawerFs.quote(p) + "\r")
+        MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run"))
         return true
     }
 
@@ -591,7 +601,6 @@ internal class FileDrawerView(
         showNewFileDialog(
             context,
             DrawerFs.shellPath(parent, host.isProotSession()) ?: parent.path,
-            onCreate = { name -> create(name, false) },
             onNano = { name -> create(name, true) },
         )
     }
@@ -690,6 +699,7 @@ internal class FileDrawerView(
         const val ID_COPY = 7
         const val ID_INFO = 8
         const val ID_DELETE = 9
+        const val ID_RUN = 10
         const val ID_REFRESH = 20
         const val ID_HEAD_NEW_DIR = 21
         const val ID_HEAD_NEW_FILE = 22
