@@ -42,6 +42,15 @@ class FilesEventsTest {
         assertEquals("[BEHAV:files.list] | depth=2 count=5", e.message)
     }
 
+    // molina-patch26e2
+    @Test
+    fun restoredHasDepthOnly() {
+        FilesEvents.restored("Movies/2024", logger)
+        val e = sink.entries.single()
+        assertEquals(LogLevel.INFO, e.level)
+        assertEquals("[BEHAV:files.restore] | depth=2", e.message)
+    }
+
     @Test
     fun permissionEventsAreBehaviorNotBug() {
         FilesEvents.permissionMissing("", logger)

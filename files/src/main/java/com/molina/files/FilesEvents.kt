@@ -31,6 +31,15 @@ internal object FilesEvents {
             logger = logger,
         )
 
+    // molina-patch26e2
+    /** Berkas dibuka di folder terakhir yang diingat (bukan root). Hanya kedalaman, tanpa path. */
+    fun restored(path: String, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "restore",
+            fields = mapOf("depth" to depth(path).toString()),
+            logger = logger,
+        )
+
     // molina-patch26b
     /** [name]: create-folder | create-file | rename | delete. Tanpa nama/path; hanya jenis dan kedalaman. */
     fun op(name: String, directory: Boolean, path: String, logger: MolinaLogger = MolinaLog.logger) =

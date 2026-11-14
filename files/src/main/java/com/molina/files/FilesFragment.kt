@@ -30,18 +30,27 @@ import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import com.molina.core.common.ErrorKind
 import com.molina.core.common.MolinaError
+import com.molina.core.common.MolinaPaths
 import com.molina.core.common.MolinaResult
+import com.molina.core.common.getOrNull
+import com.molina.core.storage.ExplorerPrefs
+import com.molina.core.storage.ExplorerRecent
 import com.molina.core.storage.FileEntry
 import com.molina.core.storage.ListOptions
 import com.molina.core.storage.ListResult
 import com.molina.core.storage.LocalMolinaStorage
 import com.molina.core.storage.MolinaStorage
+import com.molina.core.storage.PathGuard
+import com.molina.core.storage.ScopedKeyValueStore
+import com.molina.core.storage.SharedPrefsKeyValueStore
 import com.molina.core.storage.SortKey
 import com.molina.core.storage.TransferKind
 import com.molina.core.ui.MolinaDialog
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.molina.core.ui.R as UiR
 
 /**
@@ -52,7 +61,12 @@ import com.molina.core.ui.R as UiR
  * Seluruh akses berkas lewat :core-storage.
  */
 class FilesFragment : Fragment(R.layout.fragment_files) {
-    private val storage: MolinaStorage = LocalMolinaStorage()
+    // molina-patch26e2: root satu sumber; sortir diingat, folder terakhir terikat ke root agar aman bila root berubah
+    private val paths = MolinaPaths()
+    private val storage: MolinaStorage = LocalMolinaStorage(paths)
+    private val explorerStore by lazy { SharedPrefsKeyValueStore(requireContext()) }
+    private val explorerPrefs by lazy { ExplorerPrefs(explorerStore) }
+    private val explorerRecent by lazy { ExplorerRecent(ScopedKeyValueStore(explorerStore, paths.root.path)) }
     private val adapter = FilesAdapter(
         keyOf = { entry -> keyOf(entry) },
         onClick = { entry -> onEntryClick(entry) },
@@ -81,6 +95,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         if (savedInstanceState != null) {
             options = restoreOptions(savedInstanceState)
             restoreSelectionAndClip(savedInstanceState)
+        } else {
+            options = explorerPrefs.load().applyTo(options)
         }
         val v = Views(view)
         views = v
@@ -130,7 +146,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                 FilesTransfer.state.collect { renderTransfer(it) }
             }
         }
-        load(currentPath)
+        if (savedInstanceState == null) openLastFolder() else load(currentPath)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -197,6 +213,19 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         }
         if (entry.isDirectory) navigate(BrowserPath.entryPath(currentPath, entry.relDir, entry.name))
     }
+
+    /** Mulai dari folder terakhir dibuka bila masih ada, selain itu dari root. Pengecekan folder di IO. */
+    private fun openLastFolder() {
+        val recent = explorerRecent
+        viewLifecycleOwner.lifecycleScope.launch {
+            val last = withContext(Dispatchers.IO) { recent.last(::isFolder) }.orEmpty()
+            if (last.isNotEmpty()) FilesEvents.restored(last)
+            load(last)
+        }
+    }
+
+    private fun isFolder(relative: String): Boolean =
+        PathGuard.resolveInside(paths.root, relative).getOrNull()?.isDirectory == true
 
     /** Pindah folder; kueri pencarian dikosongkan agar daftar folder baru tidak terfilter. */
     private fun navigate(path: String) {
@@ -269,6 +298,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             when (val result = storage.browse(path, opts)) {
                 is MolinaResult.Success -> {
                     FilesEvents.listed(path, result.value.entries.size)
+                    explorerRecent.push(path)
                     if (opts.query.isNotEmpty()) {
                         FilesEvents.searched(path, result.value.entries.size, opts.deep, result.value.truncated)
                     }
@@ -346,6 +376,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
 
     private fun applyOptions(next: ListOptions) {
         options = next
+        explorerPrefs.save(ExplorerPrefs.Data.from(next, explorerPrefs.load().playedFirst))
         load(currentPath)
     }
 
