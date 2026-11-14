@@ -48,7 +48,11 @@ internal object FilesTransfer {
 
     val state: StateFlow<TransferState> get() = mutableState
 
-    val isRunning: Boolean get() = mutableState.value is TransferState.Running
+    /** Salin/pindah/hapus sedang berjalan. molina-patch26k2 // 26k2:transfer */
+    val transferRunning: Boolean get() = mutableState.value is TransferState.Running
+
+    /** Operasi massal ATAU arsip sedang berjalan: hanya satu operasi pada satu waktu. */
+    val isRunning: Boolean get() = transferRunning || FilesArchive.isRunning
 
     /** Memulai operasi. false bila operasi lain masih berjalan atau [sources] kosong. Panggil dari main thread. */
     fun start(kind: TransferKind, sources: List<String>, destPath: String): Boolean {

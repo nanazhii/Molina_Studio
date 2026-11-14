@@ -88,6 +88,37 @@ object MolinaDialog {
         return info
     }
 
+    // molina-patch26k2 // 26k2:form
+    /**
+     * Dialog hitam pekat dengan isi bebas [content] di bawah judul. [onPositive] mengembalikan true untuk menutup
+     * dialog; false membiarkannya terbuka (mis. input belum valid).
+     */
+    fun form(context: Context, title: String, positive: String, content: android.view.View, onPositive: () -> Boolean) {
+        val dialog = Dialog(context)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val view = LayoutInflater.from(context).inflate(R.layout.molina_dialog, null, false)
+        view.findViewById<TextView>(R.id.dlg_title).text = title
+        val anchor = view.findViewById<android.view.View>(R.id.dlg_input)
+        val parent = anchor.parent as ViewGroup
+        parent.addView(content, parent.indexOfChild(anchor) + 1)
+        val ok = view.findViewById<TextView>(R.id.dlg_ok)
+        ok.text = positive
+        view.findViewById<android.view.View>(R.id.dlg_cancel).setOnClickListener { dialog.dismiss() }
+        ok.setOnClickListener { if (onPositive()) dialog.dismiss() }
+        dialog.setContentView(view)
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE or WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE,
+            )
+        }
+        dialog.show()
+        dialog.window?.setLayout(
+            (context.resources.displayMetrics.widthPixels * 0.9f).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+        )
+    }
+
     private fun show(
         context: Context,
         title: String,

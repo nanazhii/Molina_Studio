@@ -34,7 +34,10 @@ import com.molina.core.common.MolinaError
 import com.molina.core.common.MolinaPaths
 import com.molina.core.common.MolinaResult
 import com.molina.core.common.getOrNull
+import com.molina.core.storage.ArchiveFailure
+import com.molina.core.storage.ArchiveNames
 import com.molina.core.storage.ExplorerFavorites
+import com.molina.core.storage.ExtractTarget // 26k2:imports
 import com.molina.core.storage.ExplorerPrefs
 import com.molina.core.storage.ExplorerRecent
 import com.molina.core.storage.FileEntry
@@ -121,7 +124,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         ).also { it.attachToRecyclerView(v.list) }
         v.clipPaste.setOnClickListener { pasteHere() }
         v.clipCancel.setOnClickListener { clearClip() }
-        v.progressCancel.setOnClickListener { FilesTransfer.cancel() }
+        v.progressCancel.setOnClickListener { FilesTransfer.cancel(); FilesArchive.cancel() } // 26k2:cancel
         v.up.setOnClickListener { goUp() }
         navView = FilesNavView(
             list = v.navList,
@@ -176,7 +179,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         applySelection()
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                FilesTransfer.state.collect { renderTransfer(it) }
+                launch { FilesTransfer.state.collect { renderTransfer(it) } }
+                launch { FilesArchive.state.collect { renderArchive(it) } } // 26k2:collect
             }
         }
         if (savedInstanceState == null) purgeExpiredTrash()
@@ -361,6 +365,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             m.add(Menu.NONE, MENU_DELETE_SELECTED, 2, "Hapus").isEnabled = canAct
             m.add(Menu.NONE, MENU_DELETE_PERM_SELECTED, 2, "Hapus permanen").isEnabled = canAct
             m.add(Menu.NONE, MENU_SHARE, 2, "Bagikan").isEnabled = canAct
+            m.add(Menu.NONE, MENU_COMPRESS, 2, "Kompres\u2026").isEnabled = canAct // 26k2:menu-sel
             m.add(Menu.NONE, MENU_PROPS, 3, "Properti").isEnabled = selection.count > 0
             m.add(Menu.NONE, MENU_SELECT_ALL, 3, "Pilih semua")
             m.add(Menu.NONE, MENU_SELECT_DONE, 4, "Selesai memilih")
@@ -371,6 +376,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                     MENU_DELETE_SELECTED -> trashSelection()
                     MENU_DELETE_PERM_SELECTED -> confirmDeleteSelection()
                     MENU_SHARE -> shareEntries(selection.snapshot().toList())
+                    MENU_COMPRESS -> promptCompress(selection.snapshot().toList()) // 26k2:click-sel
                     MENU_PROPS -> showProperties(selection.snapshot().toList())
                     MENU_SELECT_ALL -> selectAllVisible()
                     MENU_SELECT_DONE -> exitSelection("menu")
@@ -487,6 +493,12 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         popup.menu.add(Menu.NONE, MENU_DELETE, 1, "Hapus")
         popup.menu.add(Menu.NONE, MENU_DELETE_PERM, 1, "Hapus permanen")
         if (!entry.isDirectory) popup.menu.add(Menu.NONE, MENU_SHARE, 2, "Bagikan")
+        if (!entry.isDirectory && ArchiveNames.detect(entry.name) != null) { // 26k2:menu-entry
+            popup.menu.add(Menu.NONE, MENU_EXTRACT_HERE, 3, "Ekstrak di sini")
+            popup.menu.add(Menu.NONE, MENU_EXTRACT_FOLDER, 3, "Ekstrak ke folder")
+            popup.menu.add(Menu.NONE, MENU_EXTRACT_SUBS, 3, "Ekstrak subtitle di sini")
+        }
+        popup.menu.add(Menu.NONE, MENU_COMPRESS, 3, "Kompres\u2026")
         popup.menu.add(Menu.NONE, MENU_PROPS, 5, "Properti")
         val favPath = keyOf(entry)
         if (entry.isDirectory && !FilesNav.isBuiltIn(favPath)) {
@@ -500,6 +512,10 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                 MENU_FAV -> toggleFavorite(keyOf(entry))
                 MENU_SHARE -> shareEntries(listOf(keyOf(entry)))
                 MENU_PROPS -> showProperties(listOf(keyOf(entry)))
+                MENU_EXTRACT_HERE -> extractEntry(entry, ArchiveOp.EXTRACT, ExtractTarget.HERE) // 26k2:click-entry
+                MENU_EXTRACT_FOLDER -> extractEntry(entry, ArchiveOp.EXTRACT, ExtractTarget.NAMED_FOLDER)
+                MENU_EXTRACT_SUBS -> extractEntry(entry, ArchiveOp.EXTRACT_SUBS, ExtractTarget.HERE)
+                MENU_COMPRESS -> promptCompress(listOf(keyOf(entry)))
             }
             true
         }
@@ -881,6 +897,82 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         }
     }
 
+    // --- Arsip: Ekstrak dan Kompres (molina-patch26k2) // 26k2:block
+
+    private fun startArchive(request: ArchiveRequest, password: String? = null) {
+        if (!FilesArchive.start(request, password)) notifyBusy()
+    }
+
+    /** Ekstrak ke folder tempat arsip berada (juga untuk hasil pencarian sampai subfolder). */
+    private fun extractEntry(entry: FileEntry, op: ArchiveOp, target: ExtractTarget) {
+        val path = keyOf(entry)
+        startArchive(ArchiveRequest(op, listOf(path), BrowserPath.parent(path), target))
+    }
+
+    private fun promptCompress(paths: List<String>) {
+        if (paths.isEmpty()) return
+        val ctx = context ?: return
+        val single = paths.singleOrNull()
+        val base = ArchiveNames.defaultBaseName(
+            singleName = single?.substringAfterLast('/'),
+            singleIsDir = single != null && isFolder(single),
+            parentName = currentPath.substringAfterLast('/'),
+        )
+        ArchiveDialogs.compress(ctx, base) { format, level, name, password ->
+            if (selection.active) exitSelection("op")
+            val request = ArchiveRequest(ArchiveOp.COMPRESS, paths, currentPath, format = format, level = level, baseName = name)
+            startArchive(request, password)
+        }
+    }
+
+    private fun promptArchivePassword(request: ArchiveRequest, wrong: Boolean) {
+        val ctx = context ?: return
+        ArchiveDialogs.password(
+            ctx,
+            title = if (wrong) "Kata sandi salah" else "Arsip bersandi",
+            message = if (wrong) "Coba lagi dengan kata sandi yang benar." else "Masukkan kata sandi untuk membuka arsip ini.",
+        ) { pw -> startArchive(request, pw) }
+    }
+
+    private fun renderArchive(state: ArchiveState) {
+        val v = views ?: return
+        when (state) {
+            ArchiveState.Idle -> if (!FilesTransfer.transferRunning) v.progress.visibility = View.GONE
+            is ArchiveState.Running -> {
+                v.progress.visibility = View.VISIBLE
+                v.progressText.text = ArchiveText.progressLine(state.op, state.progress, state.cancelling)
+                v.progressBar.setProgressCompat(((state.progress?.fraction ?: 0f) * 100).toInt(), true)
+                v.progressCancel.isEnabled = !state.cancelling
+            }
+            is ArchiveState.Finished -> {
+                if (!FilesTransfer.transferRunning) v.progress.visibility = View.GONE
+                onArchiveFinished(state)
+                FilesArchive.acknowledge(state.id)
+            }
+        }
+        applyClip()
+    }
+
+    private fun onArchiveFinished(state: ArchiveState.Finished) {
+        val request = state.request
+        val reason = state.error?.let { ArchiveText.reasonOf(it) }
+        val needsPassword = reason == ArchiveFailure.NEED_PASSWORD || reason == ArchiveFailure.WRONG_PASSWORD
+        if (needsPassword && request.op != ArchiveOp.COMPRESS) {
+            promptArchivePassword(request, wrong = reason == ArchiveFailure.WRONG_PASSWORD)
+            return
+        }
+        val root = view
+        if (root != null) {
+            val bar = Snackbar.make(root, ArchiveText.finished(state), Snackbar.LENGTH_LONG)
+            val opened = state.extract
+                ?.takeIf { !it.cancelled && it.destRelative.isNotEmpty() && request.target == ExtractTarget.NAMED_FOLDER }
+                ?.destRelative
+            if (opened != null) bar.setAction("Buka") { navigate(opened) }
+            bar.show()
+        }
+        load(currentPath)
+    }
+
     private fun notifyBusy() {
         val root = view ?: return
         Snackbar.make(root, "Operasi lain masih berjalan", Snackbar.LENGTH_SHORT).show()
@@ -889,7 +981,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     private fun renderTransfer(state: TransferState) {
         val v = views ?: return
         when (state) {
-            TransferState.Idle -> v.progress.visibility = View.GONE
+            TransferState.Idle -> if (!FilesArchive.isRunning) v.progress.visibility = View.GONE // 26k2:idle
             is TransferState.Running -> {
                 v.progress.visibility = View.VISIBLE
                 v.progressText.text = TransferText.progressLine(state.kind, state.progress, state.cancelling)
@@ -1118,6 +1210,10 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         const val MENU_PROPS = 20
         const val MENU_SHARE = 21
         const val MENU_PROPS_HERE = 22
+        const val MENU_EXTRACT_HERE = 23 // 26k2:const
+        const val MENU_EXTRACT_FOLDER = 24
+        const val MENU_EXTRACT_SUBS = 25
+        const val MENU_COMPRESS = 26
         const val TRASH_TAG = "trash"
         const val UNDO_MS = 6000
     }

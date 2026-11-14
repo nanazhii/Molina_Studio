@@ -298,7 +298,7 @@ class LocalMolinaStorage(
                 archiveCatching {
                     val ctl = ArchiveCtl(ArchiveKind.EXTRACT, { cancel.isCancelled || !isActive }, onProgress)
                     val out = ArchiveEngine.extract(src, dest, target, password, only, ctl)
-                    ExtractResult(out.dir?.let { relativeOf(it) } ?: "", out.files, out.renamed, out.skipped, out.cancelled)
+                    ExtractResult(out.dir?.let { relativeOf(it) } ?: "", out.files, out.renamed, out.skipped, out.cancelled, out.bytes) // molina-patch26k2i
                 }
             }
         }
@@ -324,6 +324,7 @@ class LocalMolinaStorage(
                         out.entries,
                         out.skipped + (resolved.value.size - usable.size),
                         out.cancelled,
+                        out.bytes, // molina-patch26k2j
                     )
                 }
             }

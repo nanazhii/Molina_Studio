@@ -72,9 +72,9 @@ internal class ArchiveCtl(
     }
 }
 
-internal class ExtractOutcome(val dir: File?, val files: Int, val renamed: Int, val skipped: Int, val cancelled: Boolean)
+internal class ExtractOutcome(val dir: File?, val files: Int, val renamed: Int, val skipped: Int, val cancelled: Boolean, val bytes: Long = 0L) // molina-patch26k2c
 
-internal class CompressOutcome(val file: File?, val entries: Int, val skipped: Int, val cancelled: Boolean)
+internal class CompressOutcome(val file: File?, val entries: Int, val skipped: Int, val cancelled: Boolean, val bytes: Long = 0L) // molina-patch26k2d
 
 /**
  * Mesin arsip Molina (JVM murni, blocking: panggil dari dispatcher IO). ZIP lewat zip4j (termasuk AES);
@@ -253,6 +253,7 @@ internal object ArchiveEngine {
         var renamed = 0
         var skipped = 0
         var dirs = 0
+        var bytes = 0L // molina-patch26k2e
         private var entries = 0
         private var sinceCheck = 0L
 
@@ -333,6 +334,7 @@ internal object ArchiveEngine {
             } catch (e: java.io.FileNotFoundException) {
                 throw ArchiveException(ArchiveFailure.IO, "Tidak bisa menulis berkas hasil", e)
             }
+            bytes += entryBytes // molina-patch26k2f
             if (mtime > 0) out.setLastModified(mtime)
         }
 
@@ -387,7 +389,7 @@ internal object ArchiveEngine {
             throw mapReadError(e, fmt, password)
         }
         ctl.report()
-        return ExtractOutcome(base, sink.files, sink.renamed, sink.skipped, false)
+        return ExtractOutcome(base, sink.files, sink.renamed, sink.skipped, false, sink.bytes) // molina-patch26k2g
     }
 
     private fun checkDeclaredSpace(base: File, total: Long) {
@@ -656,7 +658,7 @@ internal object ArchiveEngine {
             out.delete()
             throw mapWriteError(e)
         }
-        return CompressOutcome(out, entries, stats.skipped, false)
+        return CompressOutcome(out, entries, stats.skipped, false, out.length()) // molina-patch26k2h
     }
 
     private fun zipLevel(level: Int): CompressionLevel =

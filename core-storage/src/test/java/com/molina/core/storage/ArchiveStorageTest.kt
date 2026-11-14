@@ -45,10 +45,12 @@ class ArchiveStorageTest {
         val c = s.compressItems(listOf("src"), "out", CompressOptions(ArchiveFormat.ZIP, 6, "paket")).getOrNull()!!
         assertEquals("out/paket.zip", c.outputRelative)
         assertFalse(c.cancelled)
+        assertTrue(c.bytes > 0) // molina-patch26k2k
         val listing = s.listArchive("out/paket.zip").getOrNull()!!
         assertEquals(2, listing.fileCount)
         val r = s.extractArchive("out/paket.zip", "dest", ExtractTarget.NAMED_FOLDER).getOrNull()!!
         assertEquals("dest/paket", r.destRelative)
+        assertEquals(10L, r.bytes) // molina-patch26k2l
         assertEquals("alpha", File(root, "dest/paket/src/a.txt").readText())
     }
 

@@ -103,6 +103,8 @@ data class ExtractResult(
     val renamed: Int,
     val skipped: Int,
     val cancelled: Boolean,
+    /** Total byte yang ditulis ke disk. molina-patch26k2a */
+    val bytes: Long = 0L,
 )
 
 /** [outputRelative]: arsip hasil (relatif terhadap root); kosong bila [cancelled]. */
@@ -111,6 +113,8 @@ data class CompressResult(
     val entries: Int,
     val skipped: Int,
     val cancelled: Boolean,
+    /** Ukuran arsip hasil (byte). molina-patch26k2b */
+    val bytes: Long = 0L,
 )
 
 /** [baseName] tanpa ekstensi (mentah dari pengguna; divalidasi). [password] hanya untuk ZIP. */

@@ -3,7 +3,9 @@ package com.molina.files
 
 import com.molina.core.common.ErrorKind
 import com.molina.core.common.MolinaError
-import com.molina.core.storage.BatchResult
+import com.molina.core.storage.ArchiveException
+import com.molina.core.storage.ArchiveFailure
+import com.molina.core.storage.BatchResult // 26k2:events-import
 import com.molina.core.storage.TransferKind
 import com.molina.log.LogLevel
 import com.molina.log.MolinaEvents
@@ -163,6 +165,65 @@ internal object FilesEvents {
         TransferKind.COPY -> "copy"
         TransferKind.MOVE -> "move"
         TransferKind.DELETE -> "delete-batch"
+    }
+
+    // molina-patch26k2 // 26k2:events-fn
+    /** [op]: extract | extract-subs | compress. Tanpa nama/path/kata sandi; hanya format, jumlah, dan kedalaman. */
+    fun archiveStart(
+        op: String,
+        count: Int,
+        format: String,
+        encrypted: Boolean,
+        destPath: String,
+        logger: MolinaLogger = MolinaLog.logger,
+    ) = MolinaEvents.behavior(
+        AREA, "archive-start",
+        fields = linkedMapOf(
+            "op" to op, "format" to format, "count" to count.toString(),
+            "encrypted" to encrypted.toString(), "depth" to depth(destPath).toString(),
+        ),
+        logger = logger,
+    )
+
+    fun archiveDone(
+        op: String,
+        ok: Int,
+        renamed: Int,
+        skipped: Int,
+        cancelled: Boolean,
+        bytes: Long,
+        destPath: String,
+        logger: MolinaLogger = MolinaLog.logger,
+    ) = MolinaEvents.behavior(
+        AREA, "archive-done",
+        fields = linkedMapOf(
+            "op" to op, "ok" to ok.toString(), "renamed" to renamed.toString(), "skipped" to skipped.toString(),
+            "cancelled" to cancelled.toString(), "bytes" to bytes.toString(), "depth" to depth(destPath).toString(),
+        ),
+        logger = logger,
+    )
+
+    private val ARCHIVE_WARN = setOf(
+        ArchiveFailure.NEED_PASSWORD, ArchiveFailure.WRONG_PASSWORD, ArchiveFailure.UNSUPPORTED,
+        ArchiveFailure.NO_MATCH, ArchiveFailure.EMPTY_SOURCE, ArchiveFailure.INVALID_NAME,
+        ArchiveFailure.NAME_TOO_LONG, ArchiveFailure.NAME_CONFLICT, ArchiveFailure.NOT_FOUND,
+        ArchiveFailure.PASSWORD_UNSUPPORTED,
+    )
+
+    /** Kode files.archive-failed; WARN untuk alasan yang bisa diperbaiki pengguna (sandi, nama, format), selain itu ERROR. */
+    fun archiveFailed(op: String, error: MolinaError, destPath: String, logger: MolinaLogger = MolinaLog.logger) {
+        val cause = error.cause
+        val reason = (cause as? ArchiveException)?.reason
+        val fields = linkedMapOf(
+            "op" to op,
+            "kind" to error.kind.name,
+            "reason" to (reason?.name ?: "none"),
+            "error" to (cause?.javaClass?.simpleName?.ifEmpty { null } ?: "none"),
+            "depth" to depth(destPath).toString(),
+        )
+        errnoOf(cause)?.let { fields["errno"] = it }
+        val level = if (reason != null && reason in ARCHIVE_WARN) LogLevel.WARN else LogLevel.ERROR
+        MolinaEvents.bug(AREA, "archive-failed", error.message, fields = fields, level = level, logger = logger)
     }
 
     fun permissionMissing(path: String, logger: MolinaLogger = MolinaLog.logger) =

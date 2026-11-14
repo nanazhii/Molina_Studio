@@ -166,6 +166,10 @@ Tag `Molina/files`. Path tidak pernah dicatat: hanya `depth` (jumlah segmen path
 | `files.transfer-start` | BEHAV | salin/pindah/hapus massal dimulai | `op` (copy/move/delete-batch), `count`, `depth` |
 | `files.transfer-done` | BEHAV | operasi massal selesai (termasuk dibatalkan atau sebagian gagal) | `op`, `ok`, `failed`, `skipped`, `cancelled`, `depth` |
 | `files.copy-failed` / `files.move-failed` / `files.delete-batch-failed` | BUG (W untuk galat nama/dilindungi/tujuan tidak valid) | tujuan tidak valid atau minimal satu item gagal (galat item pertama yang dicatat) | `kind`, `error`, `depth`, `errno` |
+| `files.archive-start` | BEHAV | Ekstrak/Kompres dimulai (tanpa nama/path/kata sandi) | `op` (extract/extract-subs/compress), `format`, `count`, `encrypted`, `depth` |
+| `files.archive-done` | BEHAV | Ekstrak/Kompres selesai (termasuk dibatalkan) | `op`, `ok`, `renamed`, `skipped`, `cancelled`, `bytes`, `depth` |
+| `files.archive-failed` | BUG (W untuk kata sandi, nama, format, tidak ada yang cocok) | Ekstrak/Kompres gagal; `reason` = alasan arsip (NEED_PASSWORD, WRONG_PASSWORD, CORRUPT, NO_SPACE, ...) | `op`, `kind`, `reason`, `error`, `depth`, `errno` |
+<!-- 26k2:docs -->
 
 `files.list-failed` dengan `kind=PERMISSION_DENIED` padahal izin sudah diberikan berarti penyebabnya
 di luar dialog izin (mis. path bukan milik Molina atau volume dicabut); lihat `errno`.
