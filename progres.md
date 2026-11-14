@@ -150,3 +150,7 @@
 - [ ] Verifikasi CI Patch 26g (kompilasi :files, jvm-tests FilesEventsTest)
 - [ ] Uji perangkat Android 8: pil tampil di bawah tengah; Segarkan memuat ulang; Urut membuka menu sortir dan pilihan tersimpan; Pilih masuk/keluar Mode Pilih (ikon hijau); Alat membuka menu header; titik Debian menampilkan penjelasan; pil hilang saat Tempel/progres; baris terakhir tidak tertutup; laci terbuka meredupkan pil; putar layar
 - [ ] Berikutnya: Properti + Bagikan, lalu Arsip (ZIP/7z/tar), Thumbnail + Putar ke Cinema, Patch 26i (multi-root Debian, menunggu keputusan)
+- [x] Perbandingan Penjelajah lama vs baru selesai (sesi terpisah): lama = Compose Win7 di app/cinema; baru = :files + :core-storage
+- [ ] Porting tambahan teridentifikasi: opsi sortir 'Terakhir diputar dulu' (playedFirst) + chip peringkat; MediaInfo (durasi/resolusi/bitrate) di Properti; poster sidecar untuk thumbnail
+- [ ] Keputusan Patch 26k: ikuti pola lama zip4j (ZIP/sandi) + commons-compress + xz (7z/tar); verifikasi lisensi dan pin di docs/provenance.md
+- [ ] Ditunda: edit isi ZIP, pratinjau gambar dari ZIP, arsip di Debian (menunggu 26i)
