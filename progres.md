@@ -100,3 +100,4 @@
 - [x] Patch 27: cd senyap dari drawer Terminal (hook cwd.req di prompt.sh + ShellPrompt.requestCd/CD_KEYS); ⋮ header drawer jadi satu aksi 'cd ke terminal + jadikan folder utama' (⋮ folder digabung); header path Terminal dipangkas ke ~34dp
 - [x] Patch 28b: Jalankan drawer mode Pintar (RunMode.SMART, bawaan): tab Debian dengan folder sama dipakai ulang, jika belum ada buka tab baru; opsi baru di Setelan > Terminal
 - [ ] Verifikasi CI Patch 27 + 28b (kompilasi :terminal, :settings, :app; jvm-tests :terminal-proot)
+- [x] Patch 27b: label ⋮ header drawer jadi 'Jalankan di terminal' (string drawer_run_in_terminal); ⋮ per folder tetap 'cd ke terminal + jadikan folder utama'
