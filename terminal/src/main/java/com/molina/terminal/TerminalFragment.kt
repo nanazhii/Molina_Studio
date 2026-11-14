@@ -151,6 +151,8 @@ class TerminalFragment : Fragment() {
                     sendWhenReady(s, text)
                     return true
                 }
+                override fun runMode(): RunMode = (owner as? RunPrefsOwner)?.runMode ?: RunMode.ASK
+                override fun runLogEnabled(): Boolean = (owner as? RunPrefsOwner)?.runLogEnabled == true
                 override fun onRootChanged(path: String) { terminalHeader?.setPath(path) }
                 override fun onOpenChanged(open: Boolean) {
                     drawerBack.isEnabled = open

@@ -74,6 +74,8 @@ internal class FileDrawerView(
         fun isProotSession(): Boolean
         fun isFullScreenProgram(): Boolean
         fun runInNewSession(line: (proot: Boolean) -> String?): Boolean
+        fun runMode(): RunMode
+        fun runLogEnabled(): Boolean
         fun onRootChanged(path: String)
         fun onOpenChanged(open: Boolean)
     }
@@ -460,7 +462,7 @@ internal class FileDrawerView(
                 ID_NEW_DIR -> newDirDialog(f)
                 ID_NEW_FILE -> newFileDialog(f)
                 ID_NANO -> if (editInNano(f)) close()
-                ID_RUN -> runDialog(f)
+                ID_RUN -> runFlow(f)
                 ID_RENAME -> renameDialog(f, e.isDir)
                 ID_COPY -> copyPath(f)
                 ID_INFO -> showInfo(f, e.isDir)
@@ -514,6 +516,15 @@ internal class FileDrawerView(
         return true
     }
 
+    /** Tombol Jalankan: ikut setelan (tanya / sesi aktif / sesi baru). */
+    private fun runFlow(f: File) {
+        when (host.runMode()) {
+            RunMode.ACTIVE -> runInActive(f)
+            RunMode.NEW -> runInNew(f)
+            RunMode.ASK -> runDialog(f)
+        }
+    }
+
     /** Dialog opsi Jalankan: sesi aktif, sesi baru, atau batal. */
     private fun runDialog(f: File) {
         AlertDialog.Builder(context)
@@ -531,7 +542,13 @@ internal class FileDrawerView(
         val p = DrawerFs.shellPath(f, proot) ?: return null
         val d = DrawerFs.shellPath(dir, proot) ?: return null
         if (DrawerFs.hasControlChars(p) || DrawerFs.hasControlChars(d)) return null
-        return RunnableFile.shellLine(f.name, DrawerFs.quote(d), DrawerFs.quote(p), proot)
+        val log = if (host.runLogEnabled()) {
+            val logDir = DrawerFs.shellPath(File(DrawerFs.INTERNAL_ROOT + "/Molina/run-logs"), proot) ?: return null
+            RunLog(DrawerFs.quote(logDir), DrawerFs.quote(logDir + "/" + NewFileName.split(f.name).first))
+        } else {
+            null
+        }
+        return RunnableFile.shellLine(f.name, DrawerFs.quote(d), DrawerFs.quote(p), proot, log)
     }
 
     private fun runInActive(f: File) {
@@ -540,6 +557,7 @@ internal class FileDrawerView(
         if (line == null) { toast(R.string.drawer_not_visible); return }
         host.send(line)
         MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run"))
+        if (host.runLogEnabled()) toast(R.string.drawer_run_log_note)
         close()
     }
 
@@ -547,6 +565,7 @@ internal class FileDrawerView(
         if (runLine(f, true) == null && runLine(f, false) == null) { toast(R.string.drawer_not_visible); return }
         if (host.runInNewSession { proot -> runLine(f, proot) }) {
             MolinaEvents.behavior("term", "drawer.op", fields = mapOf("op" to "run_new"))
+            if (host.runLogEnabled()) toast(R.string.drawer_run_log_note)
             close()
         }
     }

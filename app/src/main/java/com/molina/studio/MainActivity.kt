@@ -24,10 +24,12 @@ import com.molina.settings.TerminalPrefs
 import com.molina.terminal.NanoKeysStateOwner
 import com.molina.terminal.TerminalFragment
 import com.molina.terminal.TerminalSessionFactory
+import com.molina.terminal.RunMode
+import com.molina.terminal.RunPrefsOwner
 import com.molina.terminal.TerminalSessionFactoryOwner
 import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysStateOwner {
+class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysStateOwner, RunPrefsOwner {
     override val terminalSessionFactory: TerminalSessionFactory by lazy {
         createTerminalSessionFactory(applicationContext)
     }
@@ -35,6 +37,16 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
     override var nanoKeysOpen: Boolean
         get() = TerminalPrefs.nanoKeysOpen(applicationContext)
         set(value) = TerminalPrefs.setNanoKeysOpen(applicationContext, value)
+
+    override val runMode: RunMode
+        get() = when (TerminalPrefs.runMode(applicationContext)) {
+            TerminalPrefs.RUN_ACTIVE -> RunMode.ACTIVE
+            TerminalPrefs.RUN_NEW -> RunMode.NEW
+            else -> RunMode.ASK
+        }
+
+    override val runLogEnabled: Boolean
+        get() = TerminalPrefs.runLog(applicationContext)
 
     private val logTag = MolinaLogger.tag("core")
     private var currentTab: String? = null

@@ -21,3 +21,13 @@ interface TerminalSessionFactoryOwner {
 interface NanoKeysStateOwner {
     var nanoKeysOpen: Boolean
 }
+
+// molina-patch28
+/** Mode tombol Jalankan di drawer berkas: tanya (dialog), sesi aktif, atau sesi baru. */
+enum class RunMode { ASK, ACTIVE, NEW }
+
+/** Preferensi Jalankan; diisi oleh `app` dari settings (terminal tidak boleh bergantung pada settings). Dibaca tiap aksi, jadi perubahan setelan langsung berlaku. */
+interface RunPrefsOwner {
+    val runMode: RunMode
+    val runLogEnabled: Boolean
+}

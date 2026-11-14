@@ -5,6 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -51,6 +53,30 @@ class SettingsFragment : Fragment() {
             })
             addView(TextView(ctx).apply {
                 text = "Berlaku di sesi terminal baru. Hanya mengubah tampilan prompt; hak akses di Debian tidak berubah."
+                textSize = 12f
+            })
+            addView(TextView(ctx).apply { text = "Jalankan berkas dari drawer"; textSize = 14f; setPadding(0, pad / 2, 0, 0) })
+            addView(RadioGroup(ctx).apply {
+                val current = TerminalPrefs.runMode(ctx)
+                listOf(
+                    TerminalPrefs.RUN_ASK to "Tanya setiap kali",
+                    TerminalPrefs.RUN_ACTIVE to "Langsung di sesi aktif",
+                    TerminalPrefs.RUN_NEW to "Langsung di sesi baru",
+                ).forEach { (value, label) ->
+                    addView(RadioButton(ctx).apply {
+                        text = label
+                        isChecked = value == current
+                        setOnCheckedChangeListener { _, on -> if (on) TerminalPrefs.setRunMode(ctx, value) }
+                    })
+                }
+            })
+            addView(MaterialSwitch(ctx).apply {
+                text = "Catat keluaran Jalankan ke Molina/run-logs"
+                isChecked = TerminalPrefs.runLog(ctx)
+                setOnCheckedChangeListener { _, on -> TerminalPrefs.setRunLog(ctx, on) }
+            })
+            addView(TextView(ctx).apply {
+                text = "Keluaran tetap tampil di terminal dan disalin ke berkas log. Program layar penuh (mis. curses) bisa tidak berfungsi saat dicatat; python dijalankan dengan -u, bahasa lain bisa menahan keluaran sampai skrip selesai."
                 textSize = 12f
             })
             addView(IconPicker.build(ctx))

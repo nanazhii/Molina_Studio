@@ -216,10 +216,22 @@ internal object RunnableFile {
     fun interpreter(fileName: String): String? = spec(fileName)?.command
 
     /** Satu baris shell: cd ke folder berkas, jalankan; bila interpreter tidak ada, cetak petunjuk. Null bila ekstensi tidak dikenali. */
-    fun shellLine(fileName: String, quotedDir: String, quotedFile: String, proot: Boolean): String? {
+    fun shellLine(fileName: String, quotedDir: String, quotedFile: String, proot: Boolean, log: RunLog? = null): String? {
         val s = spec(fileName) ?: return null
         val cmd = if (!proot && s.command == "bash") "sh" else s.command
         val hint = if (proot) "$cmd belum terpasang. Pasang: apt install ${s.aptPackage}" else "$cmd tidak ditemukan di shell ini"
-        return "cd $quotedDir && if command -v $cmd >/dev/null 2>&1; then $cmd $quotedFile; else echo '[Molina] $hint'; fi\r"
+        val plain = "$cmd $quotedFile"
+        val exec = if (log == null) {
+            plain
+        } else {
+            val runner = if (cmd == "python3") "python3 -u" else cmd
+            val piped = "$runner $quotedFile 2>&1 | tee ${log.quotedBase}-\$(date +%Y%m%d-%H%M%S).log"
+            "if mkdir -p ${log.quotedDir} 2>/dev/null; then $piped; else echo '[Molina] folder log tidak bisa dibuat, dijalankan tanpa catatan'; $plain; fi"
+        }
+        return "cd $quotedDir && if command -v $cmd >/dev/null 2>&1; then $exec; else echo '[Molina] $hint'; fi\r"
     }
 }
+
+// molina-patch28
+/** Tujuan log keluaran Jalankan: folder log dan awalan nama berkas log (keduanya sudah dikutip untuk shell). */
+internal class RunLog(val quotedDir: String, val quotedBase: String)

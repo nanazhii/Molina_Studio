@@ -9,4 +9,5 @@
     <string name="drawer_run_title">Jalankan %1$s</string>
     <string name="drawer_run_active">Jalankan di sesi aktif</string>
     <string name="drawer_run_new">Jalankan di sesi baru</string>
+    <string name="drawer_run_log_note">Keluaran dicatat di Molina/run-logs</string>
 </resources>
