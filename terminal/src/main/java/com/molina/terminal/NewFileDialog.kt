@@ -100,9 +100,21 @@ internal fun showNewFileDialog(
     }
     extBox.addView(TextView(context).apply { text = "."; setTextColor(dim); typeface = Typeface.MONOSPACE; textSize = 14f })
     extBox.addView(ext, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
-    // [EXT-POPUP] daftar ekstensi ringkas: lebar mengikuti teks terpanjang (bukan minWidth 196dp bawaan PopupMenu)
-    fun showExtPopup() {
-        val labels = listOf(context.getString(R.string.newfile_ext_none)) + NewFileName.EXTENSIONS.map { ".$it" }
+    // [EXT-SUGGEST] tombol ▾ = semua ekstensi (modal); mengetik = saran berawalan huruf yang diketik (non-modal).
+    // Lebar daftar mengikuti teks terpanjang (bukan minWidth 196dp bawaan PopupMenu).
+    var openPopup: ListPopupWindow? = null
+    var suppressSuggest = false
+    fun pickExt(value: String) {
+        suppressSuggest = true
+        ext.setText(value)
+        ext.setSelection(ext.text.length)
+        suppressSuggest = false
+        openPopup?.dismiss()
+    }
+    fun showExtList(exts: List<String>, withNone: Boolean, modal: Boolean) {
+        openPopup?.dismiss()
+        val values = if (withNone) listOf("") + exts else exts
+        val labels = values.map { if (it.isEmpty()) context.getString(R.string.newfile_ext_none) else ".$it" }
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             typeface = Typeface.MONOSPACE
             textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 13f, context.resources.displayMetrics)
@@ -111,16 +123,17 @@ internal fun showNewFileDialog(
         val popup = ListPopupWindow(context)
         popup.anchorView = extBox
         popup.setDropDownGravity(Gravity.END)
-        popup.width = widest + dp(24) + dp(2)
-        popup.height = dp(34) * 7
+        popup.width = maxOf(widest + dp(24), dp(72)) + dp(2)
+        popup.height = dp(34) * minOf(labels.size, 7) + dp(2)
         popup.verticalOffset = dp(2)
-        popup.isModal = true
+        popup.isModal = modal
+        if (!modal) popup.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED // keyboard tetap terbuka saat mengetik
         popup.setBackgroundDrawable(border(8, frame, Color.BLACK))
         popup.setAdapter(object : ArrayAdapter<String>(context, 0, labels) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View =
                 (convertView as? TextView ?: TextView(context)).apply {
                     text = getItem(position)
-                    setTextColor(if (position == 0) dim else Color.WHITE)
+                    setTextColor(if (values[position].isEmpty()) dim else Color.WHITE)
                     typeface = Typeface.MONOSPACE
                     textSize = 13f
                     maxLines = 1
@@ -129,11 +142,9 @@ internal fun showNewFileDialog(
                     setPadding(dp(12), 0, dp(12), 0)
                 }
         })
-        popup.setOnItemClickListener { _, _, position, _ ->
-            ext.setText(if (position == 0) "" else NewFileName.EXTENSIONS[position - 1])
-            ext.setSelection(ext.text.length)
-            popup.dismiss()
-        }
+        popup.setOnItemClickListener { _, _, position, _ -> pickExt(values[position]) }
+        popup.setOnDismissListener { if (openPopup === popup) openPopup = null }
+        openPopup = popup
         popup.show()
         popup.listView?.apply {
             divider = null
@@ -149,9 +160,21 @@ internal fun showNewFileDialog(
         gravity = Gravity.CENTER
         setPadding(dp(6), 0, dp(6), 0)
         isClickable = true
-        setOnClickListener { showExtPopup() }
+        setOnClickListener { showExtList(NewFileName.EXTENSIONS, withNone = true, modal = true) }
     }
     extBox.addView(arrow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT))
+    ext.addTextChangedListener(object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+        override fun afterTextChanged(s: Editable?) {
+            if (suppressSuggest) return
+            val typed = s?.toString().orEmpty().trimStart('.')
+            if (typed.isEmpty()) { openPopup?.dismiss(); return }
+            val matches = NewFileName.EXTENSIONS.filter { it.startsWith(typed, ignoreCase = true) }
+            if (matches.isEmpty() || (matches.size == 1 && matches[0].equals(typed, ignoreCase = true))) openPopup?.dismiss()
+            else showExtList(matches, withNone = false, modal = false)
+        }
+    })
 
     val title = TextView(context).apply {
         setText(R.string.drawer_new_file)
@@ -175,6 +198,8 @@ internal fun showNewFileDialog(
     fields.addView(extBox, LinearLayout.LayoutParams(dp(124), dp(38)).apply { marginStart = dp(6) })
 
     val dialog = Dialog(context)
+    dialog.setOnDismissListener { openPopup?.dismiss() }
+    stem.setOnFocusChangeListener { _, has -> if (has) openPopup?.dismiss() }
     fun name(): String = NewFileName.join(stem.text.toString(), ext.text.toString())
     fun button(textRes: Int, color: Int, bold: Boolean, onClick: () -> Unit) = TextView(context).apply {
         setText(textRes)
