@@ -18,6 +18,9 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.molina.core.ui.R as UiR
+import com.molina.terminal.core.PtyTerminalSession
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.molina.terminal.proot.ProotCompat
 import com.molina.terminal.proot.RootfsPin
 import com.molina.terminal.view.TerminalView
@@ -133,6 +136,21 @@ class TerminalFragment : Fragment() {
                 override fun hasSession(): Boolean = holder.session != null
                 override fun isProotSession(): Boolean = holder.isProot(holder.currentIndex)
                 override fun isFullScreenProgram(): Boolean = holder.session?.getEmulator()?.isAlternateBufferActive == true
+                override fun runInNewSession(line: (Boolean) -> String?): Boolean {
+                    if (!holder.canAdd) {
+                        Toast.makeText(ctx, getString(R.string.terminal_tab_max, TerminalSessionHolder.MAX_SESSIONS), Toast.LENGTH_SHORT).show()
+                        return false
+                    }
+                    setup.sessionIsDebian = setup.isReady()
+                    val s = holder.newSession(factory) ?: return false
+                    val text = line(s.isProot)
+                    if (text == null) {
+                        Toast.makeText(ctx, R.string.drawer_not_visible, Toast.LENGTH_SHORT).show()
+                        return false
+                    }
+                    sendWhenReady(s, text)
+                    return true
+                }
                 override fun onRootChanged(path: String) { terminalHeader?.setPath(path) }
                 override fun onOpenChanged(open: Boolean) {
                     drawerBack.isEnabled = open
@@ -219,6 +237,20 @@ class TerminalFragment : Fragment() {
         }
         setup.sessionIsDebian = setup.isReady()
         holder.newSession(factory)
+    }
+
+    /** Kirim [text] ke sesi baru setelah shell siap: kanal PTY terbuka, dan untuk proot juga prompt pertama (cwd terlapor). */
+    private fun sendWhenReady(s: PtyTerminalSession, text: String) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val limit = if (s.isProot) 4000L else 1500L
+            var waited = 0L
+            while (waited < limit && (!s.isRunning || (s.isProot && s.getEmulator()?.cwd.isNullOrBlank()))) {
+                delay(100)
+                waited += 100
+            }
+            if (!s.isProot) delay(200)
+            if (s.isRunning) s.write(text)
+        }
     }
 
     private fun confirmClose(index: Int) {

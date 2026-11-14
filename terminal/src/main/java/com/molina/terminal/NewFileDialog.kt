@@ -198,13 +198,28 @@ internal fun showNewFileDialog(
     stem.setSelection(0, stem.text.length)
 }
 
-// molina-patch26
-/** Interpreter untuk item "Jalankan" di menu berkas: pintasan dari buka di nano lalu run. */
+// molina-patch27
+/** Interpreter untuk item "Jalankan" di menu berkas, dan baris shell yang dikirim ke sesi. */
 internal object RunnableFile {
+    private class Spec(val command: String, val aptPackage: String)
+
     private val MAP = mapOf(
-        "sh" to "bash", "py" to "python3", "js" to "node", "pl" to "perl", "rb" to "ruby",
+        "sh" to Spec("bash", "bash"),
+        "py" to Spec("python3", "python3"),
+        "js" to Spec("node", "nodejs"),
+        "pl" to Spec("perl", "perl"),
+        "rb" to Spec("ruby", "ruby"),
     )
 
-    fun interpreter(fileName: String): String? =
-        MAP[NewFileName.split(fileName).second.lowercase()]
+    private fun spec(fileName: String): Spec? = MAP[NewFileName.split(fileName).second.lowercase()]
+
+    fun interpreter(fileName: String): String? = spec(fileName)?.command
+
+    /** Satu baris shell: cd ke folder berkas, jalankan; bila interpreter tidak ada, cetak petunjuk. Null bila ekstensi tidak dikenali. */
+    fun shellLine(fileName: String, quotedDir: String, quotedFile: String, proot: Boolean): String? {
+        val s = spec(fileName) ?: return null
+        val cmd = if (!proot && s.command == "bash") "sh" else s.command
+        val hint = if (proot) "$cmd belum terpasang. Pasang: apt install ${s.aptPackage}" else "$cmd tidak ditemukan di shell ini"
+        return "cd $quotedDir && if command -v $cmd >/dev/null 2>&1; then $cmd $quotedFile; else echo '[Molina] $hint'; fi\r"
+    }
 }

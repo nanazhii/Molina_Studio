@@ -6,4 +6,7 @@
     <string name="newfile_ext_none">(tanpa)</string>
     <string name="newfile_open_nano">Buka di nano</string>
     <string name="drawer_run">Jalankan</string>
+    <string name="drawer_run_title">Jalankan %1$s</string>
+    <string name="drawer_run_active">Jalankan di sesi aktif</string>
+    <string name="drawer_run_new">Jalankan di sesi baru</string>
 </resources>
