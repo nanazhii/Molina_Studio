@@ -168,3 +168,11 @@
 - Patch 31: dialog core-ui (`molina_bg_dialog`) memakai `molina_header_frame` 1dp; semua bingkai UI (header, drawer, pil tab, tool nano, dialog) kini satu sumber warna. Bingkai layar terminal dan kotak path dalam tetap redup. Menunggu hasil CI.
 - Patch 33: dialog Berkas baru: saran ekstensi berawalan saat mengetik (mis. s → sh, p → py/properties), non-modal, keyboard tetap terbuka; tombol ▾ tetap daftar lengkap. Menunggu hasil CI.
 - Patch 35: `FileKind` dipindah ke :core-ui (sumber warna jenis berkas bersama; + `nameColor`); drawer Terminal dan Berkas memakai pemetaan yang sama (ikon + teks nama); aturan video-amber dan VIDEO_EXT di Berkas dihapus. Cinema belum punya pemilih berkas. Menunggu hasil CI dan uji visual.
+- [x] Instruksi serah-terima Arsip lanjutan dibuat (26k-4 sampai 26k-8)
+- [ ] 26k-4: banyak arsip, kebijakan timpa, Ekstrak ke..., Uji arsip
+- [ ] 26k-5: Lihat isi arsip + buka satu entri (cache)
+- [ ] 26k-6: ekstrak arsip terpecah ZIP/7z
+- [ ] 26k-7: edit isi ZIP (backup/atomik)
+- [ ] 26k-8: 7z bersandi + 7z terpecah, menunggu keputusan (Debian p7zip / 7-Zip-JBinding / tetap fail-closed)
+- [x] fix FileKind NAME_TINT: galat CI core-ui FileKind.kt:25 (companion di inisialisasi enum, asal Patch 35); konstanta dipindah ke level berkas
+- [ ] Verifikasi CI ulang: setelah :core-ui lolos, :core-storage dan :files baru dikompilasi (galat 26k-1..3 mungkin muncul)
