@@ -132,3 +132,8 @@
 - [x] Patch 26e-1: logika Favorit/Terakhir/Prefs Penjelajah diporting ke :core-storage (KeyValueStore + SharedPrefsKeyValueStore, ExplorerFavorites, ExplorerRecent maks. 5, ExplorerPrefs + applyTo(ListOptions)); 23 tes JVM lulus di sandbox; SharedPrefsKeyValueStore belum dikompilasi (tanpa Android SDK); UI belum terhubung
 - [ ] Verifikasi CI Patch 26e-1 (kompilasi :core-storage, jvm-tests ExplorerFavoritesTest/ExplorerRecentTest/ExplorerPrefsTest)
 - [ ] Berikutnya: Patch 26e-2 (hubungkan Prefs ke FilesFragment: sortir/tersembunyi diingat dan folder terakhir dibuka), lalu panel kiri Favorit/Terakhir
+- [x] Patch 26e-2: Berkas mengingat sortir/tersembunyi (ExplorerPrefs) dan membuka folder terakhir (ExplorerRecent, pengecekan di IO); riwayat terikat root lewat ScopedKeyValueStore agar aman saat root jadi full sdcard; event files.restore + log-contract; 26 tes JVM core-storage lulus di sandbox; FilesFragment belum dikompilasi
+- [ ] Verifikasi CI Patch 26e-2 (kompilasi :files, jvm-tests core-storage dan files)
+- [ ] Uji perangkat Android 8: ubah sortir lalu tutup-buka aplikasi (sortir bertahan); buka folder X lalu keluar-masuk Berkas (langsung di X); hapus folder X lalu buka (jatuh ke root); putar layar tidak mengubah folder
+- [ ] Catatan root penuh sdcard: perlu proteksi folder sistem (Android/, dst.) di LocalMolinaStorage.protectedPaths dan penyatuan root FilesTransfer sebelum DEFAULT_ROOT diganti
+- [ ] Berikutnya: panel kiri (Favorit, Terakhir, Penyimpanan/Debian)
