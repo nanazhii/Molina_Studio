@@ -10,3 +10,4 @@ include(":app", ":files", ":settings", ":core-common", ":core-storage", ":core-l
 include(":terminal-view")
 include(":terminal-pty")
 include(":terminal-proot")
+include(":filemanager")

@@ -7,7 +7,7 @@ Satu peran per modul. Dilarang menjadi "god module".
 | app | `app` | Cangkang: MainActivity, nav 4 tab (Cinema, Berkas, Terminal, Setelan), wiring |
 | feature | `cinema`, `files`, `terminal`, `settings` | UI dan ViewModel per tab |
 | api | `player-api`, `terminal-api` | Kontrak murni (interface, event, state). Tanpa implementasi |
-| engine | `mpv-native`, `terminal-core`, `terminal-emulator`, `terminal-view`, `terminal-pty` | Implementasi di balik kontrak (JNI mpv, proses terminal) |
+| engine | `mpv-native`, `terminal-core`, `terminal-emulator`, `terminal-view`, `terminal-pty`, `filemanager` | Implementasi di balik kontrak (JNI mpv, proses terminal) |
 | core | `core-common`, `core-log`, `core-storage`, `core-ui` | Utilitas lintas fitur |
 
 `native/` bukan modul Gradle: hanya pin dan profil untuk build pustaka native.
@@ -38,4 +38,5 @@ Satu peran per modul. Dilarang menjadi "god module".
 - `terminal-view` dan `terminal-core` boleh bergantung ke `terminal-emulator` (tipe emulator dan kontrak `MolinaTerminalSession`).
 - `terminal-view` dan `terminal-emulator` tidak boleh bergantung ke `terminal-core`; arah: view -> emulator <- core.
 - `terminal` (feature) boleh bergantung ke `terminal-core` dan `terminal-view`.
+- `terminal` boleh bergantung ke `filemanager` (sumber file manager; hanya bergantung ke `core-ui` dan `core-log`, aksi shell lewat `FileDrawerView.Host`).
 - `terminal-core` boleh bergantung ke `terminal-pty` (JNI PTY: fork/exec, ukuran jendela, waitFor).
