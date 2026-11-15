@@ -89,3 +89,16 @@ breadcrumb, pencarian nama (maks. 200 hasil, ditandai bila dipotong), urut nama/
   dengan `op=list` atau `op=open` (WARN untuk sandi/TOO_LARGE/NO_MATCH), dan `files.archive-open-failed` untuk
   kegagalan peluncuran aplikasi pembuka.
 - Belum ada (5d): "Ekstrak ke..." dari lembar (butuh `ArchiveClip` membawa `only`) dan pratinjau gambar.
+
+<!-- 26k5d:d01 -->
+## Lihat isi: kuota cache, ikon, Ekstrak ke..., pratinjau (Patch 26k-5d)
+
+- Header lembar menampilkan "Cache arsip X / 300 MB" (`archiveCacheBytes`) dengan aksi Bersihkan; diperbarui setelah
+  daftar dimuat, setelah entri dibuka, dan setelah dibersihkan. Menutup celah privasi entri bersandi di cache.
+- Entri ditolak `TOO_LARGE`: dialog menawarkan "Ekstrak ke folder" (satu entri, kebijakan RENAME, ke folder arsip).
+- Ikon kecil per jenis berkas (video, audio, gambar, teks, arsip, lainnya, folder) berupa glyph teks berwarna
+  `molina_header_frame`; bukan drawable, jadi tidak ada perubahan res.
+- "Ekstrak ke..." dari lembar memasang klip arsip dengan `only` (bertahan saat rotasi lewat Bundle; maks. 500 kunci).
+  Kata sandi TIDAK ikut klip: arsip bersandi diminta sandinya lewat alur kata sandi biasa saat Ekstrak di sini.
+- Gambar (jpg, jpeg, png, webp, bmp, gif) dipratinjau dalam aplikasi: decode `inSampleSize` hingga sisi terpanjang
+  2048 px, tanpa membaca rotasi EXIF; ada tombol "Buka di aplikasi lain".

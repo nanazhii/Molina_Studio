@@ -202,6 +202,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         outState.putBoolean(KEY_SEL_ACTIVE, selection.active)
         outState.putStringArrayList(KEY_SEL_KEYS, ArrayList(selection.snapshot()))
         archiveClip?.let { outState.putStringArrayList(KEY_ACLIP_PATHS, ArrayList(it.paths)) } // 26k4:e50
+        archiveClip?.only?.let { outState.putStringArrayList(KEY_ACLIP_ONLY, ArrayList(it)) } // 26k5d:e04
         clip?.let {
             outState.putString(KEY_CLIP_KIND, it.kind.name)
             outState.putStringArrayList(KEY_CLIP_PATHS, ArrayList(it.paths))
@@ -243,7 +244,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         val kind = runCatching { TransferKind.valueOf(b.getString(KEY_CLIP_KIND).orEmpty()) }.getOrNull()
         val paths = b.getStringArrayList(KEY_CLIP_PATHS).orEmpty()
         clip = if (kind != null && kind != TransferKind.DELETE && paths.isNotEmpty()) FilesClip(kind, paths) else null
-        archiveClip = b.getStringArrayList(KEY_ACLIP_PATHS)?.takeIf { it.isNotEmpty() }?.let { ArchiveClip(it) } // 26k4:e51
+        archiveClip = b.getStringArrayList(KEY_ACLIP_PATHS)?.takeIf { it.isNotEmpty() }?.let { ArchiveClip(it, b.getStringArrayList(KEY_ACLIP_ONLY)?.toSet()) } // 26k4:e51 26k5d:e05
     }
 
     /** Kunci item = path relatif terhadap root Molina (juga untuk hasil pencarian sampai subfolder). */
@@ -911,7 +912,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     private fun pasteHere() {
         val pending = archiveClip // 26k4:e58
         if (pending != null) {
-            promptExtractOptions(pending.paths, currentPath, fromClip = true)
+            promptExtractOptions(pending.paths, currentPath, fromClip = true, only = pending.only) // 26k5d:e09
             return
         }
         val c = clip ?: return
@@ -969,12 +970,12 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     }
 
     /** Opsi tujuan + kebijakan timpa, lalu ekstrak [paths] ke [dest]. [fromClip]: klip "Ekstrak ke…" dikosongkan setelah mulai. */
-    private fun promptExtractOptions(paths: List<String>, dest: String, fromClip: Boolean = false) {
+    private fun promptExtractOptions(paths: List<String>, dest: String, fromClip: Boolean = false, only: Set<String>? = null) { // 26k5d:e07
         val ctx = context ?: return
         if (paths.isEmpty()) return
         ArchiveDialogs.extractOptions(ctx, paths.size) { target, policy ->
             if (selection.active) exitSelection("op")
-            val request = ArchiveRequest(ArchiveOp.EXTRACT, paths, dest, target, policy = policy)
+            val request = ArchiveRequest(ArchiveOp.EXTRACT, paths, dest, target, policy = policy, only = only) // 26k5d:e08
             if (FilesArchive.start(request)) {
                 if (fromClip) {
                     archiveClip = null
@@ -1092,6 +1093,19 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
 
     internal fun archiveBusy(): Boolean = FilesTransfer.isRunning || FilesArchive.isRunning
 
+    // 26k5d:e11
+    internal fun archiveFile(relative: String): java.io.File = java.io.File(paths.root, relative)
+
+    /** "Ekstrak ke\u2026" dari ArchiveSheet: pasang klip arsip (dengan [only]); false bila pilihan terlalu besar untuk Bundle. */
+    internal fun setSheetArchiveClip(archive: String, only: Set<String>?): Boolean {
+        if (only != null && only.size > ArchiveBrowse.MAX_SAVED_SELECTION) return false
+        clip = null
+        archiveClip = ArchiveClip(listOf(archive), only)
+        FilesEvents.archiveClip("set", 1)
+        applyClip()
+        return true
+    }
+
     private fun openArchiveSheet(path: String) {
         if (childFragmentManager.findFragmentByTag(ARCHIVE_TAG) != null) return
         ArchiveSheet.newInstance(path).show(childFragmentManager, ARCHIVE_TAG)
@@ -1173,7 +1187,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             v.clipText.text = TransferText.clipLabel(c.kind, c.paths.size)
             v.clipPaste.text = "Tempel"
         } else if (ac != null) {
-            v.clipText.text = ArchiveText.clipLabel(ac.paths.size)
+            v.clipText.text = ArchiveText.clipLabel(ac.paths.size, ac.only?.size) // 26k5d:e10
             v.clipPaste.text = "Ekstrak di sini"
         }
         v.clipPaste.isEnabled = !FilesTransfer.isRunning
@@ -1341,6 +1355,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         const val KEY_CLIP_KIND = "clip_kind"
         const val KEY_CLIP_PATHS = "clip_paths"
         const val KEY_ACLIP_PATHS = "aclip_paths" // 26k4:e66
+        const val KEY_ACLIP_ONLY = "aclip_only" // 26k5d:e06
         const val QUERY_DEBOUNCE_MS = 250L
 
         const val GROUP_SORT = 1

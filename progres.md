@@ -178,3 +178,5 @@
 - [ ] Verifikasi CI ulang: setelah :core-ui lolos, :core-storage dan :files baru dikompilasi (galat 26k-1..3 mungkin muncul)
 - Patch 26k-4: sudah di-push (5d22c38) tetapi CI merah karena KDoc ganda di ArchiveEngine.kt; perbaikan hapus-duplikat disiapkan, menunggu CI hijau + Uji JVM
 - Patch 26k-5a: ArchiveTree (folder virtual isi arsip) + LIST_MAX 50.000 + 16 tes JVM; kompilasi kotlinc + tes lulus di sandbox, menunggu CI; lanjut 26k-5b (extractEntry + cache Molina/.arsip-cache/) dan 26k-5c (UI Lihat isi)
+- Patch 26k-5b: ArchiveCache (Molina/.arsip-cache, slot atomik, LRU 300 MB, batas 150 MB per entri) + openArchiveEntry/clearArchiveCache + ArchiveFailure.TOO_LARGE + 13 tes JVM; CI hijau
+- Patch 26k-5c: ArchiveBrowse + ArchiveSheet (Lihat isi, breadcrumb, pencarian, urut, pilih), ArchiveRequest.only (Ekstrak terpilih), buka entri via cache + ACTION_VIEW, sapuan cache saat mulai/keluar, log archive-view/open/cache + 26 tes JVM; sintaks diperiksa tree-sitter, belum dikompilasi, menunggu CI + Uji JVM; lanjut 26k-5d (Ekstrak ke... dari lembar, pratinjau gambar) lalu 26k-6

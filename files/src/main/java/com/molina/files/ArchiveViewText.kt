@@ -45,4 +45,13 @@ internal object ArchiveViewText {
         if (bytes <= 0L) "Cache sudah kosong" else "Cache dibersihkan (${FileSizeFormat.format(bytes)})"
 
     fun opening(): String = "Membuka\u2026 ketuk untuk batal"
+
+    /** Baris kuota cache: "Cache arsip 120 / 300 MB" (<1 untuk isi di bawah 1 MB). 26k5d:e01 */
+    fun cacheLine(used: Long, max: Long): String {
+        val mb = 1024L * 1024L
+        val u = if (used <= 0L) "0" else if (used < mb) "<1" else (used / mb).toString()
+        return "Cache arsip $u / ${max / mb} MB"
+    }
+
+    fun tooLargeAsk(): String = "Berkas ini terlalu besar untuk dibuka dari cache.\n\nEkstrak berkas ini ke folder arsip?"
 }

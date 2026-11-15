@@ -149,6 +149,9 @@ interface MolinaStorage {
     /** Kosongkan cache entri arsip; mengembalikan byte yang dibebaskan. Panggil saat aplikasi mulai dan keluar. */
     suspend fun clearArchiveCache(): MolinaResult<Long>
 
+    /** Total byte isi cache entri arsip (untuk tampilan kuota). 26k5d:e32 */
+    suspend fun archiveCacheBytes(): MolinaResult<Long>
+
     /** Kompres [relatives] menjadi satu arsip di [destRelative]. Isi Sampah dilewati dan dihitung di skipped. */
     suspend fun compressItems(
         relatives: List<String>,
@@ -378,6 +381,10 @@ class LocalMolinaStorage(
 
     override suspend fun clearArchiveCache(): MolinaResult<Long> = withContext(dispatchers.io) {
         archiveCatching { archiveCache.clear() }
+    }
+
+    override suspend fun archiveCacheBytes(): MolinaResult<Long> = withContext(dispatchers.io) { // 26k5d:e33
+        archiveCatching { archiveCache.size() }
     }
 
     // 26k4:e18

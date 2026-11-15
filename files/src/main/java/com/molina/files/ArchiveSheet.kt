@@ -35,6 +35,12 @@ import com.molina.core.storage.ArchiveFailure
 import com.molina.core.storage.ArchiveListing
 import com.molina.core.storage.ArchiveTree
 import com.molina.core.storage.CancelToken
+import com.molina.core.storage.ConflictPolicy // 26k5d:e12
+import com.molina.core.storage.ExtractTarget
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.widget.FrameLayout
+import android.widget.ImageView
 import com.molina.core.storage.TreeNode
 import com.molina.core.storage.TreeSort
 import com.molina.core.ui.MolinaDialog
@@ -70,6 +76,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
 
     private var titleView: TextView? = null
     private var infoView: TextView? = null
+    private var cacheView: TextView? = null // 26k5d:e13
     private var crumbBox: LinearLayout? = null
     private var crumbScroll: HorizontalScrollView? = null
     private var searchBox: EditText? = null
@@ -155,6 +162,29 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             },
         )
         root.addView(head)
+        // 26k5d:e15 kuota cache
+        val cacheRow = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(4), 0, 0)
+        }
+        val cacheText = TextView(ctx).apply {
+            text = ArchiveViewText.cacheLine(0L, com.molina.core.storage.ArchiveEngineLimits.CACHE_MAX_BYTES)
+            textSize = 12f
+            setTextColor(dim)
+        }
+        cacheView = cacheText
+        cacheRow.addView(cacheText, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        cacheRow.addView(
+            TextView(ctx).apply {
+                text = "Bersihkan"
+                textSize = 12f
+                setTextColor(green)
+                setPadding(dp(12), dp(6), 0, dp(6))
+                setOnClickListener { confirmClearCache() }
+            },
+        )
+        root.addView(cacheRow)
 
         crumbBox = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
         crumbScroll = HorizontalScrollView(ctx).apply {
@@ -297,6 +327,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         recycler?.adapter = null
         titleView = null
         infoView = null
+        cacheView = null // 26k5d:e14
         crumbBox = null
         crumbScroll = null
         searchBox = null
@@ -340,6 +371,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         FilesEvents.archiveView(formatLabel(l), l.fileCount, l.folderCount, l.encrypted, l.truncated, built.skipped)
         if (!built.isFolder(browse.folder)) browse = browse.copy(folder = "")
         infoView?.text = ArchiveViewText.counts(l.fileCount, l.folderCount, l.totalBytes)
+        refreshCache() // 26k5d:e16
         render()
     }
 
@@ -475,6 +507,8 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         if (n.isDirectory) {
             browse = browse.open(n)
             render()
+        } else if (ImagePreview.isImage(n.name)) {
+            openEntry(n, preview = true) // 26k5d:e23
         } else {
             openEntry(n)
         }
@@ -485,7 +519,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         render()
     }
 
-    private fun openEntry(n: TreeNode) {
+    private fun openEntry(n: TreeNode, preview: Boolean = false) { // 26k5d:e18
         val h = host ?: return
         if (opening) return
         if (h.archiveBusy()) {
@@ -502,9 +536,12 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
                     is MolinaResult.Success -> {
                         val o = r.value
                         FilesEvents.archiveOpen(listing?.let { formatLabel(it) } ?: "unknown", o.cached, o.bytes, o.cancelled)
-                        if (!o.cancelled) h.viewArchiveEntry(o.relative)?.let { toast(it) }
+                        if (!o.cancelled) {
+                            if (preview) showPreview(o.relative) else h.viewArchiveEntry(o.relative)?.let { toast(it) } // 26k5d:e19
+                        }
+                        refreshCache()
                     }
-                    is MolinaResult.Failure -> onOpenFailed(n, r.error)
+                    is MolinaResult.Failure -> onOpenFailed(n, r.error, preview) // 26k5d:e20
                 }
             } finally {
                 opening = false
@@ -514,14 +551,89 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         }
     }
 
-    private fun onOpenFailed(n: TreeNode, error: MolinaError) {
+    private fun onOpenFailed(n: TreeNode, error: MolinaError, preview: Boolean = false) { // 26k5d:e21
         val reason = ArchiveText.reasonOf(error)
+        if (reason == ArchiveFailure.TOO_LARGE) {
+            FilesEvents.archiveFailed("open", error, BrowserPath.parent(archivePath))
+            askExtractLarge(n)
+            return
+        }
         if (reason == ArchiveFailure.NEED_PASSWORD || reason == ArchiveFailure.WRONG_PASSWORD) {
-            promptPassword(wrong = reason == ArchiveFailure.WRONG_PASSWORD, onCancel = {}) { openEntry(n) }
+            promptPassword(wrong = reason == ArchiveFailure.WRONG_PASSWORD, onCancel = {}) { openEntry(n, preview) } // 26k5d:e22
             return
         }
         FilesEvents.archiveFailed("open", error, BrowserPath.parent(archivePath))
         toast(if (reason != null) ArchiveText.failure(reason) else FilesErrorText.forOp(error.kind))
+    }
+
+    // 26k5d:e24
+    private fun askExtractLarge(n: TreeNode) {
+        val ctx = context ?: return
+        MolinaDialog.confirm(ctx, "Berkas terlalu besar", ArchiveViewText.tooLargeAsk(), "Ekstrak ke folder") {
+            val h = host ?: return@confirm
+            if (h.startSheetExtract(archivePath, setOf(n.path), ExtractTarget.HERE, ConflictPolicy.RENAME, password)) {
+                dismissAllowingStateLoss()
+            } else {
+                toast("Operasi lain masih berjalan")
+            }
+        }
+    }
+
+    private fun showPreview(relative: String) {
+        val h = host ?: return
+        val ctx = context ?: return
+        val file = h.archiveFile(relative)
+        viewLifecycleOwner.lifecycleScope.launch {
+            val bmp = withContext(Dispatchers.IO) { decodeScaled(file) }
+            if (bmp == null) {
+                toast("Gambar tidak bisa ditampilkan")
+                h.viewArchiveEntry(relative)?.let { toast(it) }
+                return@launch
+            }
+            val d = ctx.resources.displayMetrics.density
+            val green = ContextCompat.getColor(ctx, UiR.color.molina_key_green)
+            val box = FrameLayout(ctx)
+            val iv = ImageView(ctx).apply {
+                setBackgroundColor(android.graphics.Color.BLACK)
+                scaleType = ImageView.ScaleType.FIT_CENTER
+                setImageBitmap(bmp)
+            }
+            box.addView(iv, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+            val dlg = android.app.Dialog(ctx, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+            iv.setOnClickListener { dlg.dismiss() }
+            val openOther = TextView(ctx).apply {
+                text = "Buka di aplikasi lain"
+                textSize = 14f
+                setTextColor(green)
+                setPadding((16 * d).toInt(), (14 * d).toInt(), (16 * d).toInt(), (14 * d).toInt())
+                setOnClickListener {
+                    dlg.dismiss()
+                    h.viewArchiveEntry(relative)?.let { toast(it) }
+                }
+            }
+            box.addView(openOther, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM or Gravity.END))
+            dlg.setContentView(box)
+            dlg.setOnDismissListener {
+                iv.setImageDrawable(null)
+                bmp.recycle()
+            }
+            dlg.show()
+        }
+    }
+
+    private fun decodeScaled(file: java.io.File): Bitmap? = try {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.path, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+            null
+        } else {
+            val opts = BitmapFactory.Options().apply {
+                inSampleSize = ImagePreview.sampleSize(bounds.outWidth, bounds.outHeight, ImagePreview.MAX_EDGE)
+            }
+            BitmapFactory.decodeFile(file.path, opts)
+        }
+    } catch (e: OutOfMemoryError) {
+        null
     }
 
     private fun extract(all: Boolean) {
@@ -537,9 +649,31 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         }
     }
 
+    // 26k5d:e25
+    private fun refreshCache() {
+        val h = host ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            val r = h.archiveStorage.archiveCacheBytes()
+            if (r is MolinaResult.Success) {
+                cacheView?.text = ArchiveViewText.cacheLine(r.value, com.molina.core.storage.ArchiveEngineLimits.CACHE_MAX_BYTES)
+            }
+        }
+    }
+
+    private fun extractTo() {
+        val h = host ?: return
+        if (h.setSheetArchiveClip(archivePath, browse.onlyKeys())) {
+            toast("Buka folder tujuan, lalu ketuk Ekstrak di sini")
+            dismissAllowingStateLoss()
+        } else {
+            toast("Pilihan terlalu banyak untuk Ekstrak ke\u2026; pakai Ekstrak")
+        }
+    }
+
     private fun showMenu(anchor: View) {
         val popup = PopupMenu(requireContext(), anchor)
         popup.menu.add(Menu.NONE, M_EXTRACT_ALL, 0, "Ekstrak semua\u2026")
+        popup.menu.add(Menu.NONE, M_EXTRACT_TO, 0, "Ekstrak ke\u2026") // 26k5d:e26
         popup.menu.add(Menu.NONE, M_SELECT_ALL, 1, "Pilih semua di sini")
         popup.menu.add(Menu.NONE, M_SORT_NAME, 2, "Urut nama")
         popup.menu.add(Menu.NONE, M_SORT_SIZE, 2, "Urut ukuran")
@@ -547,6 +681,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         popup.setOnMenuItemClickListener {
             when (it.itemId) {
                 M_EXTRACT_ALL -> extract(all = true)
+                M_EXTRACT_TO -> extractTo() // 26k5d:e27
                 M_SELECT_ALL -> tree?.let { t ->
                     browse = browse.selectAll(t)
                     render()
@@ -583,6 +718,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
                     is MolinaResult.Success -> {
                         FilesEvents.archiveCache("manual", r.value)
                         toast(ArchiveViewText.cacheCleared(r.value))
+                        refreshCache() // 26k5d:e17
                     }
                     is MolinaResult.Failure -> {
                         FilesEvents.failed("archive-cache", r.error, "")
@@ -637,10 +773,13 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             val dim = ContextCompat.getColor(ctx, UiR.color.molina_on_surface_variant)
             val green = ContextCompat.getColor(ctx, UiR.color.molina_key_green)
             val picked = n.path in selected
-            val name = (if (picked) "\u2713 " else "") + n.name + (if (n.isDirectory) "/" else "")
+            val frame = ContextCompat.getColor(ctx, UiR.color.molina_header_frame) // 26k5d:e29
+            val lead = (if (picked) "\u2713 " else "") + ArchiveIcons.glyph(n) + "  "
+            val name = lead + n.name + (if (n.isDirectory) "/" else "")
             val line2 = "\n" + if (searching) ArchiveViewText.hitLine(n) else ArchiveViewText.nodeLine(n)
             val span = SpannableString(name + line2)
-            span.setSpan(ForegroundColorSpan(if (n.isDirectory) green else white), 0, name.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            span.setSpan(ForegroundColorSpan(frame), 0, lead.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) // 26k5d:e30
+            span.setSpan(ForegroundColorSpan(if (n.isDirectory) green else white), lead.length, name.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             span.setSpan(ForegroundColorSpan(dim), name.length, span.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             span.setSpan(RelativeSizeSpan(0.85f), name.length, span.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             holder.text.text = span
@@ -668,6 +807,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         private const val M_SORT_NAME = 3
         private const val M_SORT_SIZE = 4
         private const val M_CLEAR_CACHE = 5
+        private const val M_EXTRACT_TO = 6 // 26k5d:e28
 
         fun newInstance(path: String): ArchiveSheet = ArchiveSheet().apply {
             arguments = Bundle().apply { putString(ARG_PATH, path) }

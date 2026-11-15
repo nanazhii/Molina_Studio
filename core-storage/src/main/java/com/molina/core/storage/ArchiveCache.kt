@@ -103,6 +103,12 @@ internal class ArchiveCache(
         return freed
     }
 
+    /** Total byte isi cache (slot dan sisa ".tmp-*"); 0 bila folder cache belum ada. 26k5d:e31 */
+    fun size(): Long {
+        if (isLink(root) || !root.isDirectory) return 0L
+        return root.listFiles().orEmpty().sumOf { sizeOf(it) }
+    }
+
     /** Kosongkan seluruh cache (termasuk sisa ".tmp-*"). Mengembalikan byte yang dibebaskan. */
     fun clear(): Long {
         if (isLink(root) || !root.isDirectory) return 0L

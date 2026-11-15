@@ -86,7 +86,11 @@ internal object ArchiveText {
         return "Arsip ${s.index + 1}/${s.count} \u00B7 $base"
     }
 
-    fun clipLabel(count: Int): String = if (count > 1) "Ekstrak $count arsip ke\u2026" else "Ekstrak arsip ke\u2026"
+    fun clipLabel(count: Int, partial: Int? = null): String = when { // 26k5d:e02
+        partial != null -> "Ekstrak $partial item terpilih ke\u2026"
+        count > 1 -> "Ekstrak $count arsip ke\u2026"
+        else -> "Ekstrak arsip ke\u2026"
+    }
 
     fun overwriteWarning(): String =
         "Berkas yang sudah ada dengan nama sama akan diganti isi arsip. Berkas lama disimpan sementara dan baru " +
