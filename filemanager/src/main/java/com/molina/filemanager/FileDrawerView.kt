@@ -130,7 +130,9 @@ class FileDrawerView(
     private val clipPaste = TextView(context)
     private val clipClear = TextView(context)
     private val adapter = RowAdapter()
-    private val fab = TextView(context) // molina-27h: tombol melayang pojok kanan bawah (menu terpusat)
+    private val fab = FrameLayout(context) // molina-27h: tombol melayang pojok kanan bawah (menu terpusat)
+    private val fabGlyph = TextView(context) // molina-27i
+    private val fabBadge = TextView(context) // molina-27i: jumlah item terpilih
 
     init {
         visibility = if (embedded) View.VISIBLE else View.GONE
@@ -243,21 +245,70 @@ class FileDrawerView(
 
     /** [molina-27h] Tombol melayang pojok kanan bawah: satu-satunya pintu menu titik tiga mode tertanam. */
     private fun setupFab() {
-        fab.text = "\u22EE"
-        fab.textSize = 24f
-        fab.setTextColor(white)
-        fab.gravity = Gravity.CENTER
+        fabGlyph.text = "\u22EE"
+        fabGlyph.textSize = 24f
+        fabGlyph.gravity = Gravity.CENTER
+        fab.addView(fabGlyph, FrameLayout.LayoutParams(MATCH, MATCH))
+        // molina-27i: lencana jumlah item terpilih di sudut kanan atas tombol
+        fabBadge.textSize = 10f
+        fabBadge.typeface = Typeface.DEFAULT_BOLD
+        fabBadge.gravity = Gravity.CENTER
+        fabBadge.setTextColor(Color.BLACK)
+        val badgeBg = GradientDrawable()
+        badgeBg.shape = GradientDrawable.OVAL
+        badgeBg.setColor(Color.WHITE)
+        fabBadge.background = badgeBg
+        fabBadge.visibility = View.GONE
+        fab.addView(fabBadge, FrameLayout.LayoutParams(dp(20), dp(20), Gravity.TOP or Gravity.END))
+        fab.isClickable = true
         fab.contentDescription = context.getString(R.string.drawer_more)
-        val bg = GradientDrawable()
-        bg.shape = GradientDrawable.OVAL
-        bg.setColor(ColorUtils.blendARGB(ContextCompat.getColor(context, UiR.color.molina_surface), accent, 0.18f))
-        bg.setStroke(dp(2), accent)
-        fab.background = RippleDrawable(ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x55)), bg, null)
         fab.elevation = dp(6).toFloat()
         fab.setOnClickListener { showCentralMenu(fab, null, false, true) }
+        updateFab()
         val lp = FrameLayout.LayoutParams(dp(52), dp(52), Gravity.BOTTOM or Gravity.END)
         lp.setMargins(0, 0, dp(16), dp(20))
         addView(fab, lp)
+    }
+
+    /** [molina-27i] Tombol aksen penuh + lencana jumlah saat mode pilih aktif; keadaan biasa: isi redup, bingkai aksen. */
+    private fun updateFab() {
+        val picking = selection.active
+        val bg = GradientDrawable()
+        bg.shape = GradientDrawable.OVAL
+        bg.setColor(if (picking) accent else ColorUtils.blendARGB(ContextCompat.getColor(context, UiR.color.molina_surface), accent, 0.18f))
+        bg.setStroke(dp(2), accent)
+        fab.background = RippleDrawable(ColorStateList.valueOf(ColorUtils.setAlphaComponent(Color.WHITE, 0x55)), bg, null)
+        fabGlyph.setTextColor(if (picking) Color.BLACK else white)
+        fabBadge.visibility = if (picking && selection.count > 0) View.VISIBLE else View.GONE
+        fabBadge.text = if (selection.count > 99) "99+" else selection.count.toString()
+    }
+
+    /** [molina-27i] Menu hamburger header: Favorit, lalu lokasi Internal / Debian / Sampah. */
+    private fun showNavMenu(anchor: View) {
+        val hasActions = actions !== FileManagerActions.None
+        val m = PopupMenu(context, anchor)
+        m.menu.add(0, 0, 0, "Favorit").isEnabled = hasActions
+        m.menu.add(0, 1, 1, "Internal")
+        m.menu.add(0, 2, 2, "Debian")
+        m.menu.add(0, 3, 3, "Sampah").isEnabled = hasActions
+        m.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                0 -> showFavorites()
+                1 -> setRoot(File(DrawerFs.INTERNAL_ROOT))
+                2 -> openDebian()
+                3 -> actions.openTrash()
+            }
+            true
+        }
+        m.gravity = Gravity.END
+        m.show()
+    }
+
+    /** [molina-27i] Rootfs Debian PRoot (filesDir/rootfs/debian, sama dengan DebianLayout) sebagai folder utama. */
+    private fun openDebian() {
+        val d = File(context.filesDir, "rootfs/debian")
+        if (!d.isDirectory) { toastText("Debian belum terpasang"); return }
+        setRoot(d)
     }
 
     /** [molina-27h] Ruang di bawah daftar untuk tombol melayang + geser baris: kanan = pilih, kiri = batal pilih. */
@@ -606,6 +657,17 @@ class FileDrawerView(
         headerMenu.contentDescription = context.getString(R.string.drawer_more)
         headerMenu.setOnClickListener { showHeaderMenu(it) }
         if (embedded) headerMenu.visibility = View.GONE // molina-27h: menu pindah ke tombol melayang
+        if (embedded) { // molina-27i: hamburger Favorit + Internal/Debian/Sampah
+            val burger = TextView(context)
+            burger.text = "\u2630"
+            burger.textSize = 18f
+            burger.setTextColor(white)
+            burger.gravity = Gravity.CENTER
+            burger.contentDescription = "Navigasi"
+            burger.background = RippleDrawable(ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x55)), null, ColorDrawable(Color.WHITE))
+            burger.setOnClickListener { showNavMenu(it) }
+            header.addView(burger, LinearLayout.LayoutParams(dp(34), dp(34)))
+        }
         header.addView(headerMenu, LinearLayout.LayoutParams(dp(34), dp(34)))
 
         val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
@@ -770,6 +832,7 @@ class FileDrawerView(
         empty.visibility = if (rows.isEmpty() && state.children[root.path] != null) View.VISIBLE else View.GONE
         renderChips(root)
         renderClip() // molina-27e
+        if (embedded) updateFab() // molina-27i
     }
 
     private fun renderChips(root: File) {
