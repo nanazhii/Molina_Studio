@@ -77,6 +77,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
     private var titleView: TextView? = null
     private var infoView: TextView? = null
     private var cacheView: TextView? = null // 26k5d:e13
+    private var previewDialog: android.app.Dialog? = null // 26k5e:e04
     private var crumbBox: LinearLayout? = null
     private var crumbScroll: HorizontalScrollView? = null
     private var searchBox: EditText? = null
@@ -327,6 +328,8 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         recycler?.adapter = null
         titleView = null
         infoView = null
+        previewDialog?.dismiss() // 26k5e:e07
+        previewDialog = null
         cacheView = null // 26k5d:e14
         crumbBox = null
         crumbScroll = null
@@ -600,6 +603,8 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             }
             box.addView(iv, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
             val dlg = android.app.Dialog(ctx, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+            previewDialog?.dismiss()
+            previewDialog = dlg // 26k5e:e05
             iv.setOnClickListener { dlg.dismiss() }
             val openOther = TextView(ctx).apply {
                 text = "Buka di aplikasi lain"
@@ -616,6 +621,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             dlg.setOnDismissListener {
                 iv.setImageDrawable(null)
                 bmp.recycle()
+                if (previewDialog === dlg) previewDialog = null // 26k5e:e06
             }
             dlg.show()
         }
@@ -773,13 +779,13 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             val dim = ContextCompat.getColor(ctx, UiR.color.molina_on_surface_variant)
             val green = ContextCompat.getColor(ctx, UiR.color.molina_key_green)
             val picked = n.path in selected
-            val frame = ContextCompat.getColor(ctx, UiR.color.molina_header_frame) // 26k5d:e29
+            val iconColor = ArchiveIcons.iconColor(n, green, dim) // 26k5e:e01
             val lead = (if (picked) "\u2713 " else "") + ArchiveIcons.glyph(n) + "  "
             val name = lead + n.name + (if (n.isDirectory) "/" else "")
             val line2 = "\n" + if (searching) ArchiveViewText.hitLine(n) else ArchiveViewText.nodeLine(n)
             val span = SpannableString(name + line2)
-            span.setSpan(ForegroundColorSpan(frame), 0, lead.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) // 26k5d:e30
-            span.setSpan(ForegroundColorSpan(if (n.isDirectory) green else white), lead.length, name.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            span.setSpan(ForegroundColorSpan(iconColor), 0, lead.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) // 26k5e:e02
+            span.setSpan(ForegroundColorSpan(ArchiveIcons.nameColor(n, green, white)), lead.length, name.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) // 26k5e:e03
             span.setSpan(ForegroundColorSpan(dim), name.length, span.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             span.setSpan(RelativeSizeSpan(0.85f), name.length, span.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             holder.text.text = span

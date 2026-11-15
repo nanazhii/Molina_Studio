@@ -1,54 +1,56 @@
-// molina-patch26k5d
+// molina-patch26k5e:f01
 package com.molina.files
 
 import com.molina.core.storage.TreeNode
+import com.molina.core.ui.FileKind
 import java.util.Locale
 
-/** Jenis berkas untuk ikon kecil di daftar "Lihat isi". Murni JVM. */
-internal enum class FileKind { FOLDER, VIDEO, AUDIO, IMAGE, TEXT, ARCHIVE, OTHER }
-
+/**
+ * Ikon kecil di daftar "Lihat isi". Jenis dan warna berasal dari [FileKind] bersama (:core-ui), satu sumber dengan
+ * daftar Berkas dan drawer Terminal; di sini hanya pemetaan ke lambang teks (bukan drawable, tidak ada perubahan res).
+ */
 internal object ArchiveIcons {
-    private val VIDEO = setOf("mkv", "mp4", "avi", "mov", "webm", "m4v", "ts", "m2ts", "wmv", "flv", "mpg", "mpeg", "3gp")
-    private val AUDIO = setOf("mp3", "flac", "aac", "m4a", "ogg", "opus", "wav", "wma", "mka")
-    private val IMAGE = setOf("jpg", "jpeg", "png", "webp", "bmp", "gif")
-    private val TEXT = setOf("txt", "srt", "ass", "ssa", "vtt", "sub", "log", "md", "json", "xml", "csv", "nfo", "ini", "conf", "sh", "py", "kt", "html")
-    private val ARCHIVE = setOf("zip", "7z", "tar", "gz", "bz2", "xz", "tgz", "rar")
+    /** Lambang folder. */
+    const val FOLDER_GLYPH = "\u25B8"
 
-    fun extensionOf(name: String): String = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
-
-    fun kindOf(name: String, isDirectory: Boolean): FileKind {
-        if (isDirectory) return FileKind.FOLDER
-        val ext = extensionOf(name)
-        return when {
-            ext in VIDEO -> FileKind.VIDEO
-            ext in AUDIO -> FileKind.AUDIO
-            ext in IMAGE -> FileKind.IMAGE
-            ext in TEXT -> FileKind.TEXT
-            ext in ARCHIVE -> FileKind.ARCHIVE
-            else -> FileKind.OTHER
-        }
-    }
-
-    /** Glyph teks (bukan emoji berwarna; U+FE0E memaksa gaya teks) agar tetap abu-putih dan tidak butuh drawable. */
+    /** Lambang teks per jenis (U+FE0E memaksa gaya teks, bukan emoji berwarna). Warna pembeda jenis ada di [FileKind]. */
     fun glyph(kind: FileKind): String = when (kind) {
-        FileKind.FOLDER -> "\u25B8"
         FileKind.VIDEO -> "\u25B6\uFE0E"
         FileKind.AUDIO -> "\u266A"
         FileKind.IMAGE -> "\u25A3"
-        FileKind.TEXT -> "\u2261"
         FileKind.ARCHIVE -> "\u25A4"
+        FileKind.SHELL, FileKind.CODE, FileKind.MARKUP, FileKind.DATA, FileKind.SUBTITLE, FileKind.TEXT -> "\u2261"
         FileKind.OTHER -> "\u00B7"
     }
 
-    fun glyph(n: TreeNode): String = glyph(kindOf(n.name, n.isDirectory))
+    fun glyph(n: TreeNode): String = if (n.isDirectory) FOLDER_GLYPH else glyph(FileKind.of(n.name))
+
+    /** Warna lambang: folder = [folder]; berkas = warna jenisnya, jenis tidak dikenal = [plain]. */
+    fun iconColor(n: TreeNode, folder: Int, plain: Int): Int {
+        if (n.isDirectory) return folder
+        val kind = FileKind.of(n.name)
+        return if (kind == FileKind.OTHER) plain else kind.color
+    }
+
+    /** Warna nama: folder = [folder]; berkas = [FileKind.nameColor], jenis tidak dikenal = [plain]. */
+    fun nameColor(n: TreeNode, folder: Int, plain: Int): Int {
+        if (n.isDirectory) return folder
+        val kind = FileKind.of(n.name)
+        return if (kind == FileKind.OTHER) plain else kind.nameColor
+    }
 }
 
-/** Pratinjau gambar sederhana: pemilihan inSampleSize (murni JVM; decode ada di ArchiveSheet). */
+/**
+ * Pratinjau gambar sederhana: format yang bisa didecode BitmapFactory di Android 8 (sengaja lebih sempit dari
+ * [FileKind.IMAGE], yang juga memuat svg/ico/heic/avif) dan pemilihan inSampleSize (murni JVM; decode ada di ArchiveSheet).
+ */
 internal object ImagePreview {
     /** Sisi terpanjang hasil decode tidak melebihi nilai ini. */
     const val MAX_EDGE = 2048
 
-    fun isImage(name: String): Boolean = ArchiveIcons.kindOf(name, false) == FileKind.IMAGE
+    private val DECODABLE = setOf("jpg", "jpeg", "png", "webp", "bmp", "gif")
+
+    fun isImage(name: String): Boolean = name.substringAfterLast('.', "").lowercase(Locale.ROOT) in DECODABLE
 
     /** Pangkat dua terkecil sehingga lebar dan tinggi hasil <= [maxEdge]. Ukuran tidak valid = 1. */
     fun sampleSize(width: Int, height: Int, maxEdge: Int): Int {
