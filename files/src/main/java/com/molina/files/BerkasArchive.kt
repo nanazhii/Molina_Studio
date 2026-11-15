@@ -93,8 +93,8 @@ internal class BerkasArchive(
             singleIsDir = single?.isDirectory == true,
             parentName = destRel.substringAfterLast('/'),
         )
-        ArchiveDialogs.compress(ctx, base) { format, level, name, password ->
-            start(ArchiveRequest(ArchiveOp.COMPRESS, rels, destRel, format = format, level = level, baseName = name), password)
+        ArchiveDialogs.compress(ctx, base) { format, level, name, password, encryptNames -> // molina-27q
+            start(ArchiveRequest(ArchiveOp.COMPRESS, rels, destRel, format = format, level = level, baseName = name, encryptNames = encryptNames), password)
         }
     }
 

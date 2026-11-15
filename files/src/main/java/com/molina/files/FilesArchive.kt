@@ -50,6 +50,8 @@ internal data class ArchiveRequest(
     val policy: ConflictPolicy = ConflictPolicy.RENAME,
     /** Hanya entri ini (kunci ArchiveTree: berkas "a/b", folder "a/b/"); null = semua. 26k5c:e01 */
     val only: Set<String>? = null,
+    /** 7z bersandi: nama berkas ikut terenkripsi (-mhe=on). molina-27q */
+    val encryptNames: Boolean = false,
 ) {
     /** extract | extract-subs | compress (untuk log). */
     val opName: String
@@ -176,7 +178,7 @@ internal object FilesArchive {
     private suspend fun run(req: ArchiveRequest, pw: String?, cancel: CancelToken, onProgress: (ArchiveProgress) -> Unit) {
         when (req.op) {
             ArchiveOp.COMPRESS -> {
-                val options = CompressOptions(req.format ?: ArchiveFormat.ZIP, req.level, req.baseName, pw)
+                val options = CompressOptions(req.format ?: ArchiveFormat.ZIP, req.level, req.baseName, pw, req.encryptNames)
                 finishCompress(req, storage.compressItems(req.sources, req.destPath, options, cancel, onProgress))
             }
             ArchiveOp.EXTRACT -> { // 26k4:e27

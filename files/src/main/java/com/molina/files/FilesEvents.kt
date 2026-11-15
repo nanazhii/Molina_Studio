@@ -211,6 +211,7 @@ internal object FilesEvents {
         ArchiveFailure.NO_MATCH, ArchiveFailure.EMPTY_SOURCE, ArchiveFailure.INVALID_NAME,
         ArchiveFailure.NAME_TOO_LONG, ArchiveFailure.NAME_CONFLICT, ArchiveFailure.NOT_FOUND,
         ArchiveFailure.PASSWORD_UNSUPPORTED, ArchiveFailure.TOO_LARGE, // 26k5b:e21
+        ArchiveFailure.TOOL_MISSING, ArchiveFailure.WEAK_PASSWORD, // molina-27q
     )
 
     /** Kode files.archive-failed; WARN untuk alasan yang bisa diperbaiki pengguna (sandi, nama, format), selain itu ERROR. */

@@ -111,9 +111,9 @@ class ArchiveEngineTest {
         assertEquals("alpha", File(r.dir, "src/a.txt").readText())
     }
 
-    @Test fun passwordHanyaUntukZip() {
+    @Test fun passwordHanyaUntukZipDan7z() { // molina-27q: 7z bersandi dikerjakan backend (lihat ArchiveEngine7zTest)
         val src = sample()
-        for (fmt in listOf(ArchiveFormat.SEVEN_Z, ArchiveFormat.TAR_GZ, ArchiveFormat.TAR)) {
+        for (fmt in listOf(ArchiveFormat.TAR_GZ, ArchiveFormat.TAR)) {
             assertReason(ArchiveFailure.PASSWORD_UNSUPPORTED) { compress(listOf(src), dir("out"), fmt, pw = "x") }
         }
         assertTrue("tidak boleh ada keluaran", dir("out").listFiles()!!.isEmpty())

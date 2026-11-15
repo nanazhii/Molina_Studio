@@ -2,6 +2,7 @@ package com.molina.studio
 
 import android.app.Application
 import android.os.Debug
+import com.molina.core.storage.SevenZipBackend
 import com.molina.log.CrashReporter
 import com.molina.log.MolinaEvents
 import com.molina.log.MolinaLogSetup
@@ -12,6 +13,7 @@ class MolinaApplication : Application() {
         MolinaLogSetup.init(this)
         CrashReporter.install()
         BuildInfo.log(this)
+        SevenZipBackend.writer = DebianSevenZip(this) // molina-27q: 7z bersandi lewat Debian
     }
 
     /** Mencatat pemakaian memori tiap sistem meminta pangkas, untuk menyetel tanpa adb. */
