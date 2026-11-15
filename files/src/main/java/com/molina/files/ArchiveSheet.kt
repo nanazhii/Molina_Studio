@@ -679,7 +679,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
     private fun showMenu(anchor: View) {
         val popup = PopupMenu(requireContext(), anchor)
         popup.menu.add(Menu.NONE, M_EXTRACT_ALL, 0, "Ekstrak semua\u2026")
-        popup.menu.add(Menu.NONE, M_EXTRACT_TO, 0, "Ekstrak ke\u2026") // 26k5d:e26
+        popup.menu.add(Menu.NONE, M_EXTRACT_TO, 0, ArchiveViewText.extractToLabel(browse.selecting)) // 26k5f:e01
         popup.menu.add(Menu.NONE, M_SELECT_ALL, 1, "Pilih semua di sini")
         popup.menu.add(Menu.NONE, M_SORT_NAME, 2, "Urut nama")
         popup.menu.add(Menu.NONE, M_SORT_SIZE, 2, "Urut ukuran")

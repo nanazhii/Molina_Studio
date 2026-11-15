@@ -46,6 +46,10 @@ internal object ArchiveViewText {
 
     fun opening(): String = "Membuka\u2026 ketuk untuk batal"
 
+    /** Label menu "Ekstrak ke..." di lembar: jelas apa yang akan diekstrak. 26k5f:e02 */
+    fun extractToLabel(selecting: Boolean): String =
+        if (selecting) "Ekstrak terpilih ke\u2026" else "Ekstrak semua ke\u2026"
+
     /** Baris kuota cache: "Cache arsip 120 / 300 MB" (<1 untuk isi di bawah 1 MB). 26k5d:e01 */
     fun cacheLine(used: Long, max: Long): String {
         val mb = 1024L * 1024L

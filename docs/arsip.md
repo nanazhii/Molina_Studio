@@ -104,3 +104,5 @@ breadcrumb, pencarian nama (maks. 200 hasil, ditandai bila dipotong), urut nama/
   2048 px, tanpa membaca rotasi EXIF; ada tombol "Buka di aplikasi lain". Hanya format yang bisa didecode
   BitmapFactory di Android 8 (jpg, jpeg, png, webp, bmp, gif); svg/ico/heic/avif tetap dibuka lewat aplikasi lain.
   Dialog pratinjau ditutup saat lembar dihancurkan (rotasi) supaya jendela tidak bocor. <!-- 26k5e:d03 -->
+- Menu ⋮ lembar: item "Ekstrak ke…" berlabel "Ekstrak terpilih ke…" bila ada pilihan dan "Ekstrak semua ke…" bila tidak
+  (perilaku sama: tanpa pilihan = seluruh arsip). <!-- 26k5f:d01 -->
