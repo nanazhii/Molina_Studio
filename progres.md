@@ -185,3 +185,7 @@
 - [27b-fix] CI :filemanager gagal: HeaderDotsView tidak ikut tersalin dan Host salinan punya changeDirectory. Diperbaiki: HeaderDotsView disalin, NoopHost dibangkitkan dari Host salinan. Menunggu CI.
 - [27b] origin/main sudah digabung ke feat/berkas-filemanager (konflik progres.md selesai); siap push, menunggu CI hijau lalu PR ke main.
 - [27b] feat/berkas-filemanager (b606078) memuat perbaikan HeaderDotsView/NoopHost dan origin/main; menunggu CI untuk SHA ini, lalu PR ke main.
+- [rencana] Berkas: ikon bawah dihapus (27c). Fitur Penjelajah dipasang bertahap lewat titik sambung FileManagerActions: 27d Favorit+Sampah, 27e seleksi/salin/pindah/tempel, 27f arsip, 27g urut/cari/properti/bagikan.
+- [handoff] Prompt serah terima Patch 27 (27d-27g) disiapkan untuk Claude lain: clone repo lama, sesuaikan dengan arsitektur repo baru, Terminal tidak diubah.
+- [27c] Tab Berkas: Folder baru/Berkas baru lewat menu titik tiga (MolinaDialog.input), bilah bawah dihapus. Hasil CI: belum diverifikasi.
+- [27d] Tab Berkas: titik sambung FileManagerActions di :filemanager; Favorit (item menu folder + daftar di menu header) dan Sampah (Hapus = pindah ke Sampah di dalam root Molina + Urungkan, menu header Sampah) lewat ExplorerFavorites/TrashBin/TrashSheet yang sudah ada; di luar root Molina Hapus tetap permanen. TrashHost menggantikan FilesFragment sebagai pemilik TrashSheet tanpa mengubah FilesFragment. Terminal tidak tersentuh. Menunggu hasil CI.
