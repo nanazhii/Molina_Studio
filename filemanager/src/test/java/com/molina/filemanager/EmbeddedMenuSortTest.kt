@@ -17,7 +17,8 @@ class EmbeddedMenuSortTest {
 
     @Test fun headerMenuOffersSortWithCurrentLabel() {
         val e = entries(state(global = true)).first { it.action == Action.SORT }
-        assertEquals("Urut: Nama \u25B2", e.label)
+        assertEquals(R.string.menu_sort, e.labelRes)
+        assertEquals(listOf<Any>("Nama \u25B2"), e.labelArgs)
     }
 
     @Test fun sortFollowsRefresh() {

@@ -54,8 +54,8 @@ class EmbeddedMenuTest {
 
     @Test
     fun favoriteLabelFollowsState() {
-        assertEquals("Tambah ke Favorit", EmbeddedMenu.build(state()).single { it.action == Action.FAVORITE }.label)
-        assertEquals("Hapus dari Favorit", EmbeddedMenu.build(state(isFavorite = true)).single { it.action == Action.FAVORITE }.label)
+        assertEquals(R.string.menu_favorite_add, EmbeddedMenu.build(state()).single { it.action == Action.FAVORITE }.labelRes)
+        assertEquals(R.string.menu_favorite_remove, EmbeddedMenu.build(state(isFavorite = true)).single { it.action == Action.FAVORITE }.labelRes)
     }
 
     @Test
@@ -85,15 +85,16 @@ class EmbeddedMenuTest {
 
     @Test
     fun selectLabelDependsOnTarget() {
-        assertEquals("Pilih", EmbeddedMenu.build(state()).single { it.action == Action.SELECT }.label)
-        assertEquals("Mode pilih", EmbeddedMenu.build(state(targetCount = 0, global = true)).single { it.action == Action.SELECT }.label)
+        assertEquals(R.string.menu_select, EmbeddedMenu.build(state()).single { it.action == Action.SELECT }.labelRes)
+        assertEquals(R.string.menu_select_mode, EmbeddedMenu.build(state(targetCount = 0, global = true)).single { it.action == Action.SELECT }.labelRes)
     }
 
     @Test
     fun pasteShownOnlyWhenClipFilledAndFollowsAvailability() {
         assertFalse(Action.PASTE in actions(state(clipCount = 0)))
         val e = EmbeddedMenu.build(state(clipCount = 2, pasteAvailable = false)).single { it.action == Action.PASTE }
-        assertEquals("Tempel di sini (2)", e.label)
+        assertEquals(R.string.menu_paste, e.labelRes)
+        assertEquals(listOf<Any>(2), e.labelArgs)
         assertFalse(e.enabled)
         assertTrue(EmbeddedMenu.build(state(clipCount = 2)).single { it.action == Action.PASTE }.enabled)
     }

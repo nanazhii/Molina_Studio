@@ -2,7 +2,6 @@
 package com.molina.filemanager
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class Embedded27kTest {
@@ -14,11 +13,6 @@ class Embedded27kTest {
     @Test
     fun locationGroupLabelsArePlainText() {
         val last = EmbeddedMenu.build(headerState()).takeLast(4)
-        assertEquals(listOf("Favorit", "Internal", "Debian", "Sampah"), last.map { it.label })
-    }
-
-    @Test
-    fun noLabelCarriesHamburgerPrefix() {
-        assertTrue(EmbeddedMenu.build(headerState()).none { it.label.contains('\u2630') })
+        assertEquals(listOf(R.string.menu_favorites, R.string.menu_internal, R.string.menu_debian, R.string.menu_trash_bin), last.map { it.labelRes })
     }
 }

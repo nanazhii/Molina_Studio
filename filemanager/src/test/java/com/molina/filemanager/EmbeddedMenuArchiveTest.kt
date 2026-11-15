@@ -71,7 +71,8 @@ class EmbeddedMenuArchiveTest {
     fun extractPasteFollowsClipAndDestination() {
         assertFalse(Action.EXTRACT_PASTE in actions(state(targetCount = 0, global = true)))
         val on = EmbeddedMenu.build(state(targetCount = 0, global = true, archiveClipCount = 2)).single { it.action == Action.EXTRACT_PASTE }
-        assertEquals("Ekstrak di sini (2)", on.label)
+        assertEquals(R.string.menu_extract_paste, on.labelRes)
+        assertEquals(listOf<Any>(2), on.labelArgs)
         assertTrue(on.enabled)
         val off = EmbeddedMenu.build(state(targetCount = 0, global = true, archiveClipCount = 2, pasteAvailable = false))
             .single { it.action == Action.EXTRACT_PASTE }

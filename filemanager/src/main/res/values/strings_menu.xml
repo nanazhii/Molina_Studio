@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-27l: semua label menu titik tiga/hamburger. Tambah item baru di sini, bukan di kode. -->
+<resources>
+    <string name="menu_compress">Kompres…</string>
+    <string name="menu_copy">Salin</string>
+    <string name="menu_copy_path">Salin path</string>
+    <string name="menu_debian">Debian</string>
+    <string name="menu_delete_permanent">Hapus permanen…</string>
+    <string name="menu_exit_select">Batal pilih</string>
+    <string name="menu_extract_folder">Ekstrak ke folder</string>
+    <string name="menu_extract_here">Ekstrak di sini</string>
+    <string name="menu_extract_paste">Ekstrak di sini (%1$d)</string>
+    <string name="menu_extract_subs">Ekstrak subtitle</string>
+    <string name="menu_extract_to">Ekstrak ke…</string>
+    <string name="menu_favorite_add">Tambah ke Favorit</string>
+    <string name="menu_favorite_remove">Hapus dari Favorit</string>
+    <string name="menu_favorites">Favorit</string>
+    <string name="menu_group_actions">Aksi</string>
+    <string name="menu_group_locations">Lokasi</string>
+    <string name="menu_internal">Internal</string>
+    <string name="menu_move">Pindah</string>
+    <string name="menu_new_dir">Folder baru</string>
+    <string name="menu_new_file">Berkas baru</string>
+    <string name="menu_paste">Tempel di sini (%1$d)</string>
+    <string name="menu_properties">Properti</string>
+    <string name="menu_refresh">Segarkan</string>
+    <string name="menu_rename">Ubah nama</string>
+    <string name="menu_search">Cari…</string>
+    <string name="menu_search_close">Tutup pencarian</string>
+    <string name="menu_select">Pilih</string>
+    <string name="menu_select_all">Pilih semua</string>
+    <string name="menu_select_mode">Mode pilih</string>
+    <string name="menu_share">Bagikan</string>
+    <string name="menu_sort">Urut: %1$s</string>
+    <string name="menu_test_archive">Uji arsip</string>
+    <string name="menu_trash">Hapus</string>
+    <string name="menu_trash_bin">Sampah</string>
+    <string name="menu_view_archive">Lihat isi</string>
+</resources>

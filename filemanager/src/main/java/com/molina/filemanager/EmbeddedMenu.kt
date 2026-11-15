@@ -4,7 +4,7 @@ package com.molina.filemanager
 /**
  * [molina-27d2][molina-27e] Satu-satunya sumber isi menu titik tiga mode tertanam. Menu baris (target = baris itu),
  * menu header (target = folder aktif), dan menu mode pilih (target = semua item terpilih) dibangun dari sini,
- * seperti W7ToolsMenu di repo lama. Murni Kotlin tanpa Android agar bisa diuji JVM.
+ * seperti W7ToolsMenu di repo lama. Tanpa View/Context agar bisa diuji JVM; label hanya id R.string.menu_* (teks ada di strings_menu.xml).
  * Aksi baru ditambah di [Action] + [buildNormal]/[buildSelecting] + penanganan di FileDrawerView.
  */
 internal object EmbeddedMenu {
@@ -19,7 +19,8 @@ internal object EmbeddedMenu {
         GO_INTERNAL, GO_DEBIAN, // molina-27i: kelompok hamburger di bawah menu titik tiga
     }
 
-    data class Entry(val action: Action, val label: String, val enabled: Boolean = true, val danger: Boolean = false)
+    /** [molina-27l] Label = id string (R.string.menu_*) + argumen format; diurai ke teks di view lewat Context.getString. */
+    data class Entry(val action: Action, val labelRes: Int, val labelArgs: List<Any> = emptyList(), val enabled: Boolean = true, val danger: Boolean = false)
 
     /**
      * [targetCount] 0 = menu header pada folder aktif, 1 = satu baris, lebih dari 1 = mode pilih.
@@ -43,7 +44,8 @@ internal object EmbeddedMenu {
         val shareAvailable: Boolean = false, // molina-27g: target di dalam root Molina dan bukan folder tunggal
         val propsAvailable: Boolean = false, // molina-27g: Properti kaya di menu mode pilih
         val sortLabel: String = "", // molina-27g2: label urutan aktif; kosong = tanpa item Urut
-        val searchLabel: String = "", // molina-27g3: "Cari\u2026" atau "Tutup pencarian"; kosong = tanpa item Cari
+        val searchAvailable: Boolean = false, // molina-27g3/27l: item Cari/Tutup pencarian hanya di menu header tertanam
+        val searchActive: Boolean = false, // molina-27l: pencarian sedang aktif, label jadi Tutup pencarian
     ) {
         val hasTarget: Boolean get() = targetCount > 0
     }
@@ -52,20 +54,20 @@ internal object EmbeddedMenu {
 
     private fun buildSelecting(s: State): List<Entry> {
         val l = ArrayList<Entry>()
-        l += Entry(Action.SELECT_ALL, "Pilih semua")
+        l += Entry(Action.SELECT_ALL, R.string.menu_select_all)
         if (s.targetCount == 1) { // molina-27h: satu item terpilih = isi menu baris lama
-            l += Entry(Action.RENAME, "Ubah nama")
-            if (s.favoriteAvailable) l += Entry(Action.FAVORITE, if (s.isFavorite) "Hapus dari Favorit" else "Tambah ke Favorit")
-            l += Entry(Action.COPY_PATH, "Salin path")
+            l += Entry(Action.RENAME, R.string.menu_rename)
+            if (s.favoriteAvailable) l += Entry(Action.FAVORITE, if (s.isFavorite) R.string.menu_favorite_remove else R.string.menu_favorite_add)
+            l += Entry(Action.COPY_PATH, R.string.menu_copy_path)
         }
-        l += Entry(Action.COPY, "Salin", enabled = s.hasTarget && s.transferAvailable)
-        l += Entry(Action.MOVE, "Pindah", enabled = s.hasTarget && s.transferAvailable)
-        if (s.shareAvailable) l += Entry(Action.SHARE, "Bagikan", enabled = s.hasTarget) // molina-27g
+        l += Entry(Action.COPY, R.string.menu_copy, enabled = s.hasTarget && s.transferAvailable)
+        l += Entry(Action.MOVE, R.string.menu_move, enabled = s.hasTarget && s.transferAvailable)
+        if (s.shareAvailable) l += Entry(Action.SHARE, R.string.menu_share, enabled = s.hasTarget) // molina-27g
         archiveEntries(l, s) // molina-27f
-        if (s.propsAvailable) l += Entry(Action.INFO, "Properti", enabled = s.hasTarget) // molina-27g
-        if (s.trashAvailable) l += Entry(Action.TRASH, "Hapus", danger = true)
-        l += Entry(Action.DELETE_PERMANENT, "Hapus permanen\u2026", enabled = s.hasTarget, danger = true)
-        l += Entry(Action.EXIT_SELECT, "Batal pilih")
+        if (s.propsAvailable) l += Entry(Action.INFO, R.string.menu_properties, enabled = s.hasTarget) // molina-27g
+        if (s.trashAvailable) l += Entry(Action.TRASH, R.string.menu_trash, danger = true)
+        l += Entry(Action.DELETE_PERMANENT, R.string.menu_delete_permanent, enabled = s.hasTarget, danger = true)
+        l += Entry(Action.EXIT_SELECT, R.string.menu_exit_select)
         return l
     }
 
@@ -75,54 +77,54 @@ internal object EmbeddedMenu {
      */
     private fun archiveEntries(l: MutableList<Entry>, s: State) {
         if (s.archiveClipCount > 0 && !s.selecting) {
-            l += Entry(Action.EXTRACT_PASTE, "Ekstrak di sini (${s.archiveClipCount})", enabled = s.pasteAvailable)
+            l += Entry(Action.EXTRACT_PASTE, R.string.menu_extract_paste, listOf(s.archiveClipCount), enabled = s.pasteAvailable)
         }
         if (!s.archiveAvailable || !s.hasTarget) return
-        l += Entry(Action.COMPRESS, "Kompres\u2026")
+        l += Entry(Action.COMPRESS, R.string.menu_compress)
         if (!s.allArchives) return
         val single = s.targetCount == 1 // molina-27h: satu arsip terpilih juga dapat Lihat isi/Uji
         if (single) {
-            l += Entry(Action.VIEW_ARCHIVE, "Lihat isi")
-            l += Entry(Action.EXTRACT_HERE, "Ekstrak di sini")
-            l += Entry(Action.EXTRACT_FOLDER, "Ekstrak ke folder")
-            l += Entry(Action.EXTRACT_SUBS, "Ekstrak subtitle")
+            l += Entry(Action.VIEW_ARCHIVE, R.string.menu_view_archive)
+            l += Entry(Action.EXTRACT_HERE, R.string.menu_extract_here)
+            l += Entry(Action.EXTRACT_FOLDER, R.string.menu_extract_folder)
+            l += Entry(Action.EXTRACT_SUBS, R.string.menu_extract_subs)
         } else {
-            l += Entry(Action.EXTRACT_HERE, "Ekstrak di sini")
+            l += Entry(Action.EXTRACT_HERE, R.string.menu_extract_here)
         }
-        l += Entry(Action.EXTRACT_TO, "Ekstrak ke\u2026")
-        if (single) l += Entry(Action.TEST_ARCHIVE, "Uji arsip")
+        l += Entry(Action.EXTRACT_TO, R.string.menu_extract_to)
+        if (single) l += Entry(Action.TEST_ARCHIVE, R.string.menu_test_archive)
     }
 
     private fun buildNormal(s: State): List<Entry> {
         val l = ArrayList<Entry>()
-        if (s.global) l += Entry(Action.REFRESH, "Segarkan")
-        if (s.global && s.sortLabel.isNotEmpty()) l += Entry(Action.SORT, "Urut: ${s.sortLabel}") // molina-27g2
-        if (s.global && s.searchLabel.isNotEmpty()) l += Entry(Action.SEARCH, s.searchLabel) // molina-27g3
-        l += Entry(Action.NEW_DIR, "Folder baru")
-        l += Entry(Action.NEW_FILE, "Berkas baru")
-        if (s.hasTarget) l += Entry(Action.RENAME, "Ubah nama")
+        if (s.global) l += Entry(Action.REFRESH, R.string.menu_refresh)
+        if (s.global && s.sortLabel.isNotEmpty()) l += Entry(Action.SORT, R.string.menu_sort, listOf(s.sortLabel)) // molina-27g2
+        if (s.global && s.searchAvailable) l += Entry(Action.SEARCH, if (s.searchActive) R.string.menu_search_close else R.string.menu_search) // molina-27g3
+        l += Entry(Action.NEW_DIR, R.string.menu_new_dir)
+        l += Entry(Action.NEW_FILE, R.string.menu_new_file)
+        if (s.hasTarget) l += Entry(Action.RENAME, R.string.menu_rename)
         if (s.hasActions) {
-            l += Entry(Action.SELECT, if (s.hasTarget) "Pilih" else "Mode pilih")
+            l += Entry(Action.SELECT, if (s.hasTarget) R.string.menu_select else R.string.menu_select_mode)
             if (s.hasTarget) {
-                l += Entry(Action.COPY, "Salin", enabled = s.transferAvailable)
-                l += Entry(Action.MOVE, "Pindah", enabled = s.transferAvailable)
+                l += Entry(Action.COPY, R.string.menu_copy, enabled = s.transferAvailable)
+                l += Entry(Action.MOVE, R.string.menu_move, enabled = s.transferAvailable)
             }
-            if (s.clipCount > 0) l += Entry(Action.PASTE, "Tempel di sini (${s.clipCount})", enabled = s.pasteAvailable)
+            if (s.clipCount > 0) l += Entry(Action.PASTE, R.string.menu_paste, listOf(s.clipCount), enabled = s.pasteAvailable)
             archiveEntries(l, s) // molina-27f
-            if (s.hasTarget && s.shareAvailable) l += Entry(Action.SHARE, "Bagikan") // molina-27g
-            l += Entry(Action.FAVORITE, if (s.isFavorite) "Hapus dari Favorit" else "Tambah ke Favorit", enabled = s.favoriteAvailable)
+            if (s.hasTarget && s.shareAvailable) l += Entry(Action.SHARE, R.string.menu_share) // molina-27g
+            l += Entry(Action.FAVORITE, if (s.isFavorite) R.string.menu_favorite_remove else R.string.menu_favorite_add, enabled = s.favoriteAvailable)
         }
-        l += Entry(Action.COPY_PATH, "Salin path")
-        l += Entry(Action.INFO, "Properti")
+        l += Entry(Action.COPY_PATH, R.string.menu_copy_path)
+        l += Entry(Action.INFO, R.string.menu_properties)
         if (s.hasTarget) {
-            if (s.trashAvailable) l += Entry(Action.TRASH, "Hapus", danger = true)
-            l += Entry(Action.DELETE_PERMANENT, "Hapus permanen\u2026", danger = true)
+            if (s.trashAvailable) l += Entry(Action.TRASH, R.string.menu_trash, danger = true)
+            l += Entry(Action.DELETE_PERMANENT, R.string.menu_delete_permanent, danger = true)
         }
         if (s.global) { // molina-27i: kelompok hamburger di bawah (pola DROP-HAMBURGER repo lama): Favorit, Internal, Debian, Sampah
-            if (s.hasActions) l += Entry(Action.FAVORITES_LIST, "Favorit")
-            l += Entry(Action.GO_INTERNAL, "Internal")
-            l += Entry(Action.GO_DEBIAN, "Debian")
-            if (s.hasActions) l += Entry(Action.OPEN_TRASH, "Sampah")
+            if (s.hasActions) l += Entry(Action.FAVORITES_LIST, R.string.menu_favorites)
+            l += Entry(Action.GO_INTERNAL, R.string.menu_internal)
+            l += Entry(Action.GO_DEBIAN, R.string.menu_debian)
+            if (s.hasActions) l += Entry(Action.OPEN_TRASH, R.string.menu_trash_bin)
         }
         return l
     }

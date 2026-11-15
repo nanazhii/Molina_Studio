@@ -215,7 +215,8 @@ class FileDrawerView(
                 shareAvailable = managed && (if (picking) targets.any { !it.isDirectory } else !targetIsDir), // molina-27g
                 propsAvailable = if (picking) managed else hasActions, // molina-27g
                 sortLabel = if (embedded && fromHeader) sort.label else "", // molina-27g2
-                searchLabel = if (embedded && fromHeader) (if (searchOn) "Tutup pencarian" else "Cari\u2026") else "", // molina-27g3
+                searchAvailable = embedded && fromHeader, // molina-27g3/27l
+                searchActive = searchOn,
             ),
         )
         val dispatch: (EmbeddedMenu.Action) -> Unit = { picked -> // molina-27k: aksi dipanggil dari menu melayang
@@ -305,7 +306,7 @@ class FileDrawerView(
                 r.addView(iv, LinearLayout.LayoutParams(dp(22), dp(22)))
             }
             val t = TextView(context)
-            t.text = en.label
+            t.text = context.getString(en.labelRes, *en.labelArgs.toTypedArray()) // molina-27l
             t.textSize = 14f
             t.setTextColor(if (en.danger) danger else white)
             t.maxLines = 1
@@ -325,7 +326,7 @@ class FileDrawerView(
         }
 
         val twoGroups = acts.isNotEmpty() && nav.isNotEmpty()
-        if (twoGroups) header("\u22EE", "Aksi")
+        if (twoGroups) header("\u22EE", context.getString(R.string.menu_group_actions))
         acts.forEach { row(it) }
         if (twoGroups) {
             val sep = View(context)
@@ -333,7 +334,7 @@ class FileDrawerView(
             val slp = LinearLayout.LayoutParams(MATCH, dp(1))
             slp.setMargins(dp(8), dp(6), dp(8), dp(2))
             col.addView(sep, slp)
-            header("\u2630", "Lokasi")
+            header("\u2630", context.getString(R.string.menu_group_locations))
         }
         nav.forEach { row(it) }
 
