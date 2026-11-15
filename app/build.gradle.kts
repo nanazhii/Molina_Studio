@@ -43,6 +43,7 @@ android {
     kotlinOptions { jvmTarget = "17" }
     // molina-patch26k: commons-compress dan turunannya membawa berkas META-INF yang sama
     packaging {
+        jniLibs { useLegacyPackaging = true } // molina-27r: lib7zz.so harus diekstrak agar bisa dieksekusi
         resources {
             excludes += setOf("META-INF/LICENSE*", "META-INF/NOTICE*", "META-INF/DEPENDENCIES", "META-INF/{AL2.0,LGPL2.1}")
         }
