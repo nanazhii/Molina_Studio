@@ -124,6 +124,9 @@ class FileDrawerView(
     private val selection = EmbeddedSelection() // molina-27e: mode pilih (hanya mode tertanam)
     private val clip = EmbeddedClipboard.state // molina-27e: papan klip Salin/Pindah, bertahan antar kunjungan tab
     private var pasteDest: File? = null // molina-27g0: folder tujuan Tempel yang sedang berjalan, dibuka saat berhasil
+    private var sort: DrawerSort = if (embedded) loadSort() else DrawerSort.DEFAULT // molina-27g2
+    private var flashPath: String? = null // molina-27g2: baris yang sedang berkilat
+    private var flashClear: Runnable? = null // molina-27g2
     private val clipBar = LinearLayout(context)
     private val clipText = TextView(context)
     private val clipPaste = TextView(context)
@@ -183,6 +186,7 @@ class FileDrawerView(
                 archiveClipCount = if (hasActions) actions.archiveClipCount() else 0,
                 shareAvailable = managed && (if (picking) targets.any { !it.isDirectory } else !targetIsDir), // molina-27g
                 propsAvailable = if (picking) managed else hasActions, // molina-27g
+                sortLabel = if (embedded && fromHeader) sort.label else "", // molina-27g2
             ),
         )
         val menu = PopupMenu(context, anchor)
@@ -209,6 +213,7 @@ class FileDrawerView(
                 EmbeddedMenu.Action.INFO ->
                     if (!(hasActions && actions.properties(propsTargets))) showInfo(target ?: base, if (target == null) true else targetIsDir)
                 EmbeddedMenu.Action.SHARE -> actions.share(targets) // molina-27g
+                EmbeddedMenu.Action.SORT -> showSortMenu(anchor) // molina-27g2
                 EmbeddedMenu.Action.TRASH -> if (picking) trashMany(targets) else target?.let { trashFlow(it) }
                 EmbeddedMenu.Action.DELETE_PERMANENT -> if (picking) deleteManyDialog(targets) else target?.let { deleteDialog(it) }
                 EmbeddedMenu.Action.FAVORITES_LIST -> showFavorites()
@@ -305,10 +310,60 @@ class FileDrawerView(
             }
             state.children.putAll(loaded)
             chain.forEach { state.expanded.add(it.path) }
-            rebuild()
-            val idx = DrawerFs.flatten(state, root).indexOfFirst { it.entry.file.path == dir.path }
-            if (idx >= 0) list.post { (list.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(idx, dp(48)) }
+            rebuild(Runnable { revealRow(dir) }) // molina-27g2: gulir + kilatan setelah daftar baru terpasang
         }
+    }
+
+    // ---------- [molina-27g2] Urut dan kilatan folder hasil ----------
+
+    private fun loadSort(): DrawerSort = runCatching {
+        DrawerSort.decode(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_SORT, null))
+    }.getOrDefault(DrawerSort.DEFAULT)
+
+    private fun applySort(s: DrawerSort) {
+        sort = s
+        runCatching { context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_SORT, s.encode()).apply() }
+        rebuild()
+    }
+
+    /** Pilih kunci urut; mengetuk kunci aktif membalik arah (penanda ▲/▼). */
+    private fun showSortMenu(anchor: View) {
+        anchor.post {
+            val keys = DrawerSortKey.values()
+            val menu = PopupMenu(context, anchor)
+            keys.forEachIndexed { i, k ->
+                val on = k == sort.key
+                menu.menu.add(0, i, i, if (on) "${k.label} ${if (sort.ascending) "\u25B2" else "\u25BC"}" else k.label).also {
+                    it.isCheckable = true
+                    it.isChecked = on
+                }
+            }
+            menu.setOnMenuItemClickListener { item -> applySort(sort.choose(keys[item.itemId])); true }
+            menu.show()
+        }
+    }
+
+    /** Gulir ke baris [dir] lalu beri kilatan latar aksen sekitar [FLASH_MS] ms supaya mudah ditemukan di daftar panjang. */
+    private fun revealRow(dir: File) {
+        val idx = adapter.currentList.indexOfFirst { it.entry.file.path == dir.path }
+        if (idx < 0) return
+        (list.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(idx, dp(48))
+        flashClear?.let { list.removeCallbacks(it) }
+        val prev = flashPath
+        flashPath = dir.path
+        if (prev != null && prev != dir.path) {
+            val pi = adapter.currentList.indexOfFirst { it.entry.file.path == prev }
+            if (pi >= 0) adapter.notifyItemChanged(pi)
+        }
+        adapter.notifyItemChanged(idx)
+        val clear = Runnable {
+            val p = flashPath ?: return@Runnable
+            flashPath = null
+            val i = adapter.currentList.indexOfFirst { it.entry.file.path == p }
+            if (i >= 0) adapter.notifyItemChanged(i)
+        }
+        flashClear = clear
+        list.postDelayed(clear, FLASH_MS)
     }
 
     /** [molina-27f] Jalankan aksi arsip; mode pilih ditutup bila diterima. Hasil dilaporkan implementasi (panel progres + Snackbar). */
@@ -671,10 +726,10 @@ class FileDrawerView(
         if (parent != null) load(parent) else rebuild()
     }
 
-    private fun rebuild() {
+    private fun rebuild(onCommitted: Runnable? = null) { // molina-27g2
         val root = currentRoot()
-        val rows = DrawerFs.flatten(state, root)
-        adapter.submitList(rows)
+        val rows = DrawerFs.flatten(state, root, sort)
+        adapter.submitList(rows, onCommitted)
         title.text = root.name.ifEmpty { "/" }
         pathText.text = DrawerFs.displayPath(root.path)
         host.onRootChanged(root.path)
@@ -827,9 +882,10 @@ class FileDrawerView(
             h.check.isChecked = picking && selection.contains(e.file.path)
             // molina-27f: baris terpilih berlatar aksen (alpha 0x22, sama dengan bilah klip), ripple tetap
             val selected = picking && selection.contains(e.file.path)
+            val flash = e.file.path == flashPath // molina-27g2
             h.row.background = RippleDrawable(
                 ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x55)),
-                if (selected) ColorDrawable(ColorUtils.setAlphaComponent(accent, 0x22)) else null,
+                if (selected || flash) ColorDrawable(ColorUtils.setAlphaComponent(accent, 0x22)) else null,
                 ColorDrawable(Color.WHITE),
             )
             h.check.setOnClickListener { toggleSelected(e.file.path) }
@@ -1213,6 +1269,9 @@ class FileDrawerView(
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
         const val ROW_DP = 36
         const val MIN_WIDTH_DP = 248
+        const val PREFS = "molina_filemanager" // molina-27g2
+        const val KEY_SORT = "sort"
+        const val FLASH_MS = 1200L
         const val MAX_WIDTH_DP = 288
         const val FRACTION = 0.40f
         const val ID_CD = 1

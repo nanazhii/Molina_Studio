@@ -13,7 +13,7 @@ class FileDrawerState {
 }
 
 /** Satu isi folder. [isDir] dihitung di thread IO supaya main thread tidak menyentuh disk. */
-data class DrawerEntry(val file: File, val isDir: Boolean) {
+data class DrawerEntry(val file: File, val isDir: Boolean, val size: Long = 0L, val modified: Long = 0L) { // molina-27g2: ukuran + waktu ubah dihitung di IO untuk Urut
     val name: String get() = file.name
     val hidden: Boolean get() = file.name.startsWith(".")
 }
@@ -29,14 +29,14 @@ object DrawerFs {
     /** BLOCKING: panggil dari Dispatchers.IO. Folder dulu, lalu berkas, urut nama. */
     fun list(dir: File): List<DrawerEntry>? {
         val kids = dir.listFiles() ?: return null
-        return kids.map { DrawerEntry(it, it.isDirectory) }
+        return kids.map { val d = it.isDirectory; DrawerEntry(it, d, if (d) 0L else it.length(), it.lastModified()) } // molina-27g2
             .sortedWith(compareByDescending<DrawerEntry> { it.isDir }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 
-    fun flatten(state: FileDrawerState, root: File): List<DrawerRow> {
+    fun flatten(state: FileDrawerState, root: File, sort: DrawerSort = DrawerSort.DEFAULT): List<DrawerRow> { // molina-27g2
         val out = ArrayList<DrawerRow>()
         fun walk(dir: File, depth: Int) {
-            state.children[dir.path]?.forEach { e ->
+            state.children[dir.path]?.let { DrawerSort.sorted(it, sort) }?.forEach { e -> // molina-27g2
                 val open = e.isDir && e.file.path in state.expanded
                 out.add(DrawerRow(e, depth, open))
                 if (open) walk(e.file, depth + 1)
