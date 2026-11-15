@@ -2,12 +2,20 @@
 package com.molina.files
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import com.molina.core.common.MolinaPaths
 import com.molina.core.common.MolinaResult
@@ -18,8 +26,11 @@ import com.molina.core.storage.MolinaStorage
 import com.molina.core.storage.PathGuard
 import com.molina.core.storage.ScopedKeyValueStore
 import com.molina.core.storage.SharedPrefsKeyValueStore
+import com.molina.core.storage.TransferKind
+import com.molina.core.ui.R as UiR
 import com.molina.filemanager.FileManagerActions
 import com.molina.filemanager.FileManagerEmbed
+import com.molina.filemanager.TransferMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,6 +47,11 @@ class BerkasFragment : Fragment() {
     // Favorit memakai path relatif terhadap root, sama dengan FilesFragment, jadi daftarnya dibagi.
     private val favStore by lazy { ExplorerFavorites(ScopedKeyValueStore(explorerStore, paths.root.path)) }
     private var handle: FileManagerEmbed.Handle? = null
+    private var strip: TransferStrip? = null // molina-27e
+    private var backCallback: OnBackPressedCallback? = null // molina-27e
+
+    /** [molina-27e] Panel progres salin/pindah di dasar tab (pola sama dengan panel progres FilesFragment). */
+    private class TransferStrip(val root: LinearLayout, val text: TextView, val bar: LinearProgressIndicator, val cancel: TextView)
 
     internal val trashHost: TrashHost = object : TrashHost {
         override val trashStorage: MolinaStorage get() = storage
@@ -81,6 +97,17 @@ class BerkasFragment : Fragment() {
             }
         }
 
+        // molina-27e: Salin/Pindah memakai FilesTransfer yang sudah ada (path relatif terhadap root Molina)
+        override fun canPasteInto(dir: File): Boolean = BerkasPaths.destRelative(paths.root, dir) != null
+
+        override fun transfer(mode: TransferMode, files: List<File>, destDir: File): Boolean {
+            val dest = BerkasPaths.destRelative(paths.root, destDir) ?: return false
+            val rels = files.mapNotNull { BerkasPaths.relative(paths.root, it) }
+            if (rels.isEmpty() || rels.size != files.size) return false
+            val kind = if (mode == TransferMode.MOVE) TransferKind.MOVE else TransferKind.COPY
+            return FilesTransfer.start(kind, rels, dest)
+        }
+
         override fun openTrash() {
             if (childFragmentManager.findFragmentByTag(TRASH_TAG) != null) return
             TrashSheet().show(childFragmentManager, TRASH_TAG)
@@ -91,9 +118,25 @@ class BerkasFragment : Fragment() {
         FrameLayout(requireContext())
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val h = FileManagerEmbed.create(requireContext(), viewLifecycleOwner.lifecycleScope, actions)
+        // molina-27e: Back menutup mode pilih lebih dulu (aktif hanya saat mode pilih menyala)
+        val cb = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                handle?.cancelSelection()
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, cb)
+        backCallback = cb
+        val h = FileManagerEmbed.create(requireContext(), viewLifecycleOwner.lifecycleScope, actions) { picking ->
+            backCallback?.isEnabled = picking
+        }
         handle = h
         (view as FrameLayout).addView(h.view, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        strip = buildStrip(view)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                FilesTransfer.state.collect { renderTransfer(it) }
+            }
+        }
         viewLifecycleOwner.lifecycleScope.launch {
             val r = storage.purgeExpiredTrash()
             if (r is MolinaResult.Success && r.value > 0) FilesEvents.trashPurged("auto", r.value)
@@ -102,7 +145,68 @@ class BerkasFragment : Fragment() {
 
     override fun onDestroyView() {
         handle = null
+        strip = null
+        backCallback = null
         super.onDestroyView()
+    }
+
+    private fun buildStrip(host: FrameLayout): TransferStrip {
+        val ctx = host.context
+        val density = ctx.resources.displayMetrics.density
+        fun dp(v: Int) = (v * density).toInt()
+        val accent = ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent)
+        val box = LinearLayout(ctx)
+        box.orientation = LinearLayout.VERTICAL
+        box.setBackgroundColor(ContextCompat.getColor(ctx, UiR.color.molina_surface_variant))
+        box.setPadding(dp(12), dp(6), dp(4), dp(8))
+        box.isClickable = true // sentuhan tidak tembus ke daftar di belakang panel
+        box.visibility = View.GONE
+        val line = LinearLayout(ctx)
+        line.orientation = LinearLayout.HORIZONTAL
+        line.gravity = Gravity.CENTER_VERTICAL
+        val text = TextView(ctx)
+        text.setTextColor(0xFFFFFFFF.toInt())
+        text.textSize = 12f
+        text.maxLines = 1
+        line.addView(text, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        val cancel = TextView(ctx)
+        cancel.text = "Batal"
+        cancel.textSize = 12f
+        cancel.setTextColor(accent)
+        cancel.setPadding(dp(12), dp(6), dp(12), dp(6))
+        cancel.setOnClickListener { FilesTransfer.cancel() }
+        line.addView(cancel)
+        box.addView(line, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        val bar = LinearProgressIndicator(ctx)
+        bar.max = 100
+        bar.setIndicatorColor(accent)
+        val barLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        barLp.marginEnd = dp(8)
+        box.addView(bar, barLp)
+        host.addView(box, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM))
+        return TransferStrip(box, text, bar, cancel)
+    }
+
+    private fun renderTransfer(state: TransferState) {
+        val s = strip ?: return
+        when (state) {
+            TransferState.Idle -> s.root.visibility = View.GONE
+            is TransferState.Running -> {
+                s.root.visibility = View.VISIBLE
+                s.text.text = TransferText.progressLine(state.kind, state.progress, state.cancelling)
+                s.bar.setProgressCompat(((state.progress?.fraction ?: 0f) * 100).toInt(), true)
+                s.cancel.isEnabled = !state.cancelling
+            }
+            is TransferState.Finished -> {
+                s.root.visibility = View.GONE
+                val text = state.result?.let { TransferText.summary(it) }
+                    ?: state.error?.let { FilesErrorText.forTransfer(it.kind) }
+                    ?: "Operasi gagal"
+                view?.let { Snackbar.make(it, text, Snackbar.LENGTH_LONG).show() }
+                handle?.transferFinished(clearClip = state.kind != TransferKind.DELETE && state.result != null)
+                FilesTransfer.acknowledge(state.id)
+            }
+        }
     }
 
     private fun showUndo(ids: List<String>) {

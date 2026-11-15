@@ -15,4 +15,12 @@ internal object BerkasPaths {
         if (rel == MolinaPaths.TRASH_DIR || rel.startsWith(MolinaPaths.TRASH_DIR + "/")) return null
         return rel
     }
+
+    /** [molina-27e] Path relatif folder tujuan: "" untuk root itu sendiri; null di luar root atau di dalam Sampah. */
+    fun destRelative(root: File, dir: File): String? {
+        val base = runCatching { root.canonicalPath }.getOrNull() ?: return null
+        val p = runCatching { dir.canonicalPath }.getOrNull() ?: return null
+        if (p == base) return ""
+        return relative(root, dir)
+    }
 }

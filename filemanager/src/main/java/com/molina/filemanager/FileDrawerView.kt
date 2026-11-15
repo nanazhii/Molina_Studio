@@ -73,6 +73,7 @@ class FileDrawerView(
     private val host: Host,
     private val embedded: Boolean = false, // molina-27b
     private val actions: FileManagerActions = FileManagerActions.None, // molina-27d
+    private val onSelectionChanged: (Boolean) -> Unit = {}, // molina-27e
 ) : FrameLayout(context) {
 
     interface Host {
@@ -120,6 +121,12 @@ class FileDrawerView(
     private val empty = TextView(context)
     private val list = RecyclerView(context)
     private var favPaths: Set<String> = emptySet() // molina-27d2: path folder Favorit, untuk bintang di baris
+    private val selection = EmbeddedSelection() // molina-27e: mode pilih (hanya mode tertanam)
+    private val clip = EmbeddedClipboard.state // molina-27e: papan klip Salin/Pindah, bertahan antar kunjungan tab
+    private val clipBar = LinearLayout(context)
+    private val clipText = TextView(context)
+    private val clipPaste = TextView(context)
+    private val clipClear = TextView(context)
     private val adapter = RowAdapter()
 
     init {
@@ -137,8 +144,8 @@ class FileDrawerView(
     val isOpen: Boolean get() = visibility == View.VISIBLE
 
     /**
-     * [molina-27d2] Satu menu titik tiga mode tertanam: isi dari [EmbeddedMenu], dipakai menu baris (target = baris)
-     * dan menu header (target = null, aksi berlaku untuk folder aktif). Pengganti showEmbeddedHeaderMenu (27c/27d).
+     * [molina-27d2][molina-27e] Satu menu titik tiga mode tertanam: isi dari [EmbeddedMenu]. Menu baris (target = baris),
+     * menu header (target = null, berlaku untuk folder aktif), dan menu header saat mode pilih (target = item terpilih).
      */
     private fun showCentralMenu(anchor: View, target: File?, targetIsDir: Boolean, fromHeader: Boolean) {
         val base = currentRoot()
@@ -147,16 +154,27 @@ class FileDrawerView(
             targetIsDir -> target
             else -> target.parentFile ?: base
         }
+        val picking = selection.active && fromHeader
+        val targets: List<File> = when {
+            picking -> EmbeddedSelection.topLevel(selection.paths).map { File(it) }
+            target != null -> listOf(target)
+            else -> emptyList()
+        }
         val favTarget = if (target == null) base else target.takeIf { targetIsDir }
         val hasActions = actions !== FileManagerActions.None
+        val managed = hasActions && targets.isNotEmpty() && targets.all { actions.canManage(it) }
         val entries = EmbeddedMenu.build(
             EmbeddedMenu.State(
-                hasTarget = target != null,
+                targetCount = targets.size,
                 hasActions = hasActions,
                 favoriteAvailable = hasActions && favTarget != null && actions.canManage(favTarget),
                 isFavorite = hasActions && favTarget != null && actions.isFavorite(favTarget),
-                trashAvailable = hasActions && target != null && actions.canManage(target),
+                trashAvailable = managed,
                 global = fromHeader,
+                selecting = picking,
+                transferAvailable = managed,
+                clipCount = clip.count,
+                pasteAvailable = hasActions && actions.canPasteInto(dir),
             ),
         )
         val menu = PopupMenu(context, anchor)
@@ -171,17 +189,126 @@ class FileDrawerView(
                 EmbeddedMenu.Action.NEW_DIR -> promptCreateEmbedded(true, dir)
                 EmbeddedMenu.Action.NEW_FILE -> promptCreateEmbedded(false, dir)
                 EmbeddedMenu.Action.RENAME -> target?.let { renameDialog(it, targetIsDir) }
+                EmbeddedMenu.Action.SELECT -> enterSelection(target?.path)
+                EmbeddedMenu.Action.SELECT_ALL -> selectAllRows()
+                EmbeddedMenu.Action.EXIT_SELECT -> cancelSelection()
+                EmbeddedMenu.Action.COPY -> setClip(TransferMode.COPY, targets)
+                EmbeddedMenu.Action.MOVE -> setClip(TransferMode.MOVE, targets)
+                EmbeddedMenu.Action.PASTE -> pasteInto(dir)
                 EmbeddedMenu.Action.FAVORITE -> favTarget?.let { actions.toggleFavorite(it); reloadFavs() }
                 EmbeddedMenu.Action.COPY_PATH -> copyPath(target ?: base)
                 EmbeddedMenu.Action.INFO -> showInfo(target ?: base, if (target == null) true else targetIsDir)
-                EmbeddedMenu.Action.TRASH -> target?.let { trashFlow(it) }
-                EmbeddedMenu.Action.DELETE_PERMANENT -> target?.let { deleteDialog(it) }
+                EmbeddedMenu.Action.TRASH -> if (picking) trashMany(targets) else target?.let { trashFlow(it) }
+                EmbeddedMenu.Action.DELETE_PERMANENT -> if (picking) deleteManyDialog(targets) else target?.let { deleteDialog(it) }
                 EmbeddedMenu.Action.FAVORITES_LIST -> showFavorites()
                 EmbeddedMenu.Action.OPEN_TRASH -> actions.openTrash()
             }
             true
         }
         menu.show()
+    }
+
+    // ---------- [molina-27e] pilih banyak dan Salin/Pindah/Tempel ----------
+
+    private fun enterSelection(first: String?) {
+        selection.enter(first)
+        selectionChanged()
+    }
+
+    private fun toggleSelected(path: String) {
+        selection.toggle(path)
+        selectionChanged()
+    }
+
+    private fun selectAllRows() {
+        selection.selectAll(adapter.currentList.map { it.entry.file.path })
+        selectionChanged()
+    }
+
+    /** Tutup mode pilih (tombol Back / ✕ di header). true bila ada mode pilih yang ditutup. */
+    fun cancelSelection(): Boolean {
+        if (!selection.active) return false
+        selection.exit()
+        selectionChanged()
+        return true
+    }
+
+    /** Header, kotak centang baris, dan Back luar diperbarui. Baris tidak berubah isi, jadi bind dipaksa ulang. */
+    private fun selectionChanged() {
+        rebuild()
+        adapter.notifyDataSetChanged()
+        onSelectionChanged(selection.active)
+    }
+
+    private fun setClip(mode: TransferMode, files: List<File>) {
+        if (files.isEmpty()) return
+        clip.put(mode, files.map { it.path })
+        selection.exit()
+        selectionChanged()
+    }
+
+    /** Tempel isi papan klip ke [dir]. Hasil dilaporkan lewat [onTransferFinished]. */
+    private fun pasteInto(dir: File) {
+        val mode = clip.mode ?: return
+        val files = clip.paths.map { File(it) }
+        if (files.isEmpty()) return
+        if (!actions.canPasteInto(dir) || !files.all { actions.canManage(it) }) {
+            toastText("Sumber atau tujuan di luar folder Molina")
+            return
+        }
+        if (!actions.transfer(mode, files, dir)) toastText("Operasi lain masih berjalan")
+    }
+
+    /** Dipanggil dari luar saat salin/pindah selesai: klip dikosongkan bila [clearClip], lalu tree disegarkan. */
+    fun onTransferFinished(clearClip: Boolean) {
+        if (clearClip) clip.clear()
+        refresh()
+    }
+
+    private fun trashMany(files: List<File>) {
+        if (files.isEmpty()) return
+        actions.trash(files) { ok ->
+            if (ok) {
+                selection.exit()
+                selectionChanged()
+                refresh()
+            }
+        }
+    }
+
+    private fun deleteManyDialog(files: List<File>) {
+        if (files.isEmpty()) return
+        AlertDialog.Builder(context)
+            .setTitle("Hapus permanen ${files.size} item?")
+            .setMessage("Item terpilih dan seluruh isinya dihapus permanen.")
+            .setNegativeButton(R.string.drawer_cancel, null)
+            .setPositiveButton(R.string.drawer_delete) { _, _ ->
+                io("delete-many", {
+                    when {
+                        files.any { DrawerFs.isProtected(it, vols) } -> R.string.drawer_err_protected
+                        files.map { DrawerFs.deleteSafe(it) }.all { it } -> null
+                        else -> R.string.drawer_err_generic
+                    }
+                }) {
+                    toast(R.string.drawer_done_delete)
+                    selection.exit()
+                    selectionChanged()
+                    refresh()
+                }
+            }
+            .show()
+    }
+
+    /** Bilah klip di bawah header: jumlah item, Tempel ke folder utama, dan ✕ untuk mengosongkan. */
+    private fun renderClip() {
+        if (!embedded) return
+        val n = clip.count
+        clipBar.visibility = if (n > 0) View.VISIBLE else View.GONE
+        if (n == 0) return
+        clipText.text = (if (clip.mode == TransferMode.MOVE) "Pindah " else "Salin ") + "$n item"
+        val ok = actions.canPasteInto(currentRoot())
+        clipPaste.isEnabled = ok
+        clipPaste.alpha = if (ok) 1f else 0.38f
     }
 
     /** [molina-27d] Muat ulang tree dari luar (mis. setelah Sampah dipulihkan). */
@@ -293,7 +420,9 @@ class FileDrawerView(
         ring.setColor(Color.TRANSPARENT)
         ring.setStroke(dp(1), dim)
         back.background = ring
-        back.setOnClickListener { currentRoot().parentFile?.let { setRoot(it) } }
+        back.setOnClickListener {
+            if (embedded && selection.active) cancelSelection() else currentRoot().parentFile?.let { setRoot(it) } // molina-27e
+        }
         header.addView(back, LinearLayout.LayoutParams(dp(30), dp(30)))
 
         // [HEADER-FILL] kotak path melebar (bobot 1) sampai tombol titik tiga
@@ -340,6 +469,34 @@ class FileDrawerView(
         panel.addView(chipScroll, LinearLayout.LayoutParams(MATCH, WRAP))
 
         panel.addView(divider(), LinearLayout.LayoutParams(MATCH, dp(1)))
+
+        // molina-27e: bilah klip (hanya tampil bila papan klip berisi), aksen Terminal
+        clipBar.orientation = LinearLayout.HORIZONTAL
+        clipBar.gravity = Gravity.CENTER_VERTICAL
+        clipBar.setPadding(dp(12), 0, dp(4), 0)
+        clipBar.setBackgroundColor(ColorUtils.setAlphaComponent(accent, 0x22))
+        clipBar.visibility = View.GONE
+        clipText.setTextColor(white)
+        clipText.textSize = 12f
+        clipText.maxLines = 1
+        clipText.ellipsize = TextUtils.TruncateAt.END
+        clipBar.addView(clipText, LinearLayout.LayoutParams(0, WRAP, 1f))
+        clipPaste.text = "Tempel"
+        clipPaste.textSize = 12f
+        clipPaste.typeface = Typeface.DEFAULT_BOLD
+        clipPaste.setTextColor(accent)
+        clipPaste.gravity = Gravity.CENTER
+        clipPaste.setPadding(dp(12), 0, dp(12), 0)
+        clipPaste.setOnClickListener { pasteInto(currentRoot()) }
+        clipBar.addView(clipPaste, LinearLayout.LayoutParams(WRAP, MATCH))
+        clipClear.text = "\u2715"
+        clipClear.textSize = 14f
+        clipClear.setTextColor(white)
+        clipClear.gravity = Gravity.CENTER
+        clipClear.contentDescription = "Kosongkan papan klip"
+        clipClear.setOnClickListener { clip.clear(); renderClip() }
+        clipBar.addView(clipClear, LinearLayout.LayoutParams(dp(40), MATCH))
+        if (embedded) panel.addView(clipBar, LinearLayout.LayoutParams(MATCH, dp(40)))
 
         empty.text = context.getString(R.string.drawer_empty)
         empty.setTextColor(dim)
@@ -451,10 +608,16 @@ class FileDrawerView(
         pathText.text = DrawerFs.displayPath(root.path)
         host.onRootChanged(root.path)
         val canUp = root.parentFile != null && vols.none { it.path == root.path }
-        back.isEnabled = canUp
-        back.alpha = if (canUp) 1f else 0.38f
+        val picking = embedded && selection.active // molina-27e: ‹ jadi ✕ dan judul menghitung item terpilih
+        back.isEnabled = canUp || picking
+        back.alpha = if (canUp || picking) 1f else 0.38f
+        if (embedded) {
+            back.text = if (picking) "\u2715" else "\u2039"
+            if (picking) title.text = if (selection.count == 0) "Mode pilih" else "${selection.count} dipilih"
+        }
         empty.visibility = if (rows.isEmpty() && state.children[root.path] != null) View.VISIBLE else View.GONE
         renderChips(root)
+        renderClip() // molina-27e
     }
 
     private fun renderChips(root: File) {
@@ -494,6 +657,8 @@ class FileDrawerView(
             }
         } else if (!embedded && editInNano(f)) {
             close()
+        } else if (embedded && selection.active) { // molina-27e: berkas = ganti status pilih; folder tetap buka/tutup
+            toggleSelected(f.path)
         }
     }
 
@@ -503,6 +668,7 @@ class FileDrawerView(
         val icon: TreeIconView,
         val name: TextView,
         val star: TextView,
+        val check: CheckBox, // molina-27e
         val more: TextView,
     ) : RecyclerView.ViewHolder(row)
 
@@ -551,6 +717,13 @@ class FileDrawerView(
             star.visibility = View.GONE
             row.addView(star, LinearLayout.LayoutParams(dp(18), WRAP))
 
+            val check = CheckBox(ctx) // molina-27e: pengganti titik tiga saat mode pilih
+            check.gravity = Gravity.CENTER
+            check.buttonTintList = ColorStateList.valueOf(accent)
+            check.contentDescription = "Pilih item"
+            check.visibility = View.GONE
+            row.addView(check, LinearLayout.LayoutParams(dp(40), MATCH))
+
             val more = TextView(ctx)
             more.text = "\u22EE"
             more.textSize = 20f
@@ -559,7 +732,7 @@ class FileDrawerView(
             more.contentDescription = ctx.getString(R.string.drawer_more)
             more.background = RippleDrawable(ripple, null, ColorDrawable(Color.WHITE))
             row.addView(more, LinearLayout.LayoutParams(dp(40), MATCH))
-            return RowHolder(row, arrow, icon, name, star, more)
+            return RowHolder(row, arrow, icon, name, star, check, more)
         }
 
         override fun onBindViewHolder(h: RowHolder, position: Int) {
@@ -576,6 +749,24 @@ class FileDrawerView(
             h.star.visibility = if (e.isDir && e.file.path in favPaths) View.VISIBLE else View.GONE // molina-27d2
             h.row.setOnClickListener { onRowTap(item) }
             h.more.setOnClickListener { showRowMenu(it, e) }
+            // molina-27e: mode pilih menukar titik tiga dengan kotak centang; tekan lama = pilih
+            val picking = embedded && selection.active
+            h.more.visibility = if (picking) View.GONE else View.VISIBLE
+            h.check.visibility = if (picking) View.VISIBLE else View.GONE
+            h.check.isChecked = picking && selection.contains(e.file.path)
+            h.check.setOnClickListener { toggleSelected(e.file.path) }
+            if (embedded) {
+                h.row.setOnLongClickListener {
+                    if (actions === FileManagerActions.None) return@setOnLongClickListener false
+                    if (selection.active) {
+                        toggleSelected(e.file.path)
+                    } else {
+                        h.row.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                        enterSelection(e.file.path)
+                    }
+                    true
+                }
+            }
         }
     }
 
