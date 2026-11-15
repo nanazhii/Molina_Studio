@@ -106,3 +106,7 @@ breadcrumb, pencarian nama (maks. 200 hasil, ditandai bila dipotong), urut nama/
   Dialog pratinjau ditutup saat lembar dihancurkan (rotasi) supaya jendela tidak bocor. <!-- 26k5e:d03 -->
 - Menu ⋮ lembar: item "Ekstrak ke…" berlabel "Ekstrak terpilih ke…" bila ada pilihan dan "Ekstrak semua ke…" bila tidak
   (perilaku sama: tanpa pilihan = seluruh arsip). <!-- 26k5f:d01 -->
+- Pratinjau gambar bisa digeser: geser kiri = gambar berikutnya, geser kanan = sebelumnya, di antara gambar yang
+  tampil di daftar saat diketuk (folder atau hasil pencarian, urutan sama; tidak berputar di ujung). Penghitung "3 / 12"
+  di atas. Satu bitmap hidup sekaligus (yang lama didaur ulang saat bitmap baru terpasang), tanpa prefetch; tiap gambar
+  dimuat lewat cache LRU yang sama dan mencatat event `files.archive-open` seperti biasa. Ketuk = tutup. <!-- 26k5h:d01 -->

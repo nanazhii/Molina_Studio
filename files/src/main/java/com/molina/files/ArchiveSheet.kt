@@ -11,6 +11,8 @@ import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
 import android.view.Gravity
+import android.view.GestureDetector // 26k5h:e03
+import android.view.MotionEvent // 26k5h:e04
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
@@ -80,6 +82,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
     private var infoView: TextView? = null
     private var cacheView: TextView? = null // 26k5d:e13
     private var previewDialog: android.app.Dialog? = null // 26k5e:e04
+    private var pager: ImagePager? = null // 26k5h:e02
     private var crumbBox: LinearLayout? = null
     private var crumbScroll: HorizontalScrollView? = null
     private var searchBox: EditText? = null
@@ -513,10 +516,23 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             browse = browse.open(n)
             render()
         } else if (ImagePreview.isImage(n.name)) {
-            openEntry(n, preview = true) // 26k5d:e23
+            openImage(n) // 26k5h:e01
         } else {
             openEntry(n)
         }
+    }
+
+    // 26k5h:e05
+    /** Ketuk gambar: kumpulkan gambar yang sedang tampil di daftar (urutan sama) sebagai bahan geser, lalu buka. */
+    private fun openImage(n: TreeNode) {
+        val t = tree
+        val paths = if (t == null) {
+            emptyList()
+        } else {
+            browse.rows(t).nodes.filter { !it.isDirectory && ImagePreview.isImage(it.name) }.map { it.path }
+        }
+        pager = ImagePager.of(paths, n.path)
+        openEntry(n, preview = true)
     }
 
     private fun onRowLong(n: TreeNode) {
@@ -584,6 +600,8 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         }
     }
 
+    // 26k5h:e06
+    @Suppress("ClickableViewAccessibility")
     private fun showPreview(relative: String) {
         val h = host ?: return
         val ctx = context ?: return
@@ -597,6 +615,11 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             }
             val d = ctx.resources.displayMetrics.density
             val green = ContextCompat.getColor(ctx, UiR.color.molina_key_green)
+            // Keadaan milik dialog ini saja (bukan field): dialog lama ditutup async dan tidak boleh menyentuh yang baru.
+            var cur: Bitmap? = bmp
+            var curRel = relative
+            var pg: ImagePager? = pager
+            var loading = false
             val box = FrameLayout(ctx)
             val iv = ImageView(ctx).apply {
                 setBackgroundColor(android.graphics.Color.BLACK)
@@ -606,8 +629,85 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             box.addView(iv, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
             val dlg = android.app.Dialog(ctx, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
             previewDialog?.dismiss()
-            previewDialog = dlg // 26k5e:e05
-            iv.setOnClickListener { dlg.dismiss() }
+            previewDialog = dlg
+            val counter = TextView(ctx).apply {
+                textSize = 13f
+                setTextColor(0xFFB0B0B0.toInt())
+                setPadding((16 * d).toInt(), (14 * d).toInt(), (16 * d).toInt(), (14 * d).toInt())
+            }
+            box.addView(counter, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP or Gravity.CENTER_HORIZONTAL))
+            fun refreshCounter(busy: Boolean) {
+                val p = pg
+                if (p == null || p.size < 2) {
+                    counter.visibility = View.GONE
+                } else {
+                    counter.visibility = View.VISIBLE
+                    counter.text = if (busy) p.label() + " \u2026" else p.label()
+                }
+            }
+            refreshCounter(false)
+            fun go(dir: Int) {
+                val p = pg ?: return
+                val target = (if (dir > 0) p.next() else p.prev()) ?: return
+                if (loading || opening) return
+                loading = true
+                opening = true
+                val cancel = CancelToken()
+                openCancel = cancel
+                refreshCounter(true)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        when (val r = h.archiveStorage.openArchiveEntry(archivePath, target.current, password, cancel)) {
+                            is MolinaResult.Success -> {
+                                val o = r.value
+                                FilesEvents.archiveOpen(listing?.let { formatLabel(it) } ?: "unknown", o.cached, o.bytes, o.cancelled)
+                                if (!o.cancelled) {
+                                    val nb = withContext(Dispatchers.IO) { decodeScaled(h.archiveFile(o.relative)) }
+                                    if (nb == null) {
+                                        toast("Gambar tidak bisa ditampilkan")
+                                    } else if (!dlg.isShowing || cur == null) {
+                                        nb.recycle()
+                                    } else {
+                                        iv.setImageBitmap(nb)
+                                        cur?.recycle()
+                                        cur = nb
+                                        curRel = o.relative
+                                        pg = target
+                                    }
+                                }
+                                refreshCache()
+                            }
+                            is MolinaResult.Failure -> {
+                                val reason = ArchiveText.reasonOf(r.error)
+                                FilesEvents.archiveFailed("open", r.error, BrowserPath.parent(archivePath))
+                                toast(if (reason != null) ArchiveText.failure(reason) else FilesErrorText.forOp(r.error.kind))
+                            }
+                        }
+                    } finally {
+                        loading = false
+                        opening = false
+                        openCancel = null
+                        if (dlg.isShowing) refreshCounter(false)
+                    }
+                }
+            }
+            val gd = GestureDetector(ctx, object : GestureDetector.SimpleOnGestureListener() {
+                override fun onDown(e: MotionEvent): Boolean = true
+
+                override fun onSingleTapUp(e: MotionEvent): Boolean {
+                    dlg.dismiss()
+                    return true
+                }
+
+                override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+                    val start = e1 ?: return false
+                    val dir = ImagePager.swipe(e2.x - start.x, e2.y - start.y, 64f * d)
+                    if (dir == 0) return false
+                    go(dir)
+                    return true
+                }
+            })
+            iv.setOnTouchListener { _, e -> gd.onTouchEvent(e) }
             val openOther = TextView(ctx).apply {
                 text = "Buka di aplikasi lain"
                 textSize = 14f
@@ -615,15 +715,17 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
                 setPadding((16 * d).toInt(), (14 * d).toInt(), (16 * d).toInt(), (14 * d).toInt())
                 setOnClickListener {
                     dlg.dismiss()
-                    h.viewArchiveEntry(relative)?.let { toast(it) }
+                    h.viewArchiveEntry(curRel)?.let { toast(it) }
                 }
             }
             box.addView(openOther, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM or Gravity.END))
             dlg.setContentView(box)
             dlg.setOnDismissListener {
+                if (loading) openCancel?.cancel()
                 iv.setImageDrawable(null)
-                bmp.recycle()
-                if (previewDialog === dlg) previewDialog = null // 26k5e:e06
+                cur?.recycle()
+                cur = null
+                if (previewDialog === dlg) previewDialog = null
             }
             dlg.show()
         }
