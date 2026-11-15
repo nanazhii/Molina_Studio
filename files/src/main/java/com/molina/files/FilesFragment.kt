@@ -38,6 +38,7 @@ import com.molina.core.storage.ArchiveFailure
 import com.molina.core.storage.ArchiveNames
 import com.molina.core.storage.ExplorerFavorites
 import com.molina.core.storage.ExtractTarget // 26k2:imports
+import com.molina.core.storage.ConflictPolicy // 26k5c:e13
 import com.molina.core.storage.ExplorerPrefs
 import com.molina.core.storage.ExplorerRecent
 import com.molina.core.storage.FileEntry
@@ -105,6 +106,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         currentPath = savedInstanceState?.getString(KEY_PATH).orEmpty()
+        FilesArchive.sweepCache("start") // 26k5c:e06
         if (savedInstanceState != null) {
             options = restoreOptions(savedInstanceState)
             restoreSelectionAndClip(savedInstanceState)
@@ -206,6 +208,11 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         }
     }
 
+    override fun onDestroy() { // 26k5c:e07
+        if (activity?.isFinishing == true) FilesArchive.sweepCache("exit")
+        super.onDestroy()
+    }
+
     override fun onDestroyView() {
         loadJob?.cancel()
         loadJob = null
@@ -255,7 +262,11 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             applySelection()
             return
         }
-        if (entry.isDirectory) navigate(BrowserPath.entryPath(currentPath, entry.relDir, entry.name))
+        if (entry.isDirectory) {
+            navigate(BrowserPath.entryPath(currentPath, entry.relDir, entry.name))
+        } else if (ArchiveNames.detect(entry.name) != null) {
+            openArchiveSheet(keyOf(entry)) // 26k5c:e08
+        }
     }
 
     /** Mulai dari folder terakhir dibuka bila masih ada, selain itu dari root. Pengecekan folder di IO. */
@@ -507,6 +518,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             popup.menu.add(Menu.NONE, MENU_EXTRACT_FOLDER, 3, "Ekstrak ke folder")
             popup.menu.add(Menu.NONE, MENU_EXTRACT_SUBS, 3, "Ekstrak subtitle di sini")
             popup.menu.add(Menu.NONE, MENU_EXTRACT_TO, 3, "Ekstrak ke\u2026") // 26k4:e54
+            popup.menu.add(Menu.NONE, MENU_VIEW_ARCHIVE, 3, "Lihat isi") // 26k5c:e09
             popup.menu.add(Menu.NONE, MENU_TEST, 3, "Uji arsip")
         }
         popup.menu.add(Menu.NONE, MENU_COMPRESS, 3, "Kompres\u2026")
@@ -528,6 +540,7 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
                 MENU_EXTRACT_SUBS -> extractEntry(entry, ArchiveOp.EXTRACT_SUBS, ExtractTarget.HERE)
                 MENU_EXTRACT_TO -> setArchiveClip(listOf(keyOf(entry))) // 26k4:e55
                 MENU_TEST -> testEntry(entry)
+                MENU_VIEW_ARCHIVE -> openArchiveSheet(keyOf(entry)) // 26k5c:e10
                 MENU_COMPRESS -> promptCompress(listOf(keyOf(entry)))
             }
             true
@@ -1073,6 +1086,45 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         promptNextPassword()
     }
 
+    // --- 26k5c:e11 Lihat isi arsip (ArchiveSheet)
+
+    internal val archiveStorage: MolinaStorage get() = storage
+
+    internal fun archiveBusy(): Boolean = FilesTransfer.isRunning || FilesArchive.isRunning
+
+    private fun openArchiveSheet(path: String) {
+        if (childFragmentManager.findFragmentByTag(ARCHIVE_TAG) != null) return
+        ArchiveSheet.newInstance(path).show(childFragmentManager, ARCHIVE_TAG)
+    }
+
+    /** Buka berkas hasil cache lewat aplikasi lain. null = berhasil; selain itu teks galat untuk pengguna. */
+    internal fun viewArchiveEntry(relative: String): String? {
+        val ctx = context ?: return null
+        val file = java.io.File(paths.root, relative)
+        return try {
+            startActivity(FilesShare.viewIntent(ctx, file))
+            null
+        } catch (e: ActivityNotFoundException) {
+            FilesEvents.failed("archive-open", MolinaError(ErrorKind.IO, "Tidak ada aplikasi untuk membuka berkas", e), relative)
+            "Tidak ada aplikasi untuk membuka berkas ini"
+        } catch (e: IllegalArgumentException) {
+            FilesEvents.failed("archive-open", MolinaError(ErrorKind.INVALID_PATH, "Berkas di luar jalur FileProvider", e), relative)
+            "Berkas ini tidak bisa dibuka"
+        }
+    }
+
+    /** Ekstrak sebagian/seluruh isi [archive] dari ArchiveSheet ke folder arsip. false bila operasi lain berjalan. */
+    internal fun startSheetExtract(
+        archive: String,
+        only: Set<String>?,
+        target: ExtractTarget,
+        policy: ConflictPolicy,
+        password: String?,
+    ): Boolean {
+        val request = ArchiveRequest(ArchiveOp.EXTRACT, listOf(archive), BrowserPath.parent(archive), target, policy = policy, only = only)
+        return FilesArchive.start(request, password)
+    }
+
     private fun notifyBusy() {
         val root = view ?: return
         Snackbar.make(root, "Operasi lain masih berjalan", Snackbar.LENGTH_SHORT).show()
@@ -1325,6 +1377,8 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
         const val MENU_EXTRACT_TO = 27 // 26k4:e65
         const val MENU_TEST = 28
         const val MENU_EXTRACT_SELECTED = 29
+        const val MENU_VIEW_ARCHIVE = 30 // 26k5c:e12
+        const val ARCHIVE_TAG = "archive-view"
         const val TRASH_TAG = "trash"
         const val UNDO_MS = 6000
     }

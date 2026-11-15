@@ -18,6 +18,15 @@ internal object FilesShare {
             ?: ShareMime.FALLBACK
     }
 
+    /** Intent Buka (ACTION_VIEW) untuk satu berkas. Melempar IllegalArgumentException bila di luar jalur FileProvider. 26k5c:e04 */
+    fun viewIntent(ctx: Context, file: File): Intent {
+        val uri = FileProvider.getUriForFile(ctx, ctx.packageName + ".fileprovider", file)
+        return Intent(Intent.ACTION_VIEW).setDataAndType(uri, mimeOf(file)).apply {
+            clipData = android.content.ClipData.newRawUri("", uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+    }
+
     /** Melempar IllegalArgumentException bila berkas di luar jalur FileProvider. */
     fun chooser(ctx: Context, files: List<File>): Intent {
         val auth = ctx.packageName + ".fileprovider"

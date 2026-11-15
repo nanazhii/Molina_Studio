@@ -285,6 +285,41 @@ internal object FilesEvents {
             logger = logger,
         )
 
+    // 26k5c:e05
+    /** Layar Lihat isi dibuka. [skipped] = entri tidak aman yang dilewati pohon. Tanpa nama/path/kata sandi. */
+    fun archiveView(
+        format: String,
+        files: Int,
+        folders: Int,
+        encrypted: Boolean,
+        truncated: Boolean,
+        skipped: Int,
+        logger: MolinaLogger = MolinaLog.logger,
+    ) = MolinaEvents.behavior(
+        AREA, "archive-view",
+        fields = linkedMapOf(
+            "format" to format, "files" to files.toString(), "folders" to folders.toString(),
+            "encrypted" to encrypted.toString(), "truncated" to truncated.toString(), "skipped" to skipped.toString(),
+        ),
+        logger = logger,
+    )
+
+    /** Satu entri dibuka lewat cache. [cached] true = slot dipakai ulang tanpa ekstrak. */
+    fun archiveOpen(format: String, cached: Boolean, bytes: Long, cancelled: Boolean, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "archive-open",
+            fields = linkedMapOf("format" to format, "cached" to cached.toString(), "bytes" to bytes.toString(), "cancelled" to cancelled.toString()),
+            logger = logger,
+        )
+
+    /** Cache entri arsip dikosongkan. [why] = start | exit | manual. */
+    fun archiveCache(why: String, freed: Long, logger: MolinaLogger = MolinaLog.logger) =
+        MolinaEvents.behavior(
+            AREA, "archive-cache",
+            fields = linkedMapOf("why" to why, "freed" to freed.toString()),
+            logger = logger,
+        )
+
     fun permissionMissing(path: String, logger: MolinaLogger = MolinaLog.logger) =
         MolinaEvents.behavior(AREA, "permission-missing", fields = mapOf("depth" to depth(path).toString()), logger = logger)
 

@@ -48,6 +48,8 @@ internal data class ArchiveRequest(
     val flatten: Boolean = false, // 26k3:request
     /** Kebijakan bila berkas hasil sudah ada. 26k4:e22 */
     val policy: ConflictPolicy = ConflictPolicy.RENAME,
+    /** Hanya entri ini (kunci ArchiveTree: berkas "a/b", folder "a/b/"); null = semua. 26k5c:e01 */
+    val only: Set<String>? = null,
 ) {
     /** extract | extract-subs | compress (untuk log). */
     val opName: String
@@ -133,6 +135,26 @@ internal object FilesArchive {
         return true
     }
 
+    private var sweptAtStart = false // 26k5c:e03
+
+    /**
+     * Kosongkan cache entri arsip (Molina/.arsip-cache). [why] = start (sekali per proses) | exit. Dilewati bila ada operasi
+     * berjalan. Kegagalan hanya dicatat; cache pasti terpangkas LRU pada pembukaan berikutnya.
+     */
+    fun sweepCache(why: String) {
+        if (why == "start") {
+            if (sweptAtStart) return
+            sweptAtStart = true
+        }
+        if (isRunning || FilesTransfer.isRunning) return
+        scope.launch {
+            when (val r = storage.clearArchiveCache()) {
+                is MolinaResult.Success -> FilesEvents.archiveCache(why, r.value)
+                is MolinaResult.Failure -> FilesEvents.failed("archive-cache", r.error, "")
+            }
+        }
+    }
+
     /** Meminta pembatalan; operasi menghapus hasil sebagian lalu melaporkan [ArchiveState.Finished]. */
     fun cancel() {
         val running = mutableState.value as? ArchiveState.Running ?: return
@@ -161,7 +183,7 @@ internal object FilesArchive {
                         is MolinaResult.Success -> finish(req, null, null, null, batch = b.value)
                     }
                 } else {
-                    val r = storage.extractArchive(req.sources.first(), req.destPath, req.target, pw, null, cancel, onProgress, false, req.policy)
+                    val r = storage.extractArchive(req.sources.first(), req.destPath, req.target, pw, req.only, cancel, onProgress, false, req.policy) // 26k5c:e02
                     finishExtract(req, r)
                 }
             }

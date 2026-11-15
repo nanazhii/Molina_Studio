@@ -171,6 +171,11 @@ Tag `Molina/files`. Path tidak pernah dicatat: hanya `depth` (jumlah segmen path
 | `files.archive-batch` | BEHAV | Ekstrak banyak arsip selesai (tanpa nama/path/kata sandi); arsip bersandi dihitung di `needpw`, bukan `failed` | `total`, `ok`, `failed`, `needpw`, `cancelled`, `files`, `renamed`, `skipped`, `replaced`, `bytes`, `depth` |
 | `files.archive-test` | BEHAV | Uji arsip selesai; `bad` = indeks entri pertama rusak (0-based; -1 = tidak ada atau struktur tak terbaca), `reason` = none atau CORRUPT; `checksummed`=false untuk TAR polos | `format`, `ok`, `entries`, `bytes`, `bad`, `reason`, `checksummed`, `cancelled`, `depth` |
 | `files.archive-clip` | BEHAV | Klip "Ekstrak ke…" dipasang/dibatalkan | `action` (set/clear), `count` |
+| `files.archive-view` | BEHAV | Layar Lihat isi dibuka (tanpa nama/path/kata sandi); `skipped` = entri tidak aman yang dilewati | `format`, `files`, `folders`, `encrypted`, `truncated`, `skipped` |
+| `files.archive-open` | BEHAV | Satu entri arsip dibuka lewat cache; `cached`=true berarti slot dipakai ulang | `format`, `cached`, `bytes`, `cancelled` |
+| `files.archive-cache` | BEHAV | Cache entri arsip dikosongkan; `why` = start / exit / manual | `why`, `freed` |
+| `files.archive-open-failed` | BUG (W bila INVALID_PATH) | Tidak ada aplikasi pembuka, atau berkas cache di luar jalur FileProvider | `kind`, `error`, `depth`, `errno` |
+| `files.archive-cache-failed` | BUG | Gagal mengosongkan cache arsip | `kind`, `error`, `depth`, `errno` |
 | `files.archive-failed` | BUG (W untuk kata sandi, nama, format, tidak ada yang cocok) | Ekstrak/Kompres gagal; `reason` = alasan arsip (NEED_PASSWORD, WRONG_PASSWORD, CORRUPT, NO_SPACE, ...) | `op`, `kind`, `reason`, `error`, `depth`, `errno` |
 <!-- 26k2:docs -->
 

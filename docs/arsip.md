@@ -66,3 +66,26 @@ Kunci simpul = kunci parameter `only` pada ekstrak: berkas `a/b.txt`, folder `a/
 `ArchiveEngine.test` mendekode semua entri ke sink kosong (tanpa tulis disk). Arsip rusak = hasil, bukan exception.
 TAR polos tidak punya checksum isi: hanya struktur dan ukuran yang diperiksa (`checksummed=false`). ZIP bersandi dengan
 entri rusak bisa dilaporkan sebagai kata sandi salah oleh zip4j (keterbatasan pustaka).
+
+<!-- 26k5c:d01 -->
+## Lihat isi arsip (Patch 26k-5c)
+
+Ketuk berkas arsip (atau menu "Lihat isi") membuka lembar bawah `ArchiveSheet`: folder virtual dari `ArchiveTree`,
+breadcrumb, pencarian nama (maks. 200 hasil, ditandai bila dipotong), urut nama/ukuran, pilih dengan tekan lama.
+
+- Logika navigasi murni ada di `ArchiveBrowse` (tes JVM); lembar hanya menggambar dan memanggil `MolinaStorage`.
+- "Ekstrak terpilih" memakai `ArchiveRequest.only` (kunci folder berakhiran "/"); kunci di dalam folder yang juga dipilih
+  dibuang. Tanpa pilihan, menu "Ekstrak semua" mengirim `only=null`. Tujuan dan kebijakan timpa lewat dialog yang sama
+  dengan ekstrak biasa; operasi berjalan di `FilesArchive` (satu operasi sekaligus) dan lembar ditutup setelah mulai.
+- Buka satu entri: `openArchiveEntry` -> cache -> `ACTION_VIEW` lewat FileProvider (jalur `Molina/` sudah mencakup
+  `.arsip-cache`, jadi `molina_file_paths.xml` tidak berubah).
+- Daftar dipotong di `LIST_MAX` (50.000): banner kuning yang bisa ditutup, pencarian hanya mencakup entri yang termuat.
+- Kata sandi hanya di memori instans lembar: tidak masuk Bundle, log, atau state. Memutar layar membuat lembar dibuat
+  ulang dan meminta sandi lagi bila arsip bersandi. Pilihan > 500 item tidak disimpan ke Bundle.
+- Cache dikosongkan sekali per proses saat Berkas pertama kali tampil, dan saat aktivitas selesai (`isFinishing`);
+  juga lewat menu "Bersihkan cache". Sapuan dilewati bila ada operasi berjalan. Isi entri bersandi bisa tinggal di
+  cache selama aplikasi hidup (keputusan A). Kegagalan sapuan hanya dicatat (`files.archive-cache-failed`).
+- Log: `files.archive-view`, `files.archive-open`, `files.archive-cache`; kegagalan memakai `files.archive-failed`
+  dengan `op=list` atau `op=open` (WARN untuk sandi/TOO_LARGE/NO_MATCH), dan `files.archive-open-failed` untuk
+  kegagalan peluncuran aplikasi pembuka.
+- Belum ada (5d): "Ekstrak ke..." dari lembar (butuh `ArchiveClip` membawa `only`) dan pratinjau gambar.
