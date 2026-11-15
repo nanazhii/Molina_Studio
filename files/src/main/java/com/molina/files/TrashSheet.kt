@@ -20,11 +20,18 @@ import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.molina.core.common.MolinaResult
+import com.molina.core.storage.MolinaStorage
 import com.molina.core.storage.TrashBin
 import com.molina.core.storage.TrashItem
 import com.molina.core.ui.MolinaDialog
 import kotlinx.coroutines.launch
 import com.molina.core.ui.R as UiR
+
+/** [molina-27d] Pemilik TrashSheet: FilesFragment (lama) atau BerkasFragment. FilesFragment tidak diubah. */
+internal interface TrashHost {
+    val trashStorage: MolinaStorage
+    fun onTrashChanged()
+}
 
 /**
  * Layar Sampah (lembar bawah) milik [FilesFragment]: daftar item, ketuk untuk Pulihkan / Hapus permanen,
@@ -35,7 +42,15 @@ internal class TrashSheet : BottomSheetDialogFragment() {
     private var emptyNote: TextView? = null
     private var clearBtn: TextView? = null
 
-    private val host: FilesFragment? get() = parentFragment as? FilesFragment
+    private val host: TrashHost?
+        get() = when (val p = parentFragment) {
+            is FilesFragment -> object : TrashHost {
+                override val trashStorage: MolinaStorage get() = p.trashStorage
+                override fun onTrashChanged() = p.onTrashChanged()
+            }
+            is BerkasFragment -> p.trashHost
+            else -> null
+        }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val ctx = requireContext()

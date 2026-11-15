@@ -72,6 +72,7 @@ class FileDrawerView(
     private val scope: CoroutineScope,
     private val host: Host,
     private val embedded: Boolean = false, // molina-27b
+    private val actions: FileManagerActions = FileManagerActions.None, // molina-27d
 ) : FrameLayout(context) {
 
     interface Host {
@@ -140,16 +141,46 @@ class FileDrawerView(
         menu.menu.add(0, 1, 0, "Segarkan")
         menu.menu.add(0, 2, 1, context.getString(R.string.drawer_new_dir))
         menu.menu.add(0, 3, 2, context.getString(R.string.drawer_new_file))
+        if (actions !== FileManagerActions.None) { // molina-27d
+            menu.menu.add(0, 4, 3, "Favorit")
+            menu.menu.add(0, 5, 4, "Sampah")
+        }
         menu.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 1 -> { rebuild(); refreshAll() }
                 2 -> promptCreateEmbedded(true)
                 3 -> promptCreateEmbedded(false)
+                4 -> showFavorites()
+                5 -> actions.openTrash()
             }
             true
         }
         menu.show()
     }
+
+    /** [molina-27d] Muat ulang tree dari luar (mis. setelah Sampah dipulihkan). */
+    fun refresh() { rebuild(); refreshAll() }
+
+    /** [molina-27d] Daftar Favorit lewat [FileManagerActions]; ketuk = jadikan folder utama. */
+    private fun showFavorites() {
+        scope.launch {
+            val dirs = actions.favoriteDirs()
+            if (dirs.isEmpty()) { toastText("Belum ada Favorit"); return@launch }
+            val labels = dirs.map { DrawerFs.displayPath(it.path) }.toTypedArray()
+            AlertDialog.Builder(context)
+                .setTitle("Favorit")
+                .setItems(labels) { _, i -> setRoot(dirs[i]) }
+                .setNegativeButton(R.string.drawer_cancel, null)
+                .show()
+        }
+    }
+
+    /** [molina-27d] Mode tertanam: Hapus = pindah ke Sampah (Urungkan ditampilkan oleh [FileManagerActions]). */
+    private fun trashFlow(f: File) {
+        actions.trash(listOf(f)) { ok -> if (ok) afterChange(f.parentFile, f.path) }
+    }
+
+    private fun toastText(s: String) = Toast.makeText(context, s, Toast.LENGTH_SHORT).show()
 
     /** [molina-27c] Dialog nama polos seperti promptCreate di Penjelajah; berkas baru tidak dibuka di nano. */
     private fun promptCreateEmbedded(folder: Boolean, parent: File = currentRoot()) {
@@ -520,6 +551,9 @@ class FileDrawerView(
                 m.add(0, ID_RUN, 1, run)
             }
         }
+        if (embedded && e.isDir && actions.canManage(f)) { // molina-27d
+            m.add(0, ID_FAV, 9, if (actions.isFavorite(f)) "Hapus dari Favorit" else "Tambah ke Favorit")
+        }
         m.add(0, ID_RENAME, 10, context.getString(R.string.drawer_rename))
         m.add(0, ID_COPY, 11, context.getString(R.string.drawer_copy_path))
         m.add(0, ID_INFO, 12, context.getString(R.string.drawer_info))
@@ -536,7 +570,8 @@ class FileDrawerView(
                 ID_RENAME -> renameDialog(f, e.isDir)
                 ID_COPY -> copyPath(f)
                 ID_INFO -> showInfo(f, e.isDir)
-                ID_DELETE -> deleteDialog(f)
+                ID_DELETE -> if (embedded && actions.canManage(f)) trashFlow(f) else deleteDialog(f) // molina-27d
+                ID_FAV -> actions.toggleFavorite(f)
             }
             true
         }
@@ -878,6 +913,7 @@ class FileDrawerView(
         const val ID_COPY = 7
         const val ID_INFO = 8
         const val ID_DELETE = 9
+        const val ID_FAV = 30 // molina-27d
         const val ID_RUN = 10
         const val ID_REFRESH = 20
         const val ID_HEAD_NEW_DIR = 21

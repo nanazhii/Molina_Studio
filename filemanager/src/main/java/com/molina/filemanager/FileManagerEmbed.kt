@@ -6,8 +6,15 @@ import kotlinx.coroutines.CoroutineScope
 
 /** [molina-27b] Pintu masuk publik: file manager salinan drawer Terminal, mode tertanam (tanpa nano/Jalankan/cd). */
 object FileManagerEmbed {
-    fun create(context: Context, scope: CoroutineScope): View =
-        FileDrawerView(context, FileDrawerState(), scope, NoopHost, embedded = true)
+    /** [molina-27d] Pegangan: [view] untuk dipasang, [refresh] untuk memuat ulang tree dari luar. */
+    class Handle internal constructor(val view: View, private val onRefresh: () -> Unit) {
+        fun refresh() = onRefresh()
+    }
+
+    fun create(context: Context, scope: CoroutineScope, actions: FileManagerActions = FileManagerActions.None): Handle {
+        val v = FileDrawerView(context, FileDrawerState(), scope, NoopHost, embedded = true, actions = actions)
+        return Handle(v) { v.refresh() }
+    }
 
     private object NoopHost : FileDrawerView.Host {
         override fun send(text: String) = Unit
