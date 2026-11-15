@@ -1,6 +1,9 @@
 name: Build Molina Studio
 
 on:
+  push:
+    branches: [main, "feat/**"]
+    paths-ignore: ["**.md", "docs/**"]
   workflow_dispatch:
     inputs:
       variant:
@@ -12,12 +15,16 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      VARIANT: ${{ inputs.variant }}
+      VARIANT: ${{ inputs.variant || 'release' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -85,7 +92,7 @@ jobs:
           MOLINA_KEYSTORE_PASSWORD: ${{ secrets.MOLINA_KEYSTORE_PASSWORD }}
         run: gradle :app:assemble${VARIANT^} --stacktrace
       - name: Pastikan bukan debuggable
-        if: inputs.variant == 'release'
+        if: env.VARIANT == 'release'
         run: |
           A=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
           for f in app/build/outputs/apk/release/*.apk; do
@@ -95,7 +102,7 @@ jobs:
             echo "OK bukan debuggable: $f"
           done
       - name: Pastikan bertanda tangan kunci Molina dan cetak sidik jari
-        if: inputs.variant == 'release'
+        if: env.VARIANT == 'release'
         run: |
           A=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           for f in app/build/outputs/apk/release/*.apk; do
@@ -108,7 +115,7 @@ jobs:
             grep -i "SHA-256" "$RUNNER_TEMP/cert.txt" || true
           done
       - name: Cetak sidik jari APK debug
-        if: inputs.variant == 'debug' && env.MOLINA_KEYSTORE_FILE != ''
+        if: env.VARIANT == 'debug' && env.MOLINA_KEYSTORE_FILE != ''
         run: |
           A=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           for f in app/build/outputs/apk/debug/*.apk; do
@@ -116,9 +123,9 @@ jobs:
           done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: molina-${{ inputs.variant }}
+          name: molina-${{ env.VARIANT }}
           path: |
-            app/build/outputs/apk/${{ inputs.variant }}/*.apk
+            app/build/outputs/apk/${{ env.VARIANT }}/*.apk
             app/build/outputs/mapping/release/
       - name: Hapus kunci sementara
         if: always()
