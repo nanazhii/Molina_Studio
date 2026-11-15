@@ -46,6 +46,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.molina.core.ui.FileKind
+import com.molina.core.ui.MolinaDialog // molina-27c
 import com.molina.core.ui.R as UiR
 import com.molina.log.MolinaEvents
 import kotlinx.coroutines.CoroutineScope
@@ -133,6 +134,49 @@ class FileDrawerView(
 
     val isOpen: Boolean get() = visibility == View.VISIBLE
 
+    /** [molina-27c] Menu header mode tertanam, meniru Penjelajah: Segarkan, Folder baru, Berkas baru. */
+    private fun showEmbeddedHeaderMenu(anchor: View) {
+        val menu = PopupMenu(context, anchor)
+        menu.menu.add(0, 1, 0, "Segarkan")
+        menu.menu.add(0, 2, 1, context.getString(R.string.drawer_new_dir))
+        menu.menu.add(0, 3, 2, context.getString(R.string.drawer_new_file))
+        menu.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                1 -> { rebuild(); refreshAll() }
+                2 -> promptCreateEmbedded(true)
+                3 -> promptCreateEmbedded(false)
+            }
+            true
+        }
+        menu.show()
+    }
+
+    /** [molina-27c] Dialog nama polos seperti promptCreate di Penjelajah; berkas baru tidak dibuka di nano. */
+    private fun promptCreateEmbedded(folder: Boolean, parent: File = currentRoot()) {
+        MolinaDialog.input(
+            context,
+            title = context.getString(if (folder) R.string.drawer_new_dir else R.string.drawer_new_file),
+            initial = "",
+            positive = context.getString(R.string.drawer_create),
+            selectBase = false,
+        ) { raw ->
+            val name = raw.trim()
+            val target = File(parent, name)
+            io(if (folder) "mkdir" else "mkfile", {
+                when {
+                    !DrawerFs.validName(name) -> R.string.drawer_err_name
+                    target.exists() -> R.string.drawer_err_exists
+                    !(if (folder) target.mkdir() else target.createNewFile()) -> R.string.drawer_err_generic
+                    else -> null
+                }
+            }) {
+                if (parent.path != currentRoot().path) state.expanded.add(parent.path)
+                toast(if (folder) R.string.drawer_done_dir else R.string.drawer_done_file)
+                load(parent)
+            }
+        }
+    }
+
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         if (embedded) { rebuild(); refreshAll() }
@@ -216,7 +260,6 @@ class FileDrawerView(
         val headerMenu = HeaderDotsView(context)
         headerMenu.contentDescription = context.getString(R.string.drawer_more)
         headerMenu.setOnClickListener { showHeaderMenu(it) }
-        if (embedded) headerMenu.visibility = View.GONE
         header.addView(headerMenu, LinearLayout.LayoutParams(dp(34), dp(34)))
 
         val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
@@ -245,7 +288,7 @@ class FileDrawerView(
         list.overScrollMode = View.OVER_SCROLL_NEVER
         panel.addView(list, LinearLayout.LayoutParams(MATCH, 0, 1f))
 
-        panel.addView(divider(), LinearLayout.LayoutParams(MATCH, dp(1)))
+        if (!embedded) panel.addView(divider(), LinearLayout.LayoutParams(MATCH, dp(1)))
         val bar = LinearLayout(context)
         bar.orientation = LinearLayout.HORIZONTAL
         bar.gravity = Gravity.CENTER_VERTICAL
@@ -254,7 +297,7 @@ class FileDrawerView(
         sep.setBackgroundColor(hairline)
         bar.addView(sep, LinearLayout.LayoutParams(dp(1), dp(20)))
         bar.addView(barButton(false, R.string.drawer_new_file) { newFileDialog(currentRoot()) }, LinearLayout.LayoutParams(0, MATCH, 1f))
-        panel.addView(bar, LinearLayout.LayoutParams(MATCH, dp(40)))
+        if (!embedded) panel.addView(bar, LinearLayout.LayoutParams(MATCH, dp(40)))
     }
 
     private fun divider(): View {
@@ -486,8 +529,8 @@ class FileDrawerView(
         menu.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 ID_CD_ROOT -> cdAndSetRoot(f)
-                ID_NEW_DIR -> newDirDialog(f)
-                ID_NEW_FILE -> newFileDialog(f)
+                ID_NEW_DIR -> if (embedded) promptCreateEmbedded(true, f) else newDirDialog(f)
+                ID_NEW_FILE -> if (embedded) promptCreateEmbedded(false, f) else newFileDialog(f)
                 ID_NANO -> if (editInNano(f)) close()
                 ID_RUN -> runFlow(f)
                 ID_RENAME -> renameDialog(f, e.isDir)
@@ -502,6 +545,7 @@ class FileDrawerView(
 
     /** Titik tiga di header drawer: satu aksi, cd terminal ke folder utama (Folder baru/Berkas baru ada di bilah bawah). */
     private fun showHeaderMenu(anchor: View) {
+        if (embedded) { showEmbeddedHeaderMenu(anchor); return }
         val menu = PopupMenu(context, anchor)
         menu.menu.add(0, ID_CD_ROOT, 0, context.getString(R.string.drawer_cd_root))
         menu.setOnMenuItemClickListener { item ->
