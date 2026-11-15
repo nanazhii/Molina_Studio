@@ -24,6 +24,7 @@ internal class BerkasArchive(
     private val root: File,
     private val onClipChanged: () -> Unit,
     private val onRefresh: () -> Unit,
+    private val onOpen: (File) -> Unit, // molina-27g0
 ) {
     private var passwordPrompting = false
 
@@ -120,6 +121,13 @@ internal class BerkasArchive(
 
     // --- hasil dan sandi (pola FilesFragment 26k4) ---
 
+    /** [molina-27g0] Folder hasil Ekstrak (tidak dibatalkan, ada berkas) untuk aksi "Buka"; null bila tidak ada. */
+    private fun openTarget(state: ArchiveState.Finished): File? {
+        val r = state.extract ?: return null
+        if (state.request.op != ArchiveOp.EXTRACT || r.cancelled || r.files == 0 || r.destRelative.isEmpty()) return null
+        return File(root, r.destRelative)
+    }
+
     fun onFinished(state: ArchiveState.Finished) {
         val request = state.request
         val reason = state.error?.let { ArchiveText.reasonOf(it) }
@@ -133,7 +141,12 @@ internal class BerkasArchive(
         if (test != null && !test.cancelled && ctx != null) {
             MolinaDialog.info(ctx, ArchiveText.TEST_TITLE, ArchiveText.testSummary(test), "Tutup")
         } else {
-            fragment.view?.let { Snackbar.make(it, ArchiveText.finished(state), Snackbar.LENGTH_LONG).show() }
+            val opened = openTarget(state) // molina-27g0
+            fragment.view?.let { v ->
+                Snackbar.make(v, ArchiveText.finished(state), Snackbar.LENGTH_LONG).also { sb ->
+                    if (opened != null) sb.setAction("Buka") { onOpen(opened) }
+                }.show()
+            }
         }
         if (request.op != ArchiveOp.TEST) onRefresh()
         promptNextPassword()

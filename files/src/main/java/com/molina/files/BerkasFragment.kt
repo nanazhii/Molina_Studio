@@ -55,7 +55,7 @@ class BerkasFragment : Fragment(), ArchiveSheetHost {
     private var backCallback: OnBackPressedCallback? = null // molina-27e
     private val propsShare by lazy { BerkasPropsShare(this, storage, paths.root) } // molina-27g
     private val archiveOps by lazy { // molina-27f
-        BerkasArchive(this, paths.root, { handle?.archiveClipChanged() }, { handle?.refresh() })
+        BerkasArchive(this, paths.root, { handle?.archiveClipChanged() }, { handle?.refresh() }, { handle?.openDirectory(it) })
     }
 
     /** [molina-27e] Panel progres salin/pindah di dasar tab (pola sama dengan panel progres FilesFragment). */

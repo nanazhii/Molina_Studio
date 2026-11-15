@@ -13,9 +13,13 @@ object FileManagerEmbed {
         private val onFinished: (Boolean) -> Unit, // molina-27e
         private val onCancelSelection: () -> Boolean,
         private val onArchiveClip: () -> Unit, // molina-27f
+        private val onOpenDir: (java.io.File) -> Unit, // molina-27g0
     ) {
         /** [molina-27f] Klip "Ekstrak ke..." berubah (dari lembar Lihat isi): bilah klip digambar ulang. */
         fun archiveClipChanged() = onArchiveClip()
+
+        /** [molina-27g0] Buka [dir] di tree: leluhur dibentangkan dan baris digulir ke sana; di luar folder utama, jadi folder utama. */
+        fun openDirectory(dir: java.io.File) = onOpenDir(dir)
 
         fun refresh() = onRefresh()
 
@@ -36,7 +40,7 @@ object FileManagerEmbed {
             context, FileDrawerState(), scope, NoopHost,
             embedded = true, actions = actions, onSelectionChanged = onSelectionChanged,
         )
-        return Handle(v, { v.refresh() }, { v.onTransferFinished(it) }, { v.cancelSelection() }, { v.onArchiveClipChanged() })
+        return Handle(v, { v.refresh() }, { v.onTransferFinished(it) }, { v.cancelSelection() }, { v.onArchiveClipChanged() }, { v.openDirectory(it) })
     }
 
     private object NoopHost : FileDrawerView.Host {

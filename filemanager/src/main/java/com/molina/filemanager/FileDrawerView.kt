@@ -123,6 +123,7 @@ class FileDrawerView(
     private var favPaths: Set<String> = emptySet() // molina-27d2: path folder Favorit, untuk bintang di baris
     private val selection = EmbeddedSelection() // molina-27e: mode pilih (hanya mode tertanam)
     private val clip = EmbeddedClipboard.state // molina-27e: papan klip Salin/Pindah, bertahan antar kunjungan tab
+    private var pasteDest: File? = null // molina-27g0: folder tujuan Tempel yang sedang berjalan, dibuka saat berhasil
     private val clipBar = LinearLayout(context)
     private val clipText = TextView(context)
     private val clipPaste = TextView(context)
@@ -276,13 +277,38 @@ class FileDrawerView(
             toastText("Sumber atau tujuan di luar folder Molina")
             return
         }
-        if (!actions.transfer(mode, files, dir)) toastText("Operasi lain masih berjalan")
+        if (actions.transfer(mode, files, dir)) pasteDest = dir else toastText("Operasi lain masih berjalan") // molina-27g0
     }
 
     /** Dipanggil dari luar saat salin/pindah selesai: klip dikosongkan bila [clearClip], lalu tree disegarkan. */
     fun onTransferFinished(clearClip: Boolean) {
         if (clearClip) clip.clear()
         refresh()
+        val dest = pasteDest // molina-27g0: buka folder tujuan hanya bila Tempel berhasil
+        pasteDest = null
+        if (clearClip && dest != null) openDirectory(dest)
+    }
+
+    /**
+     * [molina-27g0] Buka [dir]: leluhur dari folder utama dimuat di IO dan dibentangkan, lalu baris digulir ke [dir].
+     * [dir] di luar folder utama menjadi folder utama baru. Dipakai Tempel dan aksi Buka setelah Ekstrak.
+     */
+    fun openDirectory(dir: File) {
+        scope.launch {
+            if (!withContext(Dispatchers.IO) { dir.isDirectory }) return@launch
+            val root = currentRoot()
+            val chain = DrawerFs.chainTo(root, dir)
+            if (chain == null) { setRoot(dir); return@launch }
+            if (chain.isEmpty()) { refresh(); return@launch }
+            val loaded = withContext(Dispatchers.IO) {
+                (listOf(root) + chain).associate { it.path to (DrawerFs.list(it) ?: emptyList()) }
+            }
+            state.children.putAll(loaded)
+            chain.forEach { state.expanded.add(it.path) }
+            rebuild()
+            val idx = DrawerFs.flatten(state, root).indexOfFirst { it.entry.file.path == dir.path }
+            if (idx >= 0) list.post { (list.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(idx, dp(48)) }
+        }
     }
 
     /** [molina-27f] Jalankan aksi arsip; mode pilih ditutup bila diterima. Hasil dilaporkan implementasi (panel progres + Snackbar). */

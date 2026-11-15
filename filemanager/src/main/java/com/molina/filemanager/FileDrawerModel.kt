@@ -57,6 +57,16 @@ object DrawerFs {
 
     fun volumeLabel(v: File): String = if (v.path == INTERNAL_ROOT) "Internal" else v.name
 
+    /** [molina-27g0] Rantai folder dari anak langsung [root] sampai [dir]; kosong bila sama; null bila [dir] di luar [root]. */
+    fun chainTo(root: File, dir: File): List<File>? {
+        if (dir.path == root.path) return emptyList()
+        if (!dir.path.startsWith(root.path.trimEnd('/') + "/")) return null
+        val out = ArrayList<File>()
+        var c: File? = dir
+        while (c != null && c.path != root.path) { out.add(0, c); c = c.parentFile }
+        return out
+    }
+
     /** Label path untuk header: penyimpanan internal ditulis "Internal". */
     fun displayPath(path: String): String = when {
         path == INTERNAL_ROOT -> "Internal"
