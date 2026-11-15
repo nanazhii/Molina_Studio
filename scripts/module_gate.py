@@ -12,11 +12,11 @@ import re, sys, pathlib
 
 FEATURE = {"cinema", "files", "terminal", "settings"}
 API = {"player-api", "terminal-api"}
-ENGINE = {"mpv-native", "terminal-core", "terminal-emulator", "terminal-view", "terminal-pty", "terminal-proot"}
+ENGINE = {"mpv-native", "terminal-core", "terminal-emulator", "terminal-view", "terminal-pty", "terminal-proot", "filemanager"}
 OWN_API = {"cinema": {"player-api"}, "terminal": {"terminal-api"},
            "mpv-native": {"player-api"}, "terminal-core": {"terminal-api"}}
 OWN_ENGINE = {"cinema": {"mpv-native"},
-              "terminal": {"terminal-core", "terminal-view", "terminal-proot"},
+              "terminal": {"terminal-core", "terminal-view", "terminal-proot", "filemanager"},
               "terminal-core": {"terminal-emulator", "terminal-pty"},
               "terminal-view": {"terminal-emulator"}}
 PAT = re.compile(r'(?:api|implementation|compileOnly|runtimeOnly)\(project\(":([\w-]+)"\)\)')
