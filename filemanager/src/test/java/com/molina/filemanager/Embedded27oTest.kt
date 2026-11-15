@@ -1,6 +1,7 @@
 // molina-27o
 package com.molina.filemanager
 
+import com.molina.core.ui.ExtLabel
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

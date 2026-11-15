@@ -35,12 +35,3 @@ internal object FocusNav {
     const val UP_AT_ROOT = "\u0000root-up"
     const val ROOT_FOCUS = "\u0000root-focus"
 }
-
-/** [molina-27o] Label ekstensi pada ikon berkas: "skrip.tar.gz" -> "GZ", "README" / ".bashrc" -> "". Maks 4 huruf. */
-internal object ExtLabel {
-    fun of(name: String): String {
-        val dot = name.lastIndexOf('.')
-        if (dot <= 0 || dot == name.length - 1) return ""
-        return name.substring(dot + 1).uppercase().take(4)
-    }
-}
