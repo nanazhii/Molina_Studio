@@ -14,6 +14,7 @@ internal object EmbeddedMenu {
         COMPRESS, EXTRACT_HERE, EXTRACT_FOLDER, EXTRACT_SUBS, EXTRACT_TO, EXTRACT_PASTE, VIEW_ARCHIVE, TEST_ARCHIVE, // molina-27f
         SHARE, // molina-27g
         FAVORITE, COPY_PATH, INFO, TRASH, DELETE_PERMANENT, FAVORITES_LIST, OPEN_TRASH,
+        GO_INTERNAL, GO_DEBIAN, // molina-27i: kelompok hamburger di bawah menu titik tiga
     }
 
     data class Entry(val action: Action, val label: String, val enabled: Boolean = true, val danger: Boolean = false)
@@ -111,9 +112,11 @@ internal object EmbeddedMenu {
             if (s.trashAvailable) l += Entry(Action.TRASH, "Hapus", danger = true)
             l += Entry(Action.DELETE_PERMANENT, "Hapus permanen\u2026", danger = true)
         }
-        if (s.global && s.hasActions) {
-            l += Entry(Action.FAVORITES_LIST, "Daftar Favorit")
-            l += Entry(Action.OPEN_TRASH, "Sampah")
+        if (s.global) { // molina-27i: kelompok hamburger di bawah (pola DROP-HAMBURGER repo lama): Favorit, Internal, Debian, Sampah
+            if (s.hasActions) l += Entry(Action.FAVORITES_LIST, "\u2630 Favorit")
+            l += Entry(Action.GO_INTERNAL, "\u2630 Internal")
+            l += Entry(Action.GO_DEBIAN, "\u2630 Debian")
+            if (s.hasActions) l += Entry(Action.OPEN_TRASH, "\u2630 Sampah")
         }
         return l
     }

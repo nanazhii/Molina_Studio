@@ -225,6 +225,8 @@ class FileDrawerView(
                 EmbeddedMenu.Action.DELETE_PERMANENT -> if (picking) deleteManyDialog(targets) else target?.let { deleteDialog(it) }
                 EmbeddedMenu.Action.FAVORITES_LIST -> showFavorites()
                 EmbeddedMenu.Action.OPEN_TRASH -> actions.openTrash()
+                EmbeddedMenu.Action.GO_INTERNAL -> setRoot(File(DrawerFs.INTERNAL_ROOT)) // molina-27i
+                EmbeddedMenu.Action.GO_DEBIAN -> openDebian() // molina-27i
                 // molina-27f: arsip
                 EmbeddedMenu.Action.COMPRESS -> runArchive(ArchiveAction.COMPRESS, targets, dir)
                 EmbeddedMenu.Action.EXTRACT_HERE -> runArchive(ArchiveAction.EXTRACT_HERE, targets, dir)
@@ -283,64 +285,59 @@ class FileDrawerView(
         fabBadge.text = if (selection.count > 99) "99+" else selection.count.toString()
     }
 
-    /** [molina-27i] Menu hamburger header: Favorit, lalu lokasi Internal / Debian / Sampah. */
-    private fun showNavMenu(anchor: View) {
-        val hasActions = actions !== FileManagerActions.None
-        val m = PopupMenu(context, anchor)
-        m.menu.add(0, 0, 0, "Favorit").isEnabled = hasActions
-        m.menu.add(0, 1, 1, "Internal")
-        m.menu.add(0, 2, 2, "Debian")
-        m.menu.add(0, 3, 3, "Sampah").isEnabled = hasActions
-        m.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                0 -> showFavorites()
-                1 -> setRoot(File(DrawerFs.INTERNAL_ROOT))
-                2 -> openDebian()
-                3 -> actions.openTrash()
-            }
-            true
-        }
-        m.gravity = Gravity.END
-        m.show()
-    }
-
-    /** [molina-27i] Rootfs Debian PRoot (filesDir/rootfs/debian, sama dengan DebianLayout) sebagai folder utama. */
+    /** [molina-27i] Beranda Debian PRoot (filesDir/rootfs/debian/root) sebagai folder utama; pola w7DebianPlaces repo lama. */
     private fun openDebian() {
-        val d = File(context.filesDir, "rootfs/debian")
-        if (!d.isDirectory) { toastText("Debian belum terpasang"); return }
-        setRoot(d)
+        val home = File(context.filesDir, "rootfs/debian/root")
+        if (!home.isDirectory) { toastText("Debian belum terpasang"); return }
+        setRoot(home)
     }
 
-    /** [molina-27h] Ruang di bawah daftar untuk tombol melayang + geser baris: kanan = pilih, kiri = batal pilih. */
+    /**
+     * [molina-27h][molina-27i] Ruang di bawah daftar untuk tombol melayang + geser baris (pola W7-SWIPE1 repo lama):
+     * baris hanya bergeser sedikit (maks 28dp) dan kembali; lewat 64dp saat dilepas = aksi jalan.
+     * Baris belum terpilih hanya bisa digeser kanan (pilih); baris terpilih hanya kiri (batal pilih).
+     */
     private fun setupEmbeddedList() {
         list.clipToPadding = false
         list.setPadding(0, 0, 0, dp(88))
         if (actions === FileManagerActions.None) return
         val swipePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        val cap = dp(28).toFloat()
+        val thr = dp(64).toFloat()
         val cb = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            private fun pathOf(vh: RecyclerView.ViewHolder): String? =
+                adapter.currentList.getOrNull(vh.bindingAdapterPosition)?.entry?.file?.path
+
+            override fun getSwipeDirs(rv: RecyclerView, vh: RecyclerView.ViewHolder): Int {
+                val path = pathOf(vh) ?: return 0
+                return if (selection.active && selection.contains(path)) ItemTouchHelper.LEFT else ItemTouchHelper.RIGHT
+            }
+
             override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean = false
 
-            override fun getSwipeThreshold(vh: RecyclerView.ViewHolder): Float = 0.3f
+            override fun getSwipeThreshold(vh: RecyclerView.ViewHolder): Float = thr / vh.itemView.width.coerceAtLeast(1)
+
+            override fun getSwipeEscapeVelocity(defaultValue: Float): Float = Float.MAX_VALUE // hanya jarak, bukan lemparan
 
             override fun onSwiped(vh: RecyclerView.ViewHolder, direction: Int) {
-                val pos = vh.bindingAdapterPosition
-                val path = adapter.currentList.getOrNull(pos)?.entry?.file?.path
+                val path = pathOf(vh)
                 if (path != null) swipeSelect(path, direction == ItemTouchHelper.RIGHT)
-                if (pos != RecyclerView.NO_POSITION) adapter.notifyItemChanged(pos) // baris kembali ke posisi semula
+                vh.itemView.translationX = 0f
+                adapter.notifyDataSetChanged() // itemAnimator null: bind ulang memastikan baris kembali
             }
 
             override fun onChildDraw(
                 c: Canvas, rv: RecyclerView, vh: RecyclerView.ViewHolder, dX: Float, dY: Float, state: Int, active: Boolean,
             ) {
+                val shown = (dX * 0.4f).coerceIn(-cap, cap)
                 val v = vh.itemView
-                if (dX > 0f) {
-                    swipePaint.color = ColorUtils.setAlphaComponent(accent, 0x55)
-                    c.drawRect(v.left.toFloat(), v.top.toFloat(), v.left + dX, v.bottom.toFloat(), swipePaint)
-                } else if (dX < 0f) {
-                    swipePaint.color = ColorUtils.setAlphaComponent(danger, 0x55)
-                    c.drawRect(v.right + dX, v.top.toFloat(), v.right.toFloat(), v.bottom.toFloat(), swipePaint)
+                if (shown != 0f) {
+                    val armed = abs(dX) > thr
+                    swipePaint.color = ColorUtils.setAlphaComponent(if (shown > 0f) accent else danger, if (armed) 0x88 else 0x33)
+                    if (shown > 0f) c.drawRect(v.left.toFloat(), v.top.toFloat(), v.left + shown, v.bottom.toFloat(), swipePaint)
+                    else c.drawRect(v.right + shown, v.top.toFloat(), v.right.toFloat(), v.bottom.toFloat(), swipePaint)
                 }
-                super.onChildDraw(c, rv, vh, dX, dY, state, active)
+                super.onChildDraw(c, rv, vh, shown, dY, state, active)
             }
         }
         ItemTouchHelper(cb).attachToRecyclerView(list)
@@ -657,17 +654,6 @@ class FileDrawerView(
         headerMenu.contentDescription = context.getString(R.string.drawer_more)
         headerMenu.setOnClickListener { showHeaderMenu(it) }
         if (embedded) headerMenu.visibility = View.GONE // molina-27h: menu pindah ke tombol melayang
-        if (embedded) { // molina-27i: hamburger Favorit + Internal/Debian/Sampah
-            val burger = TextView(context)
-            burger.text = "\u2630"
-            burger.textSize = 18f
-            burger.setTextColor(white)
-            burger.gravity = Gravity.CENTER
-            burger.contentDescription = "Navigasi"
-            burger.background = RippleDrawable(ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x55)), null, ColorDrawable(Color.WHITE))
-            burger.setOnClickListener { showNavMenu(it) }
-            header.addView(burger, LinearLayout.LayoutParams(dp(34), dp(34)))
-        }
         header.addView(headerMenu, LinearLayout.LayoutParams(dp(34), dp(34)))
 
         val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
