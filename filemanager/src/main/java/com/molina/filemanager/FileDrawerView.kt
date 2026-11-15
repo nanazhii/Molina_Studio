@@ -119,6 +119,7 @@ class FileDrawerView(
     private val chipScroll = HorizontalScrollView(context)
     private val empty = TextView(context)
     private val list = RecyclerView(context)
+    private var favPaths: Set<String> = emptySet() // molina-27d2: path folder Favorit, untuk bintang di baris
     private val adapter = RowAdapter()
 
     init {
@@ -135,23 +136,48 @@ class FileDrawerView(
 
     val isOpen: Boolean get() = visibility == View.VISIBLE
 
-    /** [molina-27c] Menu header mode tertanam, meniru Penjelajah: Segarkan, Folder baru, Berkas baru. */
-    private fun showEmbeddedHeaderMenu(anchor: View) {
+    /**
+     * [molina-27d2] Satu menu titik tiga mode tertanam: isi dari [EmbeddedMenu], dipakai menu baris (target = baris)
+     * dan menu header (target = null, aksi berlaku untuk folder aktif). Pengganti showEmbeddedHeaderMenu (27c/27d).
+     */
+    private fun showCentralMenu(anchor: View, target: File?, targetIsDir: Boolean, fromHeader: Boolean) {
+        val base = currentRoot()
+        val dir = when {
+            target == null -> base
+            targetIsDir -> target
+            else -> target.parentFile ?: base
+        }
+        val favTarget = if (target == null) base else target.takeIf { targetIsDir }
+        val hasActions = actions !== FileManagerActions.None
+        val entries = EmbeddedMenu.build(
+            EmbeddedMenu.State(
+                hasTarget = target != null,
+                hasActions = hasActions,
+                favoriteAvailable = hasActions && favTarget != null && actions.canManage(favTarget),
+                isFavorite = hasActions && favTarget != null && actions.isFavorite(favTarget),
+                trashAvailable = hasActions && target != null && actions.canManage(target),
+                global = fromHeader,
+            ),
+        )
         val menu = PopupMenu(context, anchor)
-        menu.menu.add(0, 1, 0, "Segarkan")
-        menu.menu.add(0, 2, 1, context.getString(R.string.drawer_new_dir))
-        menu.menu.add(0, 3, 2, context.getString(R.string.drawer_new_file))
-        if (actions !== FileManagerActions.None) { // molina-27d
-            menu.menu.add(0, 4, 3, "Favorit")
-            menu.menu.add(0, 5, 4, "Sampah")
+        entries.forEachIndexed { i, en ->
+            val title: CharSequence =
+                if (en.danger) SpannableString(en.label).also { it.setSpan(ForegroundColorSpan(danger), 0, it.length, 0) } else en.label
+            menu.menu.add(0, i, i, title).isEnabled = en.enabled
         }
         menu.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                1 -> { rebuild(); refreshAll() }
-                2 -> promptCreateEmbedded(true)
-                3 -> promptCreateEmbedded(false)
-                4 -> showFavorites()
-                5 -> actions.openTrash()
+            when (entries[item.itemId].action) {
+                EmbeddedMenu.Action.REFRESH -> refresh()
+                EmbeddedMenu.Action.NEW_DIR -> promptCreateEmbedded(true, dir)
+                EmbeddedMenu.Action.NEW_FILE -> promptCreateEmbedded(false, dir)
+                EmbeddedMenu.Action.RENAME -> target?.let { renameDialog(it, targetIsDir) }
+                EmbeddedMenu.Action.FAVORITE -> favTarget?.let { actions.toggleFavorite(it); reloadFavs() }
+                EmbeddedMenu.Action.COPY_PATH -> copyPath(target ?: base)
+                EmbeddedMenu.Action.INFO -> showInfo(target ?: base, if (target == null) true else targetIsDir)
+                EmbeddedMenu.Action.TRASH -> target?.let { trashFlow(it) }
+                EmbeddedMenu.Action.DELETE_PERMANENT -> target?.let { deleteDialog(it) }
+                EmbeddedMenu.Action.FAVORITES_LIST -> showFavorites()
+                EmbeddedMenu.Action.OPEN_TRASH -> actions.openTrash()
             }
             true
         }
@@ -159,7 +185,16 @@ class FileDrawerView(
     }
 
     /** [molina-27d] Muat ulang tree dari luar (mis. setelah Sampah dipulihkan). */
-    fun refresh() { rebuild(); refreshAll() }
+    fun refresh() { rebuild(); refreshAll(); reloadFavs() }
+
+    /** [molina-27d2] Muat daftar Favorit di IO lalu gambar ulang baris agar bintang akurat. */
+    private fun reloadFavs() {
+        if (actions === FileManagerActions.None) return
+        scope.launch {
+            favPaths = actions.favoriteDirs().map { it.path }.toSet()
+            adapter.notifyDataSetChanged()
+        }
+    }
 
     /** [molina-27d] Daftar Favorit lewat [FileManagerActions]; ketuk = jadikan folder utama. */
     private fun showFavorites() {
@@ -210,7 +245,7 @@ class FileDrawerView(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (embedded) { rebuild(); refreshAll() }
+        if (embedded) { rebuild(); refreshAll(); reloadFavs() }
     }
 
     fun toggle() { if (isOpen) close() else open() }
@@ -467,6 +502,7 @@ class FileDrawerView(
         val arrow: TextView,
         val icon: TreeIconView,
         val name: TextView,
+        val star: TextView,
         val more: TextView,
     ) : RecyclerView.ViewHolder(row)
 
@@ -506,6 +542,15 @@ class FileDrawerView(
             name.ellipsize = TextUtils.TruncateAt.END
             row.addView(name, LinearLayout.LayoutParams(0, WRAP, 1f))
 
+            val star = TextView(ctx) // molina-27d2: penanda folder Favorit, warna aksen Terminal
+            star.text = "\u2605"
+            star.textSize = 12f
+            star.setTextColor(accent)
+            star.gravity = Gravity.CENTER
+            star.contentDescription = "Favorit"
+            star.visibility = View.GONE
+            row.addView(star, LinearLayout.LayoutParams(dp(18), WRAP))
+
             val more = TextView(ctx)
             more.text = "\u22EE"
             more.textSize = 20f
@@ -514,7 +559,7 @@ class FileDrawerView(
             more.contentDescription = ctx.getString(R.string.drawer_more)
             more.background = RippleDrawable(ripple, null, ColorDrawable(Color.WHITE))
             row.addView(more, LinearLayout.LayoutParams(dp(40), MATCH))
-            return RowHolder(row, arrow, icon, name, more)
+            return RowHolder(row, arrow, icon, name, star, more)
         }
 
         override fun onBindViewHolder(h: RowHolder, position: Int) {
@@ -528,6 +573,7 @@ class FileDrawerView(
             h.icon.kind = kind
             h.name.setTextColor(kind.nameColor)
             h.name.text = e.name
+            h.star.visibility = if (e.isDir && e.file.path in favPaths) View.VISIBLE else View.GONE // molina-27d2
             h.row.setOnClickListener { onRowTap(item) }
             h.more.setOnClickListener { showRowMenu(it, e) }
         }
@@ -536,6 +582,7 @@ class FileDrawerView(
     // ---------- menu opsi (titik tiga) ----------
 
     private fun showRowMenu(anchor: View, e: DrawerEntry) {
+        if (embedded) { showCentralMenu(anchor, e.file, e.isDir, false); return } // molina-27d2
         val f = e.file
         val menu = PopupMenu(context, anchor)
         val m = menu.menu
@@ -550,9 +597,6 @@ class FileDrawerView(
                 run.setSpan(ForegroundColorSpan(runGreen), 0, 1, 0)
                 m.add(0, ID_RUN, 1, run)
             }
-        }
-        if (embedded && e.isDir && actions.canManage(f)) { // molina-27d
-            m.add(0, ID_FAV, 9, if (actions.isFavorite(f)) "Hapus dari Favorit" else "Tambah ke Favorit")
         }
         m.add(0, ID_RENAME, 10, context.getString(R.string.drawer_rename))
         m.add(0, ID_COPY, 11, context.getString(R.string.drawer_copy_path))
@@ -570,8 +614,7 @@ class FileDrawerView(
                 ID_RENAME -> renameDialog(f, e.isDir)
                 ID_COPY -> copyPath(f)
                 ID_INFO -> showInfo(f, e.isDir)
-                ID_DELETE -> if (embedded && actions.canManage(f)) trashFlow(f) else deleteDialog(f) // molina-27d
-                ID_FAV -> actions.toggleFavorite(f)
+                ID_DELETE -> deleteDialog(f)
             }
             true
         }
@@ -580,7 +623,7 @@ class FileDrawerView(
 
     /** Titik tiga di header drawer: satu aksi, cd terminal ke folder utama (Folder baru/Berkas baru ada di bilah bawah). */
     private fun showHeaderMenu(anchor: View) {
-        if (embedded) { showEmbeddedHeaderMenu(anchor); return }
+        if (embedded) { showCentralMenu(anchor, null, false, true); return } // molina-27d2
         val menu = PopupMenu(context, anchor)
         menu.menu.add(0, ID_CD_ROOT, 0, context.getString(R.string.drawer_cd_root))
         menu.setOnMenuItemClickListener { item ->
@@ -913,7 +956,6 @@ class FileDrawerView(
         const val ID_COPY = 7
         const val ID_INFO = 8
         const val ID_DELETE = 9
-        const val ID_FAV = 30 // molina-27d
         const val ID_RUN = 10
         const val ID_REFRESH = 20
         const val ID_HEAD_NEW_DIR = 21
