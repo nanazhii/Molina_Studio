@@ -22,7 +22,6 @@ import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.TextUtils
-import android.text.style.ForegroundColorSpan
 import android.text.format.Formatter
 import android.text.style.ForegroundColorSpan
 import android.util.TypedValue
