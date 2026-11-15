@@ -134,8 +134,8 @@ data class ArchiveProgress(val kind: ArchiveKind, val bytesDone: Long, val bytes
 }
 
 object ArchiveEngineLimits {
-    /** Entri yang ditampilkan di daftar isi. */
-    const val LIST_MAX = 5000
+    /** Entri yang ditampilkan di daftar isi (naik dari 5000; yang terpotong ditandai truncated). 26k5a:e01 */
+    const val LIST_MAX = 50_000
 
     /** Batas jumlah entri saat ekstrak (anti bom entri). */
     const val MAX_ENTRIES = 100_000

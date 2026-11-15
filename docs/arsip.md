@@ -25,6 +25,20 @@ Satu arsip gagal tidak menghentikan yang lain. Tiap arsip atomik. Dibatalkan = a
 arsip yang sudah selesai tetap ada, sisanya tidak dijalankan (`notRun`). Arsip bersandi tidak dihitung gagal: antreannya
 (`FilesArchive.passwordQueue`, tanpa kata sandi) diminta satu per satu setelah semua selesai; Batal = lewati arsip itu.
 
+<!-- 26k5a:d01 -->
+## Pohon isi arsip (Patch 26k-5a)
+
+`ArchiveTree` (`:core-storage`, logika murni) membangun folder virtual dari daftar entri datar `ArchiveListing`.
+Kunci simpul = kunci parameter `only` pada ekstrak: berkas `a/b.txt`, folder `a/b/` (berakhiran `/`).
+
+- Folder implisit disintesis dari jalur berkas. Entri tidak aman (`..`, NUL) dilewati (`skipped`); backslash dinormalkan menjadi `/`.
+- Berkas kembar dalam satu arsip: yang terakhir menang (`duplicates`). Berkas `a` dan folder `a/` boleh berdampingan.
+- Urutan: folder dulu; lalu nama (tanpa membedakan huruf) atau ukuran terbesar.
+- Batas daftar `ArchiveEngineLimits.LIST_MAX` naik dari 5000 ke 50.000. Daftar yang masih terpotong
+  (`ArchiveListing.truncated`) menghasilkan pohon tidak lengkap dan UI wajib menampilkan banner. Untuk tar yang
+  terpotong, pembacaan berhenti di batas sehingga jumlah total TIDAK diketahui (tidak sama dengan ZIP/7z).
+- Pencarian nama hanya mencakup entri yang termuat.
+
 ## Uji arsip
 
 `ArchiveEngine.test` mendekode semua entri ke sink kosong (tanpa tulis disk). Arsip rusak = hasil, bukan exception.
