@@ -154,7 +154,6 @@ class FileDrawerView(
     private val fab = FrameLayout(context) // molina-27h: tombol melayang pojok kanan bawah (menu terpusat)
     private val fabGlyph = TextView(context) // molina-27i
     private val fabBadge = TextView(context) // molina-27i: jumlah item terpilih
-    private val glyphArt = MenuGlyphDrawable() // molina-27k: ikon FAB gabungan hamburger + titik tiga
 
     init {
         visibility = if (embedded) View.VISIBLE else View.GONE
@@ -260,35 +259,72 @@ class FileDrawerView(
             }
             Unit
         }
-        showFlyout(anchor, entries, dispatch) // molina-27k
+        showMenuRoot(anchor, entries, dispatch) // molina-27m: akar \u22EE Aksi / \u2630 Lokasi
     }
 
+    private val navActionSet = setOf(
+        EmbeddedMenu.Action.FAVORITES_LIST, EmbeddedMenu.Action.GO_INTERNAL,
+        EmbeddedMenu.Action.GO_DEBIAN, EmbeddedMenu.Action.OPEN_TRASH,
+    )
+
     /**
-     * [molina-27k] Menu melayang gaya Windows: kartu gelap bersudut membulat, baris dengan efek sentuh, garis pemisah.
-     * Kelompok Aksi (\u22EE) di atas, kelompok Lokasi (\u2630: Favorit, Internal, Debian, Sampah) berikon di bawah, dekat tombol.
+     * [molina-27m] Menu melayang akar dari tombol melayang: dua baris, \u22EE Aksi (menu titik tiga lengkap) dan
+     * \u2630 Lokasi (Favorit, Internal, Debian, Sampah). Tanpa kelompok Lokasi (mode pilih, menu baris) langsung ke daftar aksi.
      */
-    private fun showFlyout(anchor: View, entries: List<EmbeddedMenu.Entry>, onPick: (EmbeddedMenu.Action) -> Unit) {
-        val navActions = setOf(
-            EmbeddedMenu.Action.FAVORITES_LIST, EmbeddedMenu.Action.GO_INTERNAL,
-            EmbeddedMenu.Action.GO_DEBIAN, EmbeddedMenu.Action.OPEN_TRASH,
-        )
-        val nav = entries.filter { it.action in navActions }
-        val acts = entries.filter { it.action !in navActions }
+    private fun showMenuRoot(anchor: View, entries: List<EmbeddedMenu.Entry>, onPick: (EmbeddedMenu.Action) -> Unit) {
+        val nav = entries.filter { it.action in navActionSet }
+        val acts = entries.filter { it.action !in navActionSet }
+        if (nav.isEmpty() || acts.isEmpty()) { showFlyout(anchor, entries, onPick); return }
         lateinit var popup: PopupWindow
+        val col = flyoutColumn()
+        fun rootRow(glyph: String, label: String, open: () -> Unit) {
+            val r = LinearLayout(context)
+            r.orientation = LinearLayout.HORIZONTAL
+            r.gravity = Gravity.CENTER_VERTICAL
+            r.setPadding(dp(10), 0, dp(14), 0)
+            val g = TextView(context)
+            g.text = glyph
+            g.textSize = 20f
+            g.gravity = Gravity.CENTER
+            g.setTextColor(accent)
+            r.addView(g, LinearLayout.LayoutParams(dp(22), dp(22)))
+            val t = TextView(context)
+            t.text = label
+            t.textSize = 14f
+            t.setTextColor(white)
+            val tlp = LinearLayout.LayoutParams(0, WRAP, 1f)
+            tlp.marginStart = dp(12)
+            r.addView(t, tlp)
+            r.background = flyoutRipple()
+            r.setOnClickListener {
+                popup.dismiss()
+                open()
+            }
+            col.addView(r, LinearLayout.LayoutParams(MATCH, dp(44)))
+        }
+        rootRow("\u22EE", context.getString(R.string.menu_group_actions)) { showFlyout(anchor, acts, onPick) }
+        rootRow("\u2630", context.getString(R.string.menu_group_locations)) { showFlyout(anchor, nav, onPick) }
+        popup = presentFlyout(anchor, col, dp(200))
+    }
+
+    private fun flyoutColumn(): LinearLayout {
         val col = LinearLayout(context)
         col.orientation = LinearLayout.VERTICAL
         col.setPadding(dp(6), dp(6), dp(6), dp(6))
+        return col
+    }
 
-        fun header(glyph: String, label: String) {
-            val h = TextView(context)
-            h.text = "$glyph  $label"
-            h.textSize = 11f
-            h.setTextColor(dim)
-            h.setPadding(dp(10), dp(6), dp(10), dp(2))
-            col.addView(h, LinearLayout.LayoutParams(MATCH, WRAP))
-        }
+    private fun flyoutRipple() =
+        RippleDrawable(ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x44)), null, ColorDrawable(Color.WHITE))
 
-        fun row(en: EmbeddedMenu.Entry) {
+    /**
+     * [molina-27k][molina-27m] Daftar menu melayang gaya Windows: kartu gelap bersudut membulat, baris dengan efek sentuh.
+     * Baris lokasi (Favorit, Internal, Debian, Sampah) berikon gambar.
+     */
+    private fun showFlyout(anchor: View, entries: List<EmbeddedMenu.Entry>, onPick: (EmbeddedMenu.Action) -> Unit) {
+        lateinit var popup: PopupWindow
+        val col = flyoutColumn()
+        entries.forEach { en ->
             val r = LinearLayout(context)
             r.orientation = LinearLayout.HORIZONTAL
             r.gravity = Gravity.CENTER_VERTICAL
@@ -316,7 +352,7 @@ class FileDrawerView(
             r.addView(t, tlp)
             r.alpha = if (en.enabled) 1f else 0.38f
             if (en.enabled) {
-                r.background = RippleDrawable(ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x44)), null, ColorDrawable(Color.WHITE))
+                r.background = flyoutRipple()
                 r.setOnClickListener {
                     popup.dismiss()
                     onPick(en.action)
@@ -324,23 +360,14 @@ class FileDrawerView(
             }
             col.addView(r, LinearLayout.LayoutParams(MATCH, dp(42)))
         }
+        popup = presentFlyout(anchor, col, dp(260))
+    }
 
-        val twoGroups = acts.isNotEmpty() && nav.isNotEmpty()
-        if (twoGroups) header("\u22EE", context.getString(R.string.menu_group_actions))
-        acts.forEach { row(it) }
-        if (twoGroups) {
-            val sep = View(context)
-            sep.setBackgroundColor(ContextCompat.getColor(context, UiR.color.molina_outline))
-            val slp = LinearLayout.LayoutParams(MATCH, dp(1))
-            slp.setMargins(dp(8), dp(6), dp(8), dp(2))
-            col.addView(sep, slp)
-            header("\u2630", context.getString(R.string.menu_group_locations))
-        }
-        nav.forEach { row(it) }
-
-        val w = minOf(dp(260), resources.displayMetrics.widthPixels - dp(24))
+    /** [molina-27m] Tinggi kartu = seluruh ruang di atas tombol (bukan 70% layar), bilah gulir aktif agar baris bawah terlihat. */
+    private fun presentFlyout(anchor: View, col: LinearLayout, maxWidth: Int): PopupWindow {
+        val w = minOf(maxWidth, resources.displayMetrics.widthPixels - dp(24))
         val scroll = ScrollView(context)
-        scroll.isVerticalScrollBarEnabled = false
+        scroll.isVerticalScrollBarEnabled = true
         scroll.addView(col, FrameLayout.LayoutParams(MATCH, WRAP))
         val card = FrameLayout(context)
         val cardBg = GradientDrawable()
@@ -350,19 +377,25 @@ class FileDrawerView(
         card.background = cardBg
         card.addView(scroll, FrameLayout.LayoutParams(MATCH, MATCH))
         col.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
-        val h = minOf(col.measuredHeight, (resources.displayMetrics.heightPixels * 0.7f).toInt())
-        popup = PopupWindow(card, w, h, true)
+        val loc = IntArray(2)
+        anchor.getLocationOnScreen(loc)
+        val avail = maxOf(loc[1] - dp(16), dp(120))
+        val h = minOf(col.measuredHeight, avail)
+        val popup = PopupWindow(card, w, h, true)
         popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         popup.isOutsideTouchable = true
         popup.elevation = dp(10).toFloat()
         popup.showAsDropDown(anchor, 0, -(anchor.height + h + dp(8)), Gravity.END) // rata kanan, membuka ke atas dari tombol melayang
+        scroll.post { scroll.awakenScrollBars() }
+        return popup
     }
 
     // ---------- [molina-27h] tombol melayang + geser pilih ----------
 
     /** [molina-27h] Tombol melayang pojok kanan bawah: satu-satunya pintu menu titik tiga mode tertanam. */
     private fun setupFab() {
-        fabGlyph.background = glyphArt // molina-27k: ikon gabungan \u2630 + \u22EE
+        fabGlyph.text = "\u22EE" // molina-27m: tombol kembali ke titik tiga polos; hamburger ada di menu akar
+        fabGlyph.textSize = 24f
         fabGlyph.gravity = Gravity.CENTER
         fab.addView(fabGlyph, FrameLayout.LayoutParams(MATCH, MATCH))
         // molina-27i: lencana jumlah item terpilih di sudut kanan atas tombol
@@ -394,7 +427,7 @@ class FileDrawerView(
         bg.setColor(if (picking) accent else ColorUtils.blendARGB(ContextCompat.getColor(context, UiR.color.molina_surface), accent, 0.18f))
         bg.setStroke(dp(2), accent)
         fab.background = RippleDrawable(ColorStateList.valueOf(ColorUtils.setAlphaComponent(Color.WHITE, 0x55)), bg, null)
-        glyphArt.setColors(if (picking) Color.BLACK else white, if (picking) Color.BLACK else accent) // molina-27k
+        fabGlyph.setTextColor(if (picking) Color.BLACK else white) // molina-27m
         fabBadge.visibility = if (picking && selection.count > 0) View.VISIBLE else View.GONE
         fabBadge.text = if (selection.count > 99) "99+" else selection.count.toString()
     }
