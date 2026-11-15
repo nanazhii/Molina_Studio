@@ -12,6 +12,7 @@ internal object EmbeddedMenu {
         REFRESH, NEW_DIR, NEW_FILE, RENAME,
         SELECT, SELECT_ALL, EXIT_SELECT, COPY, MOVE, PASTE,
         COMPRESS, EXTRACT_HERE, EXTRACT_FOLDER, EXTRACT_SUBS, EXTRACT_TO, EXTRACT_PASTE, VIEW_ARCHIVE, TEST_ARCHIVE, // molina-27f
+        SHARE, // molina-27g
         FAVORITE, COPY_PATH, INFO, TRASH, DELETE_PERMANENT, FAVORITES_LIST, OPEN_TRASH,
     }
 
@@ -36,6 +37,8 @@ internal object EmbeddedMenu {
         val archiveAvailable: Boolean = false, // molina-27f: target di dalam root Molina
         val allArchives: Boolean = false, // molina-27f: semua target berkas arsip
         val archiveClipCount: Int = 0,
+        val shareAvailable: Boolean = false, // molina-27g: target di dalam root Molina dan bukan folder tunggal
+        val propsAvailable: Boolean = false, // molina-27g: Properti kaya di menu mode pilih
     ) {
         val hasTarget: Boolean get() = targetCount > 0
     }
@@ -47,7 +50,9 @@ internal object EmbeddedMenu {
         l += Entry(Action.SELECT_ALL, "Pilih semua")
         l += Entry(Action.COPY, "Salin", enabled = s.hasTarget && s.transferAvailable)
         l += Entry(Action.MOVE, "Pindah", enabled = s.hasTarget && s.transferAvailable)
+        if (s.shareAvailable) l += Entry(Action.SHARE, "Bagikan", enabled = s.hasTarget) // molina-27g
         archiveEntries(l, s) // molina-27f
+        if (s.propsAvailable) l += Entry(Action.INFO, "Properti", enabled = s.hasTarget) // molina-27g
         if (s.trashAvailable) l += Entry(Action.TRASH, "Hapus", danger = true)
         l += Entry(Action.DELETE_PERMANENT, "Hapus permanen\u2026", enabled = s.hasTarget, danger = true)
         l += Entry(Action.EXIT_SELECT, "Batal pilih")
@@ -92,6 +97,7 @@ internal object EmbeddedMenu {
             }
             if (s.clipCount > 0) l += Entry(Action.PASTE, "Tempel di sini (${s.clipCount})", enabled = s.pasteAvailable)
             archiveEntries(l, s) // molina-27f
+            if (s.hasTarget && s.shareAvailable) l += Entry(Action.SHARE, "Bagikan") // molina-27g
             l += Entry(Action.FAVORITE, if (s.isFavorite) "Hapus dari Favorit" else "Tambah ke Favorit", enabled = s.favoriteAvailable)
         }
         l += Entry(Action.COPY_PATH, "Salin path")

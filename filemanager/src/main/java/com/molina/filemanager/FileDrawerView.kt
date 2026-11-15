@@ -163,6 +163,8 @@ class FileDrawerView(
         val favTarget = if (target == null) base else target.takeIf { targetIsDir }
         val hasActions = actions !== FileManagerActions.None
         val managed = hasActions && targets.isNotEmpty() && targets.all { actions.canManage(it) }
+        // molina-27g: Properti memakai dialog kaya milik implementasi; Bagikan hanya untuk berkas di root Molina
+        val propsTargets: List<File> = if (picking) targets else listOf(target ?: base)
         val entries = EmbeddedMenu.build(
             EmbeddedMenu.State(
                 targetCount = targets.size,
@@ -178,6 +180,8 @@ class FileDrawerView(
                 archiveAvailable = managed, // molina-27f
                 allArchives = hasActions && targets.isNotEmpty() && targets.all { actions.isArchive(it) },
                 archiveClipCount = if (hasActions) actions.archiveClipCount() else 0,
+                shareAvailable = managed && (if (picking) targets.any { !it.isDirectory } else !targetIsDir), // molina-27g
+                propsAvailable = if (picking) managed else hasActions, // molina-27g
             ),
         )
         val menu = PopupMenu(context, anchor)
@@ -200,7 +204,10 @@ class FileDrawerView(
                 EmbeddedMenu.Action.PASTE -> pasteInto(dir)
                 EmbeddedMenu.Action.FAVORITE -> favTarget?.let { actions.toggleFavorite(it); reloadFavs() }
                 EmbeddedMenu.Action.COPY_PATH -> copyPath(target ?: base)
-                EmbeddedMenu.Action.INFO -> showInfo(target ?: base, if (target == null) true else targetIsDir)
+                // molina-27g: dialog Properti kaya dari implementasi; bawaan Terminal hanya bila ditolak
+                EmbeddedMenu.Action.INFO ->
+                    if (!(hasActions && actions.properties(propsTargets))) showInfo(target ?: base, if (target == null) true else targetIsDir)
+                EmbeddedMenu.Action.SHARE -> actions.share(targets) // molina-27g
                 EmbeddedMenu.Action.TRASH -> if (picking) trashMany(targets) else target?.let { trashFlow(it) }
                 EmbeddedMenu.Action.DELETE_PERMANENT -> if (picking) deleteManyDialog(targets) else target?.let { deleteDialog(it) }
                 EmbeddedMenu.Action.FAVORITES_LIST -> showFavorites()

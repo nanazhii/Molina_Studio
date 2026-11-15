@@ -53,6 +53,7 @@ class BerkasFragment : Fragment(), ArchiveSheetHost {
     private var handle: FileManagerEmbed.Handle? = null
     private var strip: TransferStrip? = null // molina-27e
     private var backCallback: OnBackPressedCallback? = null // molina-27e
+    private val propsShare by lazy { BerkasPropsShare(this, storage, paths.root) } // molina-27g
     private val archiveOps by lazy { // molina-27f
         BerkasArchive(this, paths.root, { handle?.archiveClipChanged() }, { handle?.refresh() })
     }
@@ -125,6 +126,11 @@ class BerkasFragment : Fragment(), ArchiveSheetHost {
         override fun extractClipInto(dir: File): Boolean = archiveOps.extractClipInto(dir)
 
         override fun clearArchiveClip() = archiveOps.clearClip()
+
+        // molina-27g: Properti dan Bagikan memakai PropsText/FilesShare/storage.properties yang sudah ada
+        override fun properties(files: List<File>): Boolean = propsShare.properties(files)
+
+        override fun share(files: List<File>): Boolean = propsShare.share(files)
 
         override fun openTrash() {
             if (childFragmentManager.findFragmentByTag(TRASH_TAG) != null) return

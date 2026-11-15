@@ -51,6 +51,15 @@ interface FileManagerActions {
 
     fun clearArchiveClip() = Unit
 
+    /**
+     * [molina-27g] Dialog Properti (jenis, ukuran, isi, tanggal, akses, SHA-256) untuk [files]; file di root Molina
+     * (termasuk root itu sendiri). false bila ditolak; View lalu memakai dialog bawaan.
+     */
+    fun properties(files: List<File>): Boolean = false
+
+    /** [molina-27g] Bagikan [files] lewat chooser sistem (folder dilewati). false bila ditolak. */
+    fun share(files: List<File>): Boolean = false
+
     /** Tanpa aksi: perilaku bawaan (Hapus permanen, tanpa Favorit/Sampah). */
     object None : FileManagerActions {
         override fun canManage(file: File): Boolean = false
