@@ -61,7 +61,13 @@ import com.molina.core.ui.R as UiR
  * memori instans ini (tidak masuk Bundle, log, atau state). Tidak mencatat nama entri di log.
  */
 internal class ArchiveSheet : BottomSheetDialogFragment() {
-    private val host: FilesFragment? get() = parentFragment as? FilesFragment
+    // molina-27f: pemilik bisa FilesFragment (lama, lewat pembungkus) atau BerkasFragment
+    private val host: ArchiveSheetHost?
+        get() = when (val p = parentFragment) {
+            is ArchiveSheetHost -> p
+            is FilesFragment -> FilesFragmentArchiveHost(p)
+            else -> null
+        }
     private val archivePath: String get() = requireArguments().getString(ARG_PATH).orEmpty()
 
     private var tree: ArchiveTree? = null

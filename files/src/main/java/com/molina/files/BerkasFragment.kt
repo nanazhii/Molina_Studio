@@ -20,7 +20,10 @@ import com.google.android.material.snackbar.Snackbar
 import com.molina.core.common.MolinaPaths
 import com.molina.core.common.MolinaResult
 import com.molina.core.common.getOrNull
+import com.molina.core.storage.ArchiveNames
+import com.molina.core.storage.ConflictPolicy
 import com.molina.core.storage.ExplorerFavorites
+import com.molina.core.storage.ExtractTarget
 import com.molina.core.storage.LocalMolinaStorage
 import com.molina.core.storage.MolinaStorage
 import com.molina.core.storage.PathGuard
@@ -28,6 +31,7 @@ import com.molina.core.storage.ScopedKeyValueStore
 import com.molina.core.storage.SharedPrefsKeyValueStore
 import com.molina.core.storage.TransferKind
 import com.molina.core.ui.R as UiR
+import com.molina.filemanager.ArchiveAction
 import com.molina.filemanager.FileManagerActions
 import com.molina.filemanager.FileManagerEmbed
 import com.molina.filemanager.TransferMode
@@ -40,7 +44,7 @@ import java.io.File
  * [molina-27b] Tab Berkas memakai file manager salinan Terminal. FilesFragment lama tetap ada (balik: 1 baris di MainActivity).
  * [molina-27d] Favorit dan Sampah memakai ExplorerFavorites/TrashBin/TrashSheet yang sudah ada; tidak ada logika yang disalin ulang.
  */
-class BerkasFragment : Fragment() {
+class BerkasFragment : Fragment(), ArchiveSheetHost {
     private val paths = MolinaPaths()
     private val storage: MolinaStorage by lazy { LocalMolinaStorage(paths) }
     private val explorerStore by lazy { SharedPrefsKeyValueStore(requireContext()) }
@@ -49,6 +53,9 @@ class BerkasFragment : Fragment() {
     private var handle: FileManagerEmbed.Handle? = null
     private var strip: TransferStrip? = null // molina-27e
     private var backCallback: OnBackPressedCallback? = null // molina-27e
+    private val archiveOps by lazy { // molina-27f
+        BerkasArchive(this, paths.root, { handle?.archiveClipChanged() }, { handle?.refresh() })
+    }
 
     /** [molina-27e] Panel progres salin/pindah di dasar tab (pola sama dengan panel progres FilesFragment). */
     private class TransferStrip(val root: LinearLayout, val text: TextView, val bar: LinearProgressIndicator, val cancel: TextView)
@@ -108,11 +115,41 @@ class BerkasFragment : Fragment() {
             return FilesTransfer.start(kind, rels, dest)
         }
 
+        // molina-27f: arsip lewat FilesArchive/ArchiveDialogs/ArchiveSheet yang sudah ada
+        override fun isArchive(file: File): Boolean = !file.isDirectory && ArchiveNames.detect(file.name) != null
+
+        override fun archive(action: ArchiveAction, files: List<File>, dir: File): Boolean = archiveOps.run(action, files, dir)
+
+        override fun archiveClipCount(): Int = archiveOps.clipCount
+
+        override fun extractClipInto(dir: File): Boolean = archiveOps.extractClipInto(dir)
+
+        override fun clearArchiveClip() = archiveOps.clearClip()
+
         override fun openTrash() {
             if (childFragmentManager.findFragmentByTag(TRASH_TAG) != null) return
             TrashSheet().show(childFragmentManager, TRASH_TAG)
         }
     }
+
+    // molina-27f: ArchiveSheetHost (lembar Lihat isi arsip)
+    override val archiveStorage: MolinaStorage get() = storage
+
+    override fun archiveBusy(): Boolean = FilesTransfer.isRunning || FilesArchive.isRunning
+
+    override fun archiveFile(relative: String): File = File(paths.root, relative)
+
+    override fun setSheetArchiveClip(archive: String, only: Set<String>?): Boolean = archiveOps.setSheetClip(archive, only)
+
+    override fun viewArchiveEntry(relative: String): String? = archiveOps.viewEntry(relative)
+
+    override fun startSheetExtract(
+        archive: String,
+        only: Set<String>?,
+        target: ExtractTarget,
+        policy: ConflictPolicy,
+        password: String?,
+    ): Boolean = archiveOps.startSheetExtract(archive, only, target, policy, password)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
         FrameLayout(requireContext())
@@ -132,15 +169,22 @@ class BerkasFragment : Fragment() {
         handle = h
         (view as FrameLayout).addView(h.view, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         strip = buildStrip(view)
+        FilesArchive.sweepCache("start") // molina-27f
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                FilesTransfer.state.collect { renderTransfer(it) }
+                launch { FilesTransfer.state.collect { renderTransfer(it) } }
+                launch { FilesArchive.state.collect { renderArchive(it) } } // molina-27f
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
             val r = storage.purgeExpiredTrash()
             if (r is MolinaResult.Success && r.value > 0) FilesEvents.trashPurged("auto", r.value)
         }
+    }
+
+    override fun onDestroy() { // molina-27f
+        if (activity?.isFinishing == true) FilesArchive.sweepCache("exit")
+        super.onDestroy()
     }
 
     override fun onDestroyView() {
@@ -174,7 +218,7 @@ class BerkasFragment : Fragment() {
         cancel.textSize = 12f
         cancel.setTextColor(accent)
         cancel.setPadding(dp(12), dp(6), dp(12), dp(6))
-        cancel.setOnClickListener { FilesTransfer.cancel() }
+        cancel.setOnClickListener { FilesTransfer.cancel(); FilesArchive.cancel() } // molina-27f
         line.addView(cancel)
         box.addView(line, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         val bar = LinearProgressIndicator(ctx)
@@ -190,7 +234,7 @@ class BerkasFragment : Fragment() {
     private fun renderTransfer(state: TransferState) {
         val s = strip ?: return
         when (state) {
-            TransferState.Idle -> s.root.visibility = View.GONE
+            TransferState.Idle -> if (!FilesArchive.isRunning) s.root.visibility = View.GONE // molina-27f
             is TransferState.Running -> {
                 s.root.visibility = View.VISIBLE
                 s.text.text = TransferText.progressLine(state.kind, state.progress, state.cancelling)
@@ -205,6 +249,28 @@ class BerkasFragment : Fragment() {
                 view?.let { Snackbar.make(it, text, Snackbar.LENGTH_LONG).show() }
                 handle?.transferFinished(clearClip = state.kind != TransferKind.DELETE && state.result != null)
                 FilesTransfer.acknowledge(state.id)
+            }
+        }
+    }
+
+    /** [molina-27f] Panel progres yang sama dipakai arsip; hasil (Snackbar/dialog Uji/sandi) ditangani [BerkasArchive]. */
+    private fun renderArchive(state: ArchiveState) {
+        val s = strip ?: return
+        when (state) {
+            ArchiveState.Idle -> {
+                if (!FilesTransfer.transferRunning) s.root.visibility = View.GONE
+                archiveOps.promptNextPassword()
+            }
+            is ArchiveState.Running -> {
+                s.root.visibility = View.VISIBLE
+                s.text.text = ArchiveText.runningLine(state)
+                s.bar.setProgressCompat(((state.progress?.fraction ?: 0f) * 100).toInt(), true)
+                s.cancel.isEnabled = !state.cancelling
+            }
+            is ArchiveState.Finished -> {
+                if (!FilesTransfer.transferRunning) s.root.visibility = View.GONE
+                archiveOps.onFinished(state)
+                FilesArchive.acknowledge(state.id)
             }
         }
     }

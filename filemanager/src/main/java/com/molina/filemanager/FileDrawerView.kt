@@ -175,6 +175,9 @@ class FileDrawerView(
                 transferAvailable = managed,
                 clipCount = clip.count,
                 pasteAvailable = hasActions && actions.canPasteInto(dir),
+                archiveAvailable = managed, // molina-27f
+                allArchives = hasActions && targets.isNotEmpty() && targets.all { actions.isArchive(it) },
+                archiveClipCount = if (hasActions) actions.archiveClipCount() else 0,
             ),
         )
         val menu = PopupMenu(context, anchor)
@@ -202,6 +205,15 @@ class FileDrawerView(
                 EmbeddedMenu.Action.DELETE_PERMANENT -> if (picking) deleteManyDialog(targets) else target?.let { deleteDialog(it) }
                 EmbeddedMenu.Action.FAVORITES_LIST -> showFavorites()
                 EmbeddedMenu.Action.OPEN_TRASH -> actions.openTrash()
+                // molina-27f: arsip
+                EmbeddedMenu.Action.COMPRESS -> runArchive(ArchiveAction.COMPRESS, targets, dir)
+                EmbeddedMenu.Action.EXTRACT_HERE -> runArchive(ArchiveAction.EXTRACT_HERE, targets, dir)
+                EmbeddedMenu.Action.EXTRACT_FOLDER -> runArchive(ArchiveAction.EXTRACT_FOLDER, targets, dir)
+                EmbeddedMenu.Action.EXTRACT_SUBS -> runArchive(ArchiveAction.EXTRACT_SUBS, targets, dir)
+                EmbeddedMenu.Action.EXTRACT_TO -> runArchive(ArchiveAction.EXTRACT_TO, targets, dir)
+                EmbeddedMenu.Action.VIEW_ARCHIVE -> runArchive(ArchiveAction.VIEW, targets, dir)
+                EmbeddedMenu.Action.TEST_ARCHIVE -> runArchive(ArchiveAction.TEST, targets, dir)
+                EmbeddedMenu.Action.EXTRACT_PASTE -> extractClipHere(dir)
             }
             true
         }
@@ -242,6 +254,7 @@ class FileDrawerView(
 
     private fun setClip(mode: TransferMode, files: List<File>) {
         if (files.isEmpty()) return
+        actions.clearArchiveClip() // molina-27f: klip Salin/Pindah dan klip Ekstrak tidak aktif bersamaan
         clip.put(mode, files.map { it.path })
         selection.exit()
         selectionChanged()
@@ -263,6 +276,29 @@ class FileDrawerView(
     fun onTransferFinished(clearClip: Boolean) {
         if (clearClip) clip.clear()
         refresh()
+    }
+
+    /** [molina-27f] Jalankan aksi arsip; mode pilih ditutup bila diterima. Hasil dilaporkan implementasi (panel progres + Snackbar). */
+    private fun runArchive(action: ArchiveAction, files: List<File>, dir: File) {
+        if (files.isEmpty()) return
+        if (!actions.archive(action, files, dir)) {
+            toastText("Operasi lain masih berjalan")
+            return
+        }
+        if (selection.active) {
+            selection.exit()
+            selectionChanged()
+        }
+    }
+
+    private fun extractClipHere(dir: File) {
+        if (!actions.extractClipInto(dir)) toastText("Operasi lain masih berjalan")
+    }
+
+    /** [molina-27f] Klip Ekstrak berubah di luar View: klip Salin/Pindah dikosongkan, bilah klip digambar ulang. */
+    fun onArchiveClipChanged() {
+        if (actions.archiveClipCount() > 0) clip.clear()
+        renderClip()
     }
 
     private fun trashMany(files: List<File>) {
@@ -302,10 +338,12 @@ class FileDrawerView(
     /** Bilah klip di bawah header: jumlah item, Tempel ke folder utama, dan ✕ untuk mengosongkan. */
     private fun renderClip() {
         if (!embedded) return
-        val n = clip.count
+        val an = actions.archiveClipCount() // molina-27f: klip Ekstrak lebih diutamakan bila ada
+        val n = if (an > 0) an else clip.count
         clipBar.visibility = if (n > 0) View.VISIBLE else View.GONE
         if (n == 0) return
-        clipText.text = (if (clip.mode == TransferMode.MOVE) "Pindah " else "Salin ") + "$n item"
+        clipPaste.text = if (an > 0) "Ekstrak" else "Tempel"
+        clipText.text = if (an > 0) "Ekstrak $an arsip ke\u2026" else (if (clip.mode == TransferMode.MOVE) "Pindah " else "Salin ") + "$n item"
         val ok = actions.canPasteInto(currentRoot())
         clipPaste.isEnabled = ok
         clipPaste.alpha = if (ok) 1f else 0.38f
@@ -487,14 +525,14 @@ class FileDrawerView(
         clipPaste.setTextColor(accent)
         clipPaste.gravity = Gravity.CENTER
         clipPaste.setPadding(dp(12), 0, dp(12), 0)
-        clipPaste.setOnClickListener { pasteInto(currentRoot()) }
+        clipPaste.setOnClickListener { if (actions.archiveClipCount() > 0) extractClipHere(currentRoot()) else pasteInto(currentRoot()) } // molina-27f
         clipBar.addView(clipPaste, LinearLayout.LayoutParams(WRAP, MATCH))
         clipClear.text = "\u2715"
         clipClear.textSize = 14f
         clipClear.setTextColor(white)
         clipClear.gravity = Gravity.CENTER
         clipClear.contentDescription = "Kosongkan papan klip"
-        clipClear.setOnClickListener { clip.clear(); renderClip() }
+        clipClear.setOnClickListener { clip.clear(); actions.clearArchiveClip(); renderClip() } // molina-27f
         clipBar.addView(clipClear, LinearLayout.LayoutParams(dp(40), MATCH))
         if (embedded) panel.addView(clipBar, LinearLayout.LayoutParams(MATCH, dp(40)))
 
@@ -754,6 +792,13 @@ class FileDrawerView(
             h.more.visibility = if (picking) View.GONE else View.VISIBLE
             h.check.visibility = if (picking) View.VISIBLE else View.GONE
             h.check.isChecked = picking && selection.contains(e.file.path)
+            // molina-27f: baris terpilih berlatar aksen (alpha 0x22, sama dengan bilah klip), ripple tetap
+            val selected = picking && selection.contains(e.file.path)
+            h.row.background = RippleDrawable(
+                ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x55)),
+                if (selected) ColorDrawable(ColorUtils.setAlphaComponent(accent, 0x22)) else null,
+                ColorDrawable(Color.WHITE),
+            )
             h.check.setOnClickListener { toggleSelected(e.file.path) }
             if (embedded) {
                 h.row.setOnLongClickListener {

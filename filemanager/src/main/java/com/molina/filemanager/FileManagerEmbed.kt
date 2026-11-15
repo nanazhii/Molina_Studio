@@ -12,7 +12,11 @@ object FileManagerEmbed {
         private val onRefresh: () -> Unit,
         private val onFinished: (Boolean) -> Unit, // molina-27e
         private val onCancelSelection: () -> Boolean,
+        private val onArchiveClip: () -> Unit, // molina-27f
     ) {
+        /** [molina-27f] Klip "Ekstrak ke..." berubah (dari lembar Lihat isi): bilah klip digambar ulang. */
+        fun archiveClipChanged() = onArchiveClip()
+
         fun refresh() = onRefresh()
 
         /** [molina-27e] Salin/pindah selesai: segarkan tree; [clearClip] true mengosongkan papan klip. */
@@ -32,7 +36,7 @@ object FileManagerEmbed {
             context, FileDrawerState(), scope, NoopHost,
             embedded = true, actions = actions, onSelectionChanged = onSelectionChanged,
         )
-        return Handle(v, { v.refresh() }, { v.onTransferFinished(it) }, { v.cancelSelection() })
+        return Handle(v, { v.refresh() }, { v.onTransferFinished(it) }, { v.cancelSelection() }, { v.onArchiveClipChanged() })
     }
 
     private object NoopHost : FileDrawerView.Host {

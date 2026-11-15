@@ -10,6 +10,9 @@ import java.io.File
 /** [molina-27e] Jenis operasi papan klip. Dipetakan implementasi ke jenis transfer miliknya. */
 enum class TransferMode { COPY, MOVE }
 
+/** [molina-27f] Aksi arsip yang diminta file manager tertanam; dijalankan oleh implementasi (:files). */
+enum class ArchiveAction { COMPRESS, EXTRACT_HERE, EXTRACT_FOLDER, EXTRACT_SUBS, EXTRACT_TO, VIEW, TEST }
+
 interface FileManagerActions {
     /** True bila [file] di dalam root Molina (Favorit dan Sampah berlaku). */
     fun canManage(file: File): Boolean
@@ -30,6 +33,23 @@ interface FileManagerActions {
      * FileManagerEmbed.Handle.transferFinished. Dipanggil dari main thread.
      */
     fun transfer(mode: TransferMode, files: List<File>, destDir: File): Boolean = false
+
+    /** [molina-27f] True bila [file] berkas arsip yang dikenali (ZIP, 7z, tar, ...). */
+    fun isArchive(file: File): Boolean = false
+
+    /**
+     * [molina-27f] Menjalankan [action] pada [files]; [dir] = folder tujuan hasil (Kompres, Ekstrak banyak arsip).
+     * false bila ditolak (operasi lain berjalan, atau di luar root Molina). Dipanggil dari main thread.
+     */
+    fun archive(action: ArchiveAction, files: List<File>, dir: File): Boolean = false
+
+    /** [molina-27f] Jumlah arsip yang menunggu folder tujuan ("Ekstrak ke..."); 0 = tidak ada. */
+    fun archiveClipCount(): Int = 0
+
+    /** [molina-27f] Ekstrak arsip yang menunggu ke [dir]. false bila ditolak. */
+    fun extractClipInto(dir: File): Boolean = false
+
+    fun clearArchiveClip() = Unit
 
     /** Tanpa aksi: perilaku bawaan (Hapus permanen, tanpa Favorit/Sampah). */
     object None : FileManagerActions {

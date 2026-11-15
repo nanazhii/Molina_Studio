@@ -11,6 +11,7 @@ internal object EmbeddedMenu {
     enum class Action {
         REFRESH, NEW_DIR, NEW_FILE, RENAME,
         SELECT, SELECT_ALL, EXIT_SELECT, COPY, MOVE, PASTE,
+        COMPRESS, EXTRACT_HERE, EXTRACT_FOLDER, EXTRACT_SUBS, EXTRACT_TO, EXTRACT_PASTE, VIEW_ARCHIVE, TEST_ARCHIVE, // molina-27f
         FAVORITE, COPY_PATH, INFO, TRASH, DELETE_PERMANENT, FAVORITES_LIST, OPEN_TRASH,
     }
 
@@ -32,6 +33,9 @@ internal object EmbeddedMenu {
         val transferAvailable: Boolean = false,
         val clipCount: Int = 0,
         val pasteAvailable: Boolean = false,
+        val archiveAvailable: Boolean = false, // molina-27f: target di dalam root Molina
+        val allArchives: Boolean = false, // molina-27f: semua target berkas arsip
+        val archiveClipCount: Int = 0,
     ) {
         val hasTarget: Boolean get() = targetCount > 0
     }
@@ -43,10 +47,35 @@ internal object EmbeddedMenu {
         l += Entry(Action.SELECT_ALL, "Pilih semua")
         l += Entry(Action.COPY, "Salin", enabled = s.hasTarget && s.transferAvailable)
         l += Entry(Action.MOVE, "Pindah", enabled = s.hasTarget && s.transferAvailable)
+        archiveEntries(l, s) // molina-27f
         if (s.trashAvailable) l += Entry(Action.TRASH, "Hapus", danger = true)
         l += Entry(Action.DELETE_PERMANENT, "Hapus permanen\u2026", enabled = s.hasTarget, danger = true)
         l += Entry(Action.EXIT_SELECT, "Batal pilih")
         return l
+    }
+
+    /**
+     * [molina-27f] Item arsip. Satu arsip: Lihat isi, Ekstrak di sini/ke folder/subtitle/ke..., Uji. Banyak arsip:
+     * Ekstrak di sini (dengan dialog opsi) dan Ekstrak ke.... Kompres untuk semua target di dalam root Molina.
+     */
+    private fun archiveEntries(l: MutableList<Entry>, s: State) {
+        if (s.archiveClipCount > 0 && !s.selecting) {
+            l += Entry(Action.EXTRACT_PASTE, "Ekstrak di sini (${s.archiveClipCount})", enabled = s.pasteAvailable)
+        }
+        if (!s.archiveAvailable || !s.hasTarget) return
+        l += Entry(Action.COMPRESS, "Kompres\u2026")
+        if (!s.allArchives) return
+        val single = s.targetCount == 1 && !s.selecting
+        if (single) {
+            l += Entry(Action.VIEW_ARCHIVE, "Lihat isi")
+            l += Entry(Action.EXTRACT_HERE, "Ekstrak di sini")
+            l += Entry(Action.EXTRACT_FOLDER, "Ekstrak ke folder")
+            l += Entry(Action.EXTRACT_SUBS, "Ekstrak subtitle")
+        } else {
+            l += Entry(Action.EXTRACT_HERE, "Ekstrak di sini")
+        }
+        l += Entry(Action.EXTRACT_TO, "Ekstrak ke\u2026")
+        if (single) l += Entry(Action.TEST_ARCHIVE, "Uji arsip")
     }
 
     private fun buildNormal(s: State): List<Entry> {
@@ -62,6 +91,7 @@ internal object EmbeddedMenu {
                 l += Entry(Action.MOVE, "Pindah", enabled = s.transferAvailable)
             }
             if (s.clipCount > 0) l += Entry(Action.PASTE, "Tempel di sini (${s.clipCount})", enabled = s.pasteAvailable)
+            archiveEntries(l, s) // molina-27f
             l += Entry(Action.FAVORITE, if (s.isFavorite) "Hapus dari Favorit" else "Tambah ke Favorit", enabled = s.favoriteAvailable)
         }
         l += Entry(Action.COPY_PATH, "Salin path")
