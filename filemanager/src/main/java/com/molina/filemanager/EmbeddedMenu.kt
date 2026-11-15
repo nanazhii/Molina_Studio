@@ -119,10 +119,10 @@ internal object EmbeddedMenu {
             l += Entry(Action.DELETE_PERMANENT, "Hapus permanen\u2026", danger = true)
         }
         if (s.global) { // molina-27i: kelompok hamburger di bawah (pola DROP-HAMBURGER repo lama): Favorit, Internal, Debian, Sampah
-            if (s.hasActions) l += Entry(Action.FAVORITES_LIST, "\u2630 Favorit")
-            l += Entry(Action.GO_INTERNAL, "\u2630 Internal")
-            l += Entry(Action.GO_DEBIAN, "\u2630 Debian")
-            if (s.hasActions) l += Entry(Action.OPEN_TRASH, "\u2630 Sampah")
+            if (s.hasActions) l += Entry(Action.FAVORITES_LIST, "Favorit")
+            l += Entry(Action.GO_INTERNAL, "Internal")
+            l += Entry(Action.GO_DEBIAN, "Debian")
+            if (s.hasActions) l += Entry(Action.OPEN_TRASH, "Sampah")
         }
         return l
     }
