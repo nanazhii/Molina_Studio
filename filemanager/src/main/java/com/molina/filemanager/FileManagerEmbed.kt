@@ -11,16 +11,17 @@ object FileManagerEmbed {
 
     private object NoopHost : FileDrawerView.Host {
         override fun send(text: String) = Unit
-        override fun hasSession() = false
-        override fun isProotSession() = false
-        override fun isFullScreenProgram() = false
-        override fun runInNewSession(line: (proot: Boolean) -> String?) = false
-        override fun activateSessionAt(guestDir: String) = false
+        override fun hasSession(): Boolean = false
+        override fun isProotSession(): Boolean = false
+        override fun isFullScreenProgram(): Boolean = false
+        override fun runInNewSession(line: (proot: Boolean) -> String?): Boolean = false
+        override fun activateSessionAt(guestDir: String): Boolean = false
+        override fun changeDirectory(shellPath: String) = Unit
         override fun showNanoKeys() = Unit
         override fun autoRunNano() = Unit
-        override fun runMode() = RunMode.ASK
+        override fun runMode(): RunMode = RunMode.ASK
         override fun rememberRunMode(mode: RunMode) = Unit
-        override fun runLogEnabled() = false
+        override fun runLogEnabled(): Boolean = false
         override fun onRootChanged(path: String) = Unit
         override fun onOpenChanged(open: Boolean) = Unit
     }
