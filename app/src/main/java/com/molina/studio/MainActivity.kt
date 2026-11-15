@@ -14,7 +14,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.molina.cinema.CinemaFragment
 import com.molina.core.common.MolinaResult
 import com.molina.core.storage.LocalMolinaStorage
-import com.molina.files.FilesFragment
+import com.molina.files.BerkasFragment
 import com.molina.log.MolinaEvents
 import com.molina.log.MolinaLog
 import com.molina.log.MolinaLogSetup
@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
             }
             val fragment: Fragment = when (tab) {
                 "cinema" -> CinemaFragment()
-                "files" -> FilesFragment()
+                "files" -> BerkasFragment() // molina-27b (balik: FilesFragment())
                 "terminal" -> TerminalFragment()
                 else -> SettingsFragment()
             }
