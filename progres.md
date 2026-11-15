@@ -203,3 +203,6 @@
 - [x] 27l: label menu (EmbeddedMenu + header flyout) dipindah ke res/values/strings_menu.xml; Entry memakai labelRes+labelArgs; State.searchLabel diganti searchAvailable/searchActive
 - [x] 27m: FAB kembali ke titik tiga polos; menu melayang akar berisi ⋮ Aksi (menu lengkap) dan ☰ Lokasi (Favorit/Internal/Debian/Sampah); tinggi kartu memakai seluruh ruang di atas tombol + bilah gulir
 - [x] 27n: FAB jadi ikon bento (4 kotak) -> dua tombol ikon vertikal (⋮ Aksi lengkap, ☰ Lokasi); header Berkas lebih tipis; path header mengikuti item yang diketuk di pohon
+- [27o] Tab Berkas: tombol ‹, Folder baru, dan Tempel mengikuti path header; ikon folder berpola dan ikon berkas berpita ekstensi. Menunggu hasil CI.
+- [27p] TreeIconView bersama gaya Mint di :core-ui, dipakai Terminal dan Berkas. Menunggu hasil CI.
+- [27q] Kompres 7z bersandi: 7z a di Debian PRoot (sandi via stdin, -mhe=on opsional, bind berlingkup, staging atomik) meniru repo lama; SevenZipCommand + PasswordPolicy di :core-common, SevenZipBackend di :core-storage, DebianSevenZip di :app, ProotExec di :terminal-proot. Belum: lib7zz.so bawaan, tombol Buat acak. Menunggu hasil CI + uji di perangkat (butuh paket 7zip di Debian).
