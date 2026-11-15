@@ -183,3 +183,4 @@
 - [27b rencana] BerkasFragment baru memakai FileDrawerView(embedded) dari :filemanager; FilesFragment tetap di repo (bisa dibalik 1 baris di MainActivity). Menunggu keputusan fitur Berkas + CI hijau.
 - [27b] Tab Berkas memakai FileDrawerView(embedded) dari :filemanager via BerkasFragment + FileManagerEmbed; gate modul diperbarui; FilesFragment tetap di repo. Branch feat/berkas-filemanager, menunggu CI.
 - [27b-fix] CI :filemanager gagal: HeaderDotsView tidak ikut tersalin dan Host salinan punya changeDirectory. Diperbaiki: HeaderDotsView disalin, NoopHost dibangkitkan dari Host salinan. Menunggu CI.
+- [27b] origin/main sudah digabung ke feat/berkas-filemanager (konflik progres.md selesai); siap push, menunggu CI hijau lalu PR ke main.
