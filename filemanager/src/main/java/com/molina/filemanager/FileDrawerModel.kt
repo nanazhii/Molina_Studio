@@ -74,6 +74,9 @@ object DrawerFs {
         else -> path
     }
 
+    /** [molina-27j] Segmen breadcrumb dari path tampilan: Internal/Molina/Film -> [Internal, Molina, Film]; kosong -> ["/"]. */
+    fun crumbs(path: String): List<String> = displayPath(path).split('/').filter { it.isNotEmpty() }.ifEmpty { listOf("/") }
+
     /** Path untuk shell sesi: proot melihat /storage/emulated/0 sebagai /sdcard. Null bila tidak terlihat di sesi itu. */
     fun shellPath(file: File, proot: Boolean): String? {
         val p = file.path

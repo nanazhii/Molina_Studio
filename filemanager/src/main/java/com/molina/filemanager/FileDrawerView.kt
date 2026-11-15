@@ -19,7 +19,10 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.text.InputType
 import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.Spanned
 import android.text.TextUtils
+import android.text.style.ForegroundColorSpan
 import android.text.format.Formatter
 import android.text.style.ForegroundColorSpan
 import android.util.TypedValue
@@ -115,6 +118,7 @@ class FileDrawerView(
         dp(1),
     ) { close() }
     private val back = TextView(context)
+    private val backArt = BlueBackDrawable() // molina-27j: tombol kembali bulat biru (hanya mode Berkas)
     private val title = TextView(context)
     private val pathText = TextView(context)
     private val chips = LinearLayout(context)
@@ -836,7 +840,7 @@ class FileDrawerView(
         headerFrame.setColor(Color.TRANSPARENT)
         headerFrame.cornerRadius = dp(8).toFloat()
         headerFrame.setStroke(dp(1), ContextCompat.getColor(context, UiR.color.molina_header_frame))
-        header.background = headerFrame
+        if (!embedded) header.background = headerFrame // molina-27j: Berkas tanpa bingkai luar
 
         back.text = "\u2039"
         back.textSize = 22f
@@ -847,11 +851,11 @@ class FileDrawerView(
         ring.shape = GradientDrawable.OVAL
         ring.setColor(Color.TRANSPARENT)
         ring.setStroke(dp(1), dim)
-        back.background = ring
+        if (embedded) { back.text = ""; back.background = backArt } else back.background = ring // molina-27j
         back.setOnClickListener {
             if (embedded && selection.active) cancelSelection() else currentRoot().parentFile?.let { setRoot(it) } // molina-27e
         }
-        header.addView(back, LinearLayout.LayoutParams(dp(30), dp(30)))
+        header.addView(back, LinearLayout.LayoutParams(dp(if (embedded) 40 else 30), dp(if (embedded) 40 else 30))) // molina-27j
 
         // [HEADER-FILL] kotak path melebar (bobot 1) sampai tombol titik tiga
         val box = LinearLayout(context)
@@ -860,8 +864,8 @@ class FileDrawerView(
         box.setPadding(dp(10), dp(2), dp(10), dp(2))
         val boxBg = GradientDrawable()
         boxBg.setColor(ContextCompat.getColor(context, UiR.color.molina_bg))
-        boxBg.cornerRadius = dp(4).toFloat()
-        boxBg.setStroke(dp(1), ContextCompat.getColor(context, UiR.color.molina_outline))
+        boxBg.cornerRadius = dp(if (embedded) 2 else 4).toFloat() // molina-27j
+        boxBg.setStroke(dp(1), if (embedded) ColorUtils.setAlphaComponent(ContextCompat.getColor(context, UiR.color.molina_header_frame), 0xAA) else ContextCompat.getColor(context, UiR.color.molina_outline)) // molina-27j
         box.background = boxBg
         title.setTextColor(white)
         title.textSize = 14f
@@ -875,7 +879,14 @@ class FileDrawerView(
         pathText.ellipsize = TextUtils.TruncateAt.MIDDLE
         box.addView(title)
         box.addView(pathText)
-        val boxLp = LinearLayout.LayoutParams(0, dp(34), 1f)
+        if (embedded) { // molina-27j: satu baris breadcrumb "Internal \u203A Molina \u203A ...", ujung kanan selalu terlihat
+            title.typeface = Typeface.DEFAULT
+            title.textSize = 15f
+            title.ellipsize = TextUtils.TruncateAt.START
+            pathText.visibility = View.GONE
+            box.setPadding(dp(12), 0, dp(12), 0)
+        }
+        val boxLp = LinearLayout.LayoutParams(0, dp(if (embedded) 40 else 34), 1f) // molina-27j
         boxLp.marginStart = dp(4)
         boxLp.marginEnd = dp(4)
         header.addView(box, boxLp)
@@ -890,6 +901,7 @@ class FileDrawerView(
         val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
         headerLp.setMargins(dp(6), dp(6), dp(6), dp(4))
         panel.addView(header, headerLp)
+        if (embedded) panel.addView(divider(), LinearLayout.LayoutParams(MATCH, dp(1))) // molina-27j: garis pemisah di bawah header
 
         chips.orientation = LinearLayout.HORIZONTAL
         chipScroll.isHorizontalScrollBarEnabled = false
@@ -1040,7 +1052,7 @@ class FileDrawerView(
         val rows = if (found != null) DrawerSort.sorted(found, sort).map { DrawerRow(it, 0, false) } else DrawerFs.flatten(state, root, sort)
         adapter.submitList(rows, onCommitted)
         headerDots?.statusColor = if (embedded && (searchOn || sort != DrawerSort.DEFAULT)) accent else null
-        title.text = root.name.ifEmpty { "/" }
+        title.text = if (embedded) crumbText(root) else root.name.ifEmpty { "/" } // molina-27j
         pathText.text = DrawerFs.displayPath(root.path)
         host.onRootChanged(root.path)
         val canUp = root.parentFile != null && vols.none { it.path == root.path }
@@ -1048,7 +1060,7 @@ class FileDrawerView(
         back.isEnabled = canUp || picking
         back.alpha = if (canUp || picking) 1f else 0.38f
         if (embedded) {
-            back.text = if (picking) "\u2715" else "\u2039"
+            backArt.cross = picking // molina-27j: panah kembali berubah jadi \u2715 saat mode pilih
             if (picking) title.text = if (selection.count == 0) "Mode pilih" else "${selection.count} dipilih"
         }
         empty.text = if (found != null) "Tidak ada hasil" else context.getString(R.string.drawer_empty) // molina-27g3
@@ -1056,6 +1068,20 @@ class FileDrawerView(
         renderChips(root)
         renderClip() // molina-27e
         if (embedded) updateFab() // molina-27i
+    }
+
+    /** [molina-27j] Breadcrumb "Internal \u203A Molina \u203A Film": pemisah redup, segmen putih. */
+    private fun crumbText(root: File): CharSequence {
+        val sb = SpannableStringBuilder()
+        DrawerFs.crumbs(root.path).forEachIndexed { i, seg ->
+            if (i > 0) {
+                val a = sb.length
+                sb.append(" \u203A ")
+                sb.setSpan(ForegroundColorSpan(dim), a, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            sb.append(seg)
+        }
+        return sb
     }
 
     private fun renderChips(root: File) {
