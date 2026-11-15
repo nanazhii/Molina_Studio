@@ -103,7 +103,8 @@ class ArchiveNamesTest {
         assertEquals(1, ArchiveFormat.TAR_GZ.clampLevel(0))
         assertEquals(0, ArchiveFormat.TAR.clampLevel(5))
         assertTrue(ArchiveFormat.ZIP.canEncrypt)
-        assertFalse(ArchiveFormat.SEVEN_Z.canEncrypt)
+        assertTrue(ArchiveFormat.SEVEN_Z.canEncrypt) // molina-27q: 7z bersandi lewat Debian
+        assertFalse(ArchiveFormat.TAR_GZ.canEncrypt)
         assertFalse(ArchiveFormat.GZ.canCompress)
     }
 }

@@ -953,9 +953,9 @@ class FilesFragment : Fragment(R.layout.fragment_files) {
             singleIsDir = single != null && isFolder(single),
             parentName = currentPath.substringAfterLast('/'),
         )
-        ArchiveDialogs.compress(ctx, base) { format, level, name, password ->
+        ArchiveDialogs.compress(ctx, base) { format, level, name, password, encryptNames -> // molina-27q
             if (selection.active) exitSelection("op")
-            val request = ArchiveRequest(ArchiveOp.COMPRESS, paths, currentPath, format = format, level = level, baseName = name)
+            val request = ArchiveRequest(ArchiveOp.COMPRESS, paths, currentPath, format = format, level = level, baseName = name, encryptNames = encryptNames)
             startArchive(request, password)
         }
     }

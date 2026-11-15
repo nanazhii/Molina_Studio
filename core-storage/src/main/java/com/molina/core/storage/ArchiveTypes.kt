@@ -32,8 +32,11 @@ enum class ArchiveFormat(
 
     val canCompress: Boolean get() = !isSingle
 
-    /** Dibuat dengan kata sandi: hanya ZIP (AES-256). 7z bersandi sengaja tidak ada: penulis 7z tidak bisa mengenkripsi. */
-    val canEncrypt: Boolean get() = this == ZIP
+    /** Dibuat dengan kata sandi (AES-256): ZIP lewat zip4j, 7z lewat `7z` di Debian ([SevenZipBackend], molina-27q). */
+    val canEncrypt: Boolean get() = this == ZIP || this == SEVEN_Z
+
+    /** 7z bersandi bisa ikut mengenkripsi nama berkas (`-mhe=on`). */
+    val encryptsNames: Boolean get() = this == SEVEN_Z
 
     val hasLevel: Boolean get() = maxLevel > minLevel
 
@@ -62,6 +65,8 @@ enum class ArchiveFailure {
     EMPTY_SOURCE,
     NOT_FOUND,
     PASSWORD_UNSUPPORTED,
+    TOOL_MISSING, // molina-27q: 7z bersandi butuh 7zip di Debian
+    WEAK_PASSWORD, // molina-27q
     IO,
     TOO_LARGE, // 26k5b:e03
 }
@@ -132,12 +137,13 @@ data class CompressResult(
     val bytes: Long = 0L,
 )
 
-/** [baseName] tanpa ekstensi (mentah dari pengguna; divalidasi). [password] hanya untuk ZIP. */
+/** [baseName] tanpa ekstensi (mentah dari pengguna; divalidasi). [password] untuk ZIP dan 7z; [encryptNames] hanya 7z bersandi. */
 data class CompressOptions(
     val format: ArchiveFormat,
     val level: Int,
     val baseName: String,
     val password: String? = null,
+    val encryptNames: Boolean = false, // molina-27q
 )
 
 data class ArchiveProgress(val kind: ArchiveKind, val bytesDone: Long, val bytesTotal: Long) {

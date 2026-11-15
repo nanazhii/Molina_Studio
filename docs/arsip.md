@@ -110,3 +110,21 @@ breadcrumb, pencarian nama (maks. 200 hasil, ditandai bila dipotong), urut nama/
   tampil di daftar saat diketuk (folder atau hasil pencarian, urutan sama; tidak berputar di ujung). Penghitung "3 / 12"
   di atas. Satu bitmap hidup sekaligus (yang lama didaur ulang saat bitmap baru terpasang), tanpa prefetch; tiap gambar
   dimuat lewat cache LRU yang sama dan mencatat event `files.archive-open` seperti biasa. Ketuk = tutup. <!-- 26k5h:d01 -->
+
+## 7z bersandi (Patch 27q)
+
+Penulis 7z commons-compress tidak bisa mengenkripsi, jadi 7z BERSANDI dibuat oleh `7z a` di Debian PRoot (meniru
+`DebianArchive.create` repo lama). Tanpa sandi, 7z tetap lewat commons-compress seperti sebelumnya.
+
+- Alur: `ArchiveEngine.compress` -> `write7zEncrypted` -> `SevenZipBackend.writer` (diisi `:app` = `DebianSevenZip`, dipasang di
+  `MolinaApplication`). Tanpa backend atau 7zip belum terpasang: `ArchiveFailure.TOOL_MISSING` (fail-closed, tidak pernah menulis
+  arsip tanpa sandi).
+- Sandi hanya lewat stdin (`-p` tanpa nilai), tidak pernah di argumen proses atau log. `-mhe=on` (opsi Enkripsi nama berkas)
+  mengenkripsi daftar isi juga.
+- Hanya folder sumber (`/mnt/molina-in/<i>`) dan staging (`/mnt/molina-out`) yang di-bind ke guest, bukan seluruh penyimpanan.
+- Keluaran ditulis ke staging `.molina-7z-*` di folder tujuan lalu dipindah; gagal/batal = staging dihapus.
+- Tautan simbolik dan berkas khusus dilewati (`-x!` untuk yang di dalam folder). Nama sumber berisi `*` atau `?` ditolak.
+- Kebijakan sandi 7z (`PasswordPolicy`): minimal 8 karakter, yang umum/berpola/lemah ditolak (`ArchiveFailure.WEAK_PASSWORD`).
+  Berlaku untuk 7z saja; ZIP AES tidak berubah.
+- Prasyarat di perangkat: Debian terpasang dan `apt-get update && apt-get install -y --no-install-recommends 7zip`.
+- Belum: biner 7-Zip yang dibundel (lib7zz.so) seperti repo lama, tombol Buat acak, 7z bersandi untuk berkas > ruang staging.

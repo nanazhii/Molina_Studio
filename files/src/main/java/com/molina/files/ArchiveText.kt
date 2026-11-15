@@ -47,6 +47,8 @@ internal object ArchiveText {
         ArchiveFailure.EMPTY_SOURCE -> "Tidak ada berkas yang bisa dikompres"
         ArchiveFailure.NOT_FOUND -> "Berkas tidak ditemukan"
         ArchiveFailure.PASSWORD_UNSUPPORTED -> "Format ini belum mendukung kata sandi"
+        ArchiveFailure.TOOL_MISSING -> "7z bersandi butuh Debian dengan paket 7zip. Di Terminal: apt-get update && apt-get install -y 7zip" // molina-27q
+        ArchiveFailure.WEAK_PASSWORD -> "Kata sandi terlalu lemah (minimal 8 karakter, hindari yang umum)" // molina-27q
         ArchiveFailure.IO -> "Operasi arsip gagal (periksa izin tulis)"
         ArchiveFailure.TOO_LARGE -> "Berkas di dalam arsip terlalu besar untuk dibuka (maks. ${ArchiveEngineLimits.ENTRY_MAX_BYTES / (1024L * 1024L)} MB)" // 26k5b:e20
     }

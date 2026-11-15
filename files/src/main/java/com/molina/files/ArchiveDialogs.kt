@@ -7,6 +7,7 @@ import android.text.InputType
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.widget.CheckBox // molina-27q
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
@@ -15,6 +16,7 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import com.molina.core.common.PasswordPolicy // molina-27q
 import com.molina.core.storage.ArchiveFormat
 import com.molina.core.storage.ConflictPolicy // 26k4:e43
 import com.molina.core.storage.ExtractTarget
@@ -139,13 +141,14 @@ internal object ArchiveDialogs {
     }
 
     /**
-     * Opsi Kompres: nama, format, level, dan kata sandi (hanya ZIP, AES-256, diulang untuk mencegah salah ketik).
-     * [onSubmit] (format, level, nama dasar tanpa ekstensi, kata sandi atau null).
+     * Opsi Kompres: nama, format, level, dan kata sandi (ZIP dan 7z, AES-256, diulang untuk mencegah salah ketik).
+     * 7z: sandi lemah ditolak ([PasswordPolicy]) dan nama berkas bisa ikut dienkripsi.
+     * [onSubmit] (format, level, nama dasar tanpa ekstensi, kata sandi atau null, enkripsi nama).
      */
     fun compress(
         context: Context,
         defaultName: String,
-        onSubmit: (ArchiveFormat, Int, String, String?) -> Unit,
+        onSubmit: (ArchiveFormat, Int, String, String?, Boolean) -> Unit,
     ) {
         val formats = ArchiveOptions.FORMATS
         var format = formats.first()
@@ -165,6 +168,11 @@ internal object ArchiveDialogs {
         val pw2 = field(context, "Ulangi kata sandi", password = true)
         pwBox.addView(pw1, fieldParams(context))
         pwBox.addView(pw2, fieldParams(context))
+        val encNames = CheckBox(context).apply { // molina-27q
+            text = "Enkripsi nama berkas (daftar isi ikut terkunci)"
+            setTextColor(Color.WHITE)
+        }
+        pwBox.addView(encNames)
 
         fun applyFormat() {
             level = format.defaultLevel
@@ -179,6 +187,7 @@ internal object ArchiveDialogs {
                 levelHolder.addView(radioRow(context, options.map { it.second }, idx) { i -> level = options[i].first })
             }
             pwBox.visibility = if (format.canEncrypt) View.VISIBLE else View.GONE
+            encNames.visibility = if (format.encryptsNames) View.VISIBLE else View.GONE // molina-27q
         }
 
         box.addView(label(context, "Format"))
@@ -208,10 +217,17 @@ internal object ArchiveDialogs {
                         pw2.error = "Kata sandi tidak sama"
                         return@validate false
                     }
+                    if (format == ArchiveFormat.SEVEN_Z) { // molina-27q: kunci 7z murah ditebak, jadi sandi lemah ditolak
+                        val verdict = PasswordPolicy.evaluate(a)
+                        if (!verdict.acceptable) {
+                            pw1.error = verdict.message
+                            return@validate false
+                        }
+                    }
                     password = a
                 }
             }
-            onSubmit(format, format.clampLevel(level), base, password)
+            onSubmit(format, format.clampLevel(level), base, password, format.encryptsNames && password != null && encNames.isChecked)
             true
         }
         MolinaDialog.form(context, "Kompres", "Kompres", box, validate)

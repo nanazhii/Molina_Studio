@@ -1,6 +1,8 @@
 // molina-patch26k
 package com.molina.core.storage
 
+import com.molina.core.common.SevenZipCommand
+import com.molina.core.common.PasswordPolicy
 import net.lingala.zip4j.ZipFile
 import net.lingala.zip4j.exception.ZipException
 import net.lingala.zip4j.io.outputstream.ZipOutputStream
@@ -56,6 +58,9 @@ internal class ArchiveCtl(
     fun check() {
         if (cancel()) throw ArchiveCancelled()
     }
+
+    /** [molina-27q] Untuk proses luar (7z di Debian) yang menanyakan pembatalan tanpa melempar. */
+    fun cancelled(): Boolean = cancel()
 
     fun add(n: Long) {
         done += n
@@ -821,6 +826,10 @@ internal object ArchiveEngine {
             throw fail(ArchiveFailure.NAME_CONFLICT, "Ada dua item bernama sama dari folder berbeda")
         }
         if (pw != null && !fmt.canEncrypt) throw fail(ArchiveFailure.PASSWORD_UNSUPPORTED, "Format ini belum mendukung kata sandi")
+        // molina-27q: pagar terakhir di luar UI; sandi 7z diturunkan lewat SHA-256 (murah ditebak), jadi yang lemah ditolak
+        if (pw != null && fmt == ArchiveFormat.SEVEN_Z && !PasswordPolicy.evaluate(pw).acceptable) {
+            throw fail(ArchiveFailure.WEAK_PASSWORD, "Kata sandi terlalu lemah")
+        }
         val base = ArchiveNames.cleanBaseName(opt.baseName, fmt)
         ArchiveNames.baseNameProblem(base, fmt)?.let { throw fail(it, "Nama arsip tidak valid") }
         val level = fmt.clampLevel(opt.level)
@@ -831,13 +840,16 @@ internal object ArchiveEngine {
         var entries = 0
         try {
             ctl.total = sizeOf(files, ctl)
-            val stored = fmt == ArchiveFormat.TAR || level == 0
+            // molina-27q: ukuran 7z bersandi tidak bisa diperkirakan; anggap tak terkompresi (kasus terburuk)
+            val stored = fmt == ArchiveFormat.TAR || level == 0 || (fmt == ArchiveFormat.SEVEN_Z && pw != null)
             if (DiskSpace.lacks(destDir, if (stored) ctl.total else 0L)) {
                 throw fail(ArchiveFailure.NO_SPACE, "Ruang penyimpanan tidak cukup")
             }
             val n = when (fmt) {
                 ArchiveFormat.ZIP -> writeZip(files, out, level, pw, ctl, guard, skip, stats)
-                ArchiveFormat.SEVEN_Z -> write7z(files, out, level, ctl, guard, skip, stats)
+                ArchiveFormat.SEVEN_Z ->
+                    if (pw != null) write7zEncrypted(files, out, level, pw, opt.encryptNames, destDir, ctl, stats)
+                    else write7z(files, out, level, ctl, guard, skip, stats)
                 else -> writeTar(files, out, fmt, level, ctl, guard, skip, stats)
             }
             entries = n
@@ -949,6 +961,84 @@ internal object ArchiveEngine {
                 raw.close()
             } catch (ignored: Exception) {
             }
+        }
+        return count
+    }
+
+    /**
+     * [molina-27q] 7z BERSANDI: penulis commons-compress tidak bisa mengenkripsi, jadi dikerjakan `7z` di Debian PRoot lewat
+     * [SevenZipBackend] (meniru DebianArchive.create repo lama). Keluaran ditulis ke folder staging di [destDir] lalu dipindah ke
+     * [out] hanya bila sukses. Tautan simbolik dan berkas khusus dilewati (yang di dalam folder lewat `-x!`). Mengembalikan jumlah entri.
+     */
+    private fun write7zEncrypted(
+        files: List<File>,
+        out: File,
+        level: Int,
+        pw: String,
+        encryptNames: Boolean,
+        destDir: File,
+        ctl: ArchiveCtl,
+        stats: WalkStats,
+    ): Int {
+        val writer = SevenZipBackend.writer ?: throw fail(ArchiveFailure.TOOL_MISSING, "7z bersandi butuh 7zip di Debian")
+        writer.unavailableReason()?.let { throw fail(ArchiveFailure.TOOL_MISSING, it) }
+        // Tujuan di dalam folder sumber: 7z ikut mengarsipkan staging-nya sendiri.
+        val destCanon = destDir.canonicalFile
+        for (f in files) {
+            if (isLink(f) || !f.isDirectory) continue
+            val c = f.canonicalFile
+            if (destCanon.path == c.path || destCanon.path.startsWith(c.path + File.separator)) {
+                throw fail(ArchiveFailure.IO, "Folder tujuan berada di dalam folder yang dikompres")
+            }
+        }
+        val sources = ArrayList<File>()
+        val excludes = ArrayList<String>()
+        var count = 0
+        fun scan(f: File, path: String, top: Boolean) {
+            ctl.check()
+            if (isLink(f) || (!f.isFile && !f.isDirectory)) {
+                stats.skipped++
+                if (!top) excludes.add(path)
+                return
+            }
+            if (top) sources.add(f)
+            count++
+            if (f.isDirectory) {
+                val kids = f.listFiles() ?: throw fail(ArchiveFailure.IO, "Folder tidak bisa dibaca")
+                for (k in kids.sortedBy { it.name }) scan(k, path + "/" + k.name, false)
+            }
+        }
+        for (f in files) scan(f, f.name, true)
+        if (count == 0) return 0 // compress() mengubahnya menjadi EMPTY_SOURCE
+
+        val stage = File(destDir, ".molina-7z-" + java.lang.Long.toHexString(System.nanoTime()))
+        if (!stage.mkdir()) throw fail(ArchiveFailure.IO, "Tidak bisa membuat folder kerja")
+        try {
+            val made = File(stage, SevenZipCommand.OUT_FILE)
+            var last = 0
+            try {
+                writer.create(SevenZipJob(sources, made, stage, level, pw, encryptNames, excludes), { ctl.cancelled() }) { p ->
+                    if (p > last) {
+                        ctl.add((p - last) * ctl.total / 100)
+                        last = p
+                    }
+                }
+            } catch (e: SevenZipFailure) {
+                throw when (e.failure) {
+                    SevenZipCommand.Failure.CANCELLED -> ArchiveCancelled()
+                    SevenZipCommand.Failure.DISK_FULL -> fail(ArchiveFailure.NO_SPACE, "Ruang penyimpanan tidak cukup", e)
+                    SevenZipCommand.Failure.OUT_OF_MEMORY ->
+                        fail(ArchiveFailure.OUT_OF_MEMORY, "Memori tidak cukup untuk level ini. Turunkan level kompresi.", e)
+                    else -> fail(ArchiveFailure.IO, e.failure.hint, e)
+                }
+            } catch (e: IllegalArgumentException) {
+                throw fail(ArchiveFailure.INVALID_NAME, "Nama berkas tidak didukung untuk 7z bersandi", e)
+            }
+            ctl.check()
+            if (!made.isFile || made.length() == 0L) throw fail(ArchiveFailure.IO, "7z tidak menghasilkan arsip")
+            java.nio.file.Files.move(made.toPath(), out.toPath())
+        } finally {
+            stage.deleteRecursively()
         }
         return count
     }
