@@ -3,6 +3,7 @@ package com.molina.files
 
 import com.molina.core.common.MolinaError
 import com.molina.core.storage.ArchiveBatchResult // 26k4:e38
+import com.molina.core.storage.ArchiveEngineLimits // 26k5b:e19
 import com.molina.core.storage.ArchiveException
 import com.molina.core.storage.ArchiveTestResult
 import com.molina.core.storage.ArchiveFailure
@@ -47,6 +48,7 @@ internal object ArchiveText {
         ArchiveFailure.NOT_FOUND -> "Berkas tidak ditemukan"
         ArchiveFailure.PASSWORD_UNSUPPORTED -> "Format ini belum mendukung kata sandi"
         ArchiveFailure.IO -> "Operasi arsip gagal (periksa izin tulis)"
+        ArchiveFailure.TOO_LARGE -> "Berkas di dalam arsip terlalu besar untuk dibuka (maks. ${ArchiveEngineLimits.ENTRY_MAX_BYTES / (1024L * 1024L)} MB)" // 26k5b:e20
     }
 
     fun nameProblem(reason: ArchiveFailure): String =

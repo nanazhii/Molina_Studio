@@ -63,6 +63,7 @@ enum class ArchiveFailure {
     NOT_FOUND,
     PASSWORD_UNSUPPORTED,
     IO,
+    TOO_LARGE, // 26k5b:e03
 }
 
 /** Galat operasi arsip; dilampirkan sebagai cause di MolinaError sehingga UI bisa membaca [reason]. */
@@ -94,6 +95,18 @@ data class ArchiveListing(
     val totalBytes: Long,
     val encrypted: Boolean,
     val truncated: Boolean,
+)
+
+/**
+ * Hasil membuka satu entri arsip. [relative]: berkas di cache (relatif root), kosong bila [cancelled].
+ * [cached] true bila dipakai ulang tanpa ekstrak. // 26k5b:e05
+ */
+data class OpenedEntry(
+    val relative: String,
+    val name: String,
+    val bytes: Long,
+    val cached: Boolean,
+    val cancelled: Boolean = false,
 )
 
 /** [destRelative]: folder hasil (relatif terhadap root); kosong bila [cancelled]. [skipped]: tautan/berkas khusus tar. */
@@ -139,4 +152,10 @@ object ArchiveEngineLimits {
 
     /** Batas jumlah entri saat ekstrak (anti bom entri). */
     const val MAX_ENTRIES = 100_000
+
+    /** Batas satu entri yang dibuka ke cache (26k-5b). 26k5b:e04 */
+    const val ENTRY_MAX_BYTES = 150L * 1024 * 1024
+
+    /** Batas total isi cache entri arsip; dipangkas LRU. */
+    const val CACHE_MAX_BYTES = 300L * 1024 * 1024
 }

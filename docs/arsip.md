@@ -39,6 +39,28 @@ Kunci simpul = kunci parameter `only` pada ekstrak: berkas `a/b.txt`, folder `a/
   terpotong, pembacaan berhenti di batas sehingga jumlah total TIDAK diketahui (tidak sama dengan ZIP/7z).
 - Pencarian nama hanya mencakup entri yang termuat.
 
+<!-- 26k5b:d01 -->
+## Buka satu entri lewat cache (Patch 26k-5b)
+
+`MolinaStorage.openArchiveEntry(relative, entryName, password, cancel, onProgress)` mengekstrak SATU berkas ke cache
+`Molina/.arsip-cache/` lalu mengembalikan `OpenedEntry.relative` (relatif root) untuk dibuka lewat FileProvider.
+`clearArchiveCache()` mengosongkan cache; panggil saat aplikasi mulai dan keluar (hook UI ada di 26k-5c).
+
+- Memakai `Sink` yang sama dengan ekstrak biasa: nama dibersihkan (`cleanEntry`), jalur kanonik (`safeTarget`), batas
+  entri, cek ruang kosong, rollback, pembatalan. Arsip dengan satu entri tidak aman tetap ditolak seluruhnya.
+- Batas: `ArchiveEngineLimits.ENTRY_MAX_BYTES` = 150 MB per entri (header dan byte nyata, jadi tar tanpa ukuran header
+  juga terjaga), `CACHE_MAX_BYTES` = 300 MB total. Entri yang melebihi batas ditolak dengan `ArchiveFailure.TOO_LARGE`
+  dan tidak pernah memecah isi cache.
+- Slot cache = folder bernama hash SHA-1(jalur kanonik arsip, ukuran, waktu ubah, nama entri); arsip yang berubah
+  otomatis menjadi slot baru. Berkas di dalam slot memakai nama dasar entri (aman dibuka dengan ACTION_VIEW + MIME).
+- Ekstrak berjalan di `.tmp-*` lalu di-rename atomik ke slot: gagal/batal tidak meninggalkan slot setengah jadi.
+- Pemangkasan LRU menurut waktu ubah slot (disentuh saat dipakai ulang), slot yang baru dibuka tidak pernah dihapus.
+- Entri kembar dalam tar: yang terakhir ditulis dipertahankan (selaras dengan ArchiveTree).
+- Privasi: kata sandi tidak masuk kunci, nama folder, atau log. Isi entri bersandi tersimpan sebagai berkas biasa di cache
+  sampai dipangkas atau cache dikosongkan; slot yang sudah ada dibuka ulang tanpa sandi.
+- Satu operasi sekaligus. Dua pembukaan bersamaan untuk entri yang sama bisa saling menghapus slot (UI menserialkan).
+- Folder cache disembunyikan dari daftar dan pencarian Berkas walau "tampilkan tersembunyi" aktif.
+
 ## Uji arsip
 
 `ArchiveEngine.test` mendekode semua entri ke sink kosong (tanpa tulis disk). Arsip rusak = hasil, bukan exception.

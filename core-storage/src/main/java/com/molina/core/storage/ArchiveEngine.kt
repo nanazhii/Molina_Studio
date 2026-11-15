@@ -72,7 +72,7 @@ internal class ArchiveCtl(
     }
 }
 
-internal class ExtractOutcome(val dir: File?, val files: Int, val renamed: Int, val skipped: Int, val cancelled: Boolean, val bytes: Long = 0L, val replaced: Int = 0) // molina-patch26k2c // 26k4:e02
+internal class ExtractOutcome(val dir: File?, val files: Int, val renamed: Int, val skipped: Int, val cancelled: Boolean, val bytes: Long = 0L, val replaced: Int = 0, val lastFile: File? = null /* 26k5b:e06 */) // molina-patch26k2c // 26k4:e02
 
 internal class CompressOutcome(val file: File?, val entries: Int, val skipped: Int, val cancelled: Boolean, val bytes: Long = 0L) // molina-patch26k2d
 
@@ -246,7 +246,7 @@ internal object ArchiveEngine {
     // ------------------------------------------------------------------ ekstrak
 
     /** Penulis hasil: memvalidasi nama, menjaga jalur di dalam [base], tidak menimpa, memeriksa ruang kosong. */
-    private class Sink(val base: File, val only: Set<String>?, val ctl: ArchiveCtl, val limit: Int, val flatten: Boolean = false, val policy: ConflictPolicy = ConflictPolicy.RENAME) { // 26k3:sink // 26k4:e03
+    private class Sink(val base: File, val only: Set<String>?, val ctl: ArchiveCtl, val limit: Int, val flatten: Boolean = false, val policy: ConflictPolicy = ConflictPolicy.RENAME, val maxBytes: Long = Long.MAX_VALUE /* 26k5b:e07 */) { // 26k3:sink // 26k4:e03
         private val createdFiles = ArrayList<File>()
         private val createdDirs = ArrayList<File>()
         var files = 0
@@ -255,6 +255,7 @@ internal object ArchiveEngine {
         var dirs = 0
         var bytes = 0L // molina-patch26k2e
         var replaced = 0 // 26k4:e04
+        var lastOut: File? = null // 26k5b:e08
         var picked = 0
         private val createdPaths = HashSet<String>()
         private val backups = ArrayList<Pair<File, File>>()
@@ -327,6 +328,7 @@ internal object ArchiveEngine {
             createdFiles.add(out)
             createdPaths.add(out.path)
             files++
+            lastOut = out // 26k5b:e09
             return out
         }
 
@@ -339,6 +341,9 @@ internal object ArchiveEngine {
                 if (byteProgress && declared > 0) ctl.add(declared)
                 return
             }
+            if (declared > maxBytes - bytes) { // 26k5b:e10
+                throw ArchiveException(ArchiveFailure.TOO_LARGE, "Berkas di dalam arsip terlalu besar untuk dibuka")
+            }
             var entryBytes = 0L
             try {
                 out.outputStream().buffered(64 * 1024).use { o ->
@@ -348,6 +353,9 @@ internal object ArchiveEngine {
                         val n = src.read(buf)
                         if (n < 0) break
                         entryBytes += n
+                        if (bytes + entryBytes > maxBytes) { // 26k5b:e11
+                            throw ArchiveException(ArchiveFailure.TOO_LARGE, "Berkas di dalam arsip terlalu besar untuk dibuka")
+                        }
                         if (declared >= 0 && entryBytes > declared) {
                             throw ArchiveException(ArchiveFailure.CORRUPT, "Isi entri melebihi ukuran di header arsip")
                         }
@@ -407,6 +415,7 @@ internal object ArchiveEngine {
         ctl: ArchiveCtl,
         flatten: Boolean = false, // 26k3:param
         policy: ConflictPolicy = ConflictPolicy.RENAME, // 26k4:e09
+        maxBytes: Long = Long.MAX_VALUE, // 26k5b:e12
     ): ExtractOutcome {
         val fmt = requireArchive(file)
         if (!destDir.isDirectory || !destDir.canWrite()) throw fail(ArchiveFailure.IO, "Folder tujuan tidak bisa ditulisi")
@@ -417,7 +426,7 @@ internal object ArchiveEngine {
         }
         val base = if (named) ArchiveNames.uniqueFolder(destDir, folder) else destDir
         if (named && !base.mkdirs()) throw fail(ArchiveFailure.IO, "Gagal membuat folder hasil")
-        val sink = Sink(base, only, ctl, maxEntries, flatten, policy) // 26k3:ctor // 26k4:e10
+        val sink = Sink(base, only, ctl, maxEntries, flatten, policy, maxBytes) // 26k5b:e13 // 26k3:ctor // 26k4:e10
 
         fun undo() {
             if (named) base.deleteRecursively() else sink.rollback()
@@ -444,7 +453,7 @@ internal object ArchiveEngine {
         }
         sink.commit() // 26k4:e12
         ctl.report()
-        return ExtractOutcome(base, sink.files, sink.renamed, sink.skipped, false, sink.bytes, sink.replaced) // molina-patch26k2g
+        return ExtractOutcome(base, sink.files, sink.renamed, sink.skipped, false, sink.bytes, sink.replaced, sink.lastOut) // 26k5b:e14 // molina-patch26k2g
     }
 
     private fun checkDeclaredSpace(base: File, total: Long) {

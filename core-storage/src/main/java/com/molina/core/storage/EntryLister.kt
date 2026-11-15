@@ -37,7 +37,7 @@ internal object EntryLister {
         val w = words(o.query)
         val top = dir.listFiles() ?: return null
         // molina-patch26h: folder Sampah tidak pernah tampil (juga saat "tampilkan tersembunyi")
-        fun visible(f: File) = f.name != MolinaPaths.TRASH_DIR && (o.showHidden || !f.name.startsWith("."))
+        fun visible(f: File) = f.name != MolinaPaths.TRASH_DIR && f.name != MolinaPaths.ARSIP_CACHE_DIR /* 26k5b:e18 */ && (o.showHidden || !f.name.startsWith("."))
         fun extOk(f: File): Boolean {
             val only = o.onlyExt ?: return true
             return f.isDirectory || f.extension.lowercase(Locale.ROOT) in only

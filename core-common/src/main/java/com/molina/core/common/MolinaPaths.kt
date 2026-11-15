@@ -11,11 +11,15 @@ class MolinaPaths(val root: File = File(DEFAULT_ROOT)) {
     /** molina-patch26h: Sampah di dalam root (rename satu volume, instan). Dibuat saat item pertama dihapus. */
     val trash: File get() = File(root, TRASH_DIR)
 
+    /** Cache entri arsip yang dibuka satu per satu (Patch 26k-5b). 26k5b:e01 */
+    val arsipCache: File get() = File(root, ARSIP_CACHE_DIR)
+
     /** Urutan pembuatan: root lebih dulu. */
     val layout: List<File> get() = listOf(root, logs, terminal, cinema)
 
     companion object {
         const val DEFAULT_ROOT = "/storage/emulated/0/Molina"
         const val TRASH_DIR = ".molina-trash"
+        const val ARSIP_CACHE_DIR = ".arsip-cache" // 26k5b:e02
     }
 }

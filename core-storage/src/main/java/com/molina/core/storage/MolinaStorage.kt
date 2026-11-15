@@ -132,6 +132,23 @@ interface MolinaStorage {
         onProgress: (ArchiveProgress) -> Unit = {},
     ): MolinaResult<ArchiveBatchResult>
 
+    // 26k5b:e15
+    /**
+     * Buka satu entri arsip: diekstrak ke cache (Molina/.arsip-cache/), lalu [OpenedEntry.relative] bisa dibuka lewat
+     * FileProvider. Entri lebih besar dari [ArchiveEngineLimits.ENTRY_MAX_BYTES] ditolak (TOO_LARGE). Cache dipangkas
+     * LRU sampai [ArchiveEngineLimits.CACHE_MAX_BYTES]. Batal = Success dengan [OpenedEntry.cancelled].
+     */
+    suspend fun openArchiveEntry(
+        relative: String,
+        entryName: String,
+        password: String? = null,
+        cancel: CancelToken = CancelToken(),
+        onProgress: (ArchiveProgress) -> Unit = {},
+    ): MolinaResult<OpenedEntry>
+
+    /** Kosongkan cache entri arsip; mengembalikan byte yang dibebaskan. Panggil saat aplikasi mulai dan keluar. */
+    suspend fun clearArchiveCache(): MolinaResult<Long>
+
     /** Kompres [relatives] menjadi satu arsip di [destRelative]. Isi Sampah dilewati dan dihitung di skipped. */
     suspend fun compressItems(
         relatives: List<String>,
@@ -336,6 +353,33 @@ class LocalMolinaStorage(
         }
     }
 
+    // 26k5b:e16
+    private val archiveCache by lazy { ArchiveCache(paths.arsipCache) }
+
+    override suspend fun openArchiveEntry(
+        relative: String,
+        entryName: String,
+        password: String?,
+        cancel: CancelToken,
+        onProgress: (ArchiveProgress) -> Unit,
+    ): MolinaResult<OpenedEntry> = withContext(dispatchers.io) {
+        onResolved(relative) { src ->
+            archiveCatching {
+                val ctl = ArchiveCtl(ArchiveKind.EXTRACT, { cancel.isCancelled || !isActive }, onProgress)
+                val r = archiveCache.open(src, entryName, password, ctl)
+                if (r == null) {
+                    OpenedEntry("", "", 0L, false, true)
+                } else {
+                    OpenedEntry(relativeOf(r.file), r.file.name, r.bytes, r.cached)
+                }
+            }
+        }
+    }
+
+    override suspend fun clearArchiveCache(): MolinaResult<Long> = withContext(dispatchers.io) {
+        archiveCatching { archiveCache.clear() }
+    }
+
     // 26k4:e18
     override suspend fun testArchive(
         relative: String,
@@ -447,7 +491,7 @@ class LocalMolinaStorage(
         if (!dir.isDirectory) throw IOException("bukan folder")
         val children = dir.listFiles() ?: throw SecurityException()
         children
-            .filter { it.name != MolinaPaths.TRASH_DIR }
+            .filter { it.name != MolinaPaths.TRASH_DIR && it.name != MolinaPaths.ARSIP_CACHE_DIR } // 26k5b:e17
             .map { FileEntry(it.name, it.path, it.isDirectory, if (it.isDirectory) 0L else it.length(), it.lastModified()) }
             .sortedWith(compareByDescending<FileEntry> { it.isDirectory }
                 .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
