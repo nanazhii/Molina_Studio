@@ -48,6 +48,11 @@ internal object EmbeddedMenu {
     private fun buildSelecting(s: State): List<Entry> {
         val l = ArrayList<Entry>()
         l += Entry(Action.SELECT_ALL, "Pilih semua")
+        if (s.targetCount == 1) { // molina-27h: satu item terpilih = isi menu baris lama
+            l += Entry(Action.RENAME, "Ubah nama")
+            if (s.favoriteAvailable) l += Entry(Action.FAVORITE, if (s.isFavorite) "Hapus dari Favorit" else "Tambah ke Favorit")
+            l += Entry(Action.COPY_PATH, "Salin path")
+        }
         l += Entry(Action.COPY, "Salin", enabled = s.hasTarget && s.transferAvailable)
         l += Entry(Action.MOVE, "Pindah", enabled = s.hasTarget && s.transferAvailable)
         if (s.shareAvailable) l += Entry(Action.SHARE, "Bagikan", enabled = s.hasTarget) // molina-27g
@@ -70,7 +75,7 @@ internal object EmbeddedMenu {
         if (!s.archiveAvailable || !s.hasTarget) return
         l += Entry(Action.COMPRESS, "Kompres\u2026")
         if (!s.allArchives) return
-        val single = s.targetCount == 1 && !s.selecting
+        val single = s.targetCount == 1 // molina-27h: satu arsip terpilih juga dapat Lihat isi/Uji
         if (single) {
             l += Entry(Action.VIEW_ARCHIVE, "Lihat isi")
             l += Entry(Action.EXTRACT_HERE, "Ekstrak di sini")
