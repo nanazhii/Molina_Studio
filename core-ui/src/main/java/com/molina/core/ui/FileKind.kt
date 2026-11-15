@@ -25,8 +25,6 @@ enum class FileKind(val color: Int) {
     val nameColor: Int = mix(Color.WHITE, color, NAME_TINT)
 
     companion object {
-        private const val NAME_TINT = 0.28f
-
         private val BY_EXT: Map<String, FileKind> = buildMap {
             fun add(kind: FileKind, vararg exts: String) = exts.forEach { put(it, kind) }
             add(SHELL, "sh", "bash", "zsh", "fish")
@@ -58,3 +56,6 @@ private fun mix(base: Int, tint: Int, t: Float): Int {
     }
     return (0xFF shl 24) or (ch(16) shl 16) or (ch(8) shl 8) or ch(0)
 }
+
+// molina-fix:filekind-tint
+private const val NAME_TINT = 0.28f
