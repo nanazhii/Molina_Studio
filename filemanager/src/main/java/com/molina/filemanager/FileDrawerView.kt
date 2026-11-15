@@ -42,6 +42,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -144,6 +145,9 @@ class FileDrawerView(
     private val clipPaste = TextView(context)
     private val clipClear = TextView(context)
     private val adapter = RowAdapter()
+    private val fab = FrameLayout(context) // molina-27h: tombol melayang pojok kanan bawah (menu terpusat)
+    private val fabGlyph = TextView(context) // molina-27i
+    private val fabBadge = TextView(context) // molina-27i: jumlah item terpilih
 
     init {
         visibility = if (embedded) View.VISIBLE else View.GONE
@@ -155,6 +159,7 @@ class FileDrawerView(
         panel.isClickable = true
         buildPanel()
         addView(panel, FrameLayout.LayoutParams(if (embedded) MATCH else dp(MIN_WIDTH_DP), MATCH))
+        if (embedded) setupFab() // molina-27h
     }
 
     val isOpen: Boolean get() = visibility == View.VISIBLE
@@ -165,18 +170,22 @@ class FileDrawerView(
      */
     private fun showCentralMenu(anchor: View, target: File?, targetIsDir: Boolean, fromHeader: Boolean) {
         val base = currentRoot()
-        val dir = when {
-            target == null -> base
-            targetIsDir -> target
-            else -> target.parentFile ?: base
-        }
         val picking = selection.active && fromHeader
         val targets: List<File> = when {
             picking -> EmbeddedSelection.topLevel(selection.paths).map { File(it) }
             target != null -> listOf(target)
             else -> emptyList()
         }
-        val favTarget = if (target == null) base else target.takeIf { targetIsDir }
+        // molina-27h: satu item terpilih berperilaku seperti menu baris lama (Ubah nama, Favorit, Lihat isi, ...)
+        val tgt: File? = if (picking) targets.singleOrNull() else target
+        val tgtIsDir = if (picking) tgt?.isDirectory == true else targetIsDir
+        val dir = when {
+            tgt == null -> base
+            picking -> tgt.parentFile ?: base
+            tgtIsDir -> tgt
+            else -> tgt.parentFile ?: base
+        }
+        val favTarget = if (picking) tgt?.takeIf { tgtIsDir } else if (tgt == null) base else tgt.takeIf { tgtIsDir }
         val hasActions = actions !== FileManagerActions.None
         val managed = hasActions && targets.isNotEmpty() && targets.all { actions.canManage(it) }
         // molina-27g: Properti memakai dialog kaya milik implementasi; Bagikan hanya untuk berkas di root Molina
@@ -213,7 +222,10 @@ class FileDrawerView(
                 EmbeddedMenu.Action.REFRESH -> refresh()
                 EmbeddedMenu.Action.NEW_DIR -> promptCreateEmbedded(true, dir)
                 EmbeddedMenu.Action.NEW_FILE -> promptCreateEmbedded(false, dir)
-                EmbeddedMenu.Action.RENAME -> target?.let { renameDialog(it, targetIsDir) }
+                EmbeddedMenu.Action.RENAME -> tgt?.let { // molina-27h
+                    if (picking) { selection.exit(); selectionChanged() } // path lama tidak boleh tersisa di pilihan
+                    renameDialog(it, tgtIsDir)
+                }
                 EmbeddedMenu.Action.SELECT -> enterSelection(target?.path)
                 EmbeddedMenu.Action.SELECT_ALL -> selectAllRows()
                 EmbeddedMenu.Action.EXIT_SELECT -> cancelSelection()
@@ -221,10 +233,10 @@ class FileDrawerView(
                 EmbeddedMenu.Action.MOVE -> setClip(TransferMode.MOVE, targets)
                 EmbeddedMenu.Action.PASTE -> pasteInto(dir)
                 EmbeddedMenu.Action.FAVORITE -> favTarget?.let { actions.toggleFavorite(it); reloadFavs() }
-                EmbeddedMenu.Action.COPY_PATH -> copyPath(target ?: base)
+                EmbeddedMenu.Action.COPY_PATH -> copyPath(tgt ?: base) // molina-27h
                 // molina-27g: dialog Properti kaya dari implementasi; bawaan Terminal hanya bila ditolak
                 EmbeddedMenu.Action.INFO ->
-                    if (!(hasActions && actions.properties(propsTargets))) showInfo(target ?: base, if (target == null) true else targetIsDir)
+                    if (!(hasActions && actions.properties(propsTargets))) showInfo(tgt ?: base, if (tgt == null) true else tgtIsDir) // molina-27h
                 EmbeddedMenu.Action.SHARE -> actions.share(targets) // molina-27g
                 EmbeddedMenu.Action.SORT -> showSortMenu(anchor) // molina-27g2
                 EmbeddedMenu.Action.SEARCH -> if (searchOn) closeSearch() else openSearch() // molina-27g3
@@ -244,7 +256,125 @@ class FileDrawerView(
             }
             true
         }
+        menu.gravity = Gravity.END // molina-27h: rata kanan, membuka ke atas dari tombol melayang
         menu.show()
+    }
+
+    // ---------- [molina-27h] tombol melayang + geser pilih ----------
+
+    /** [molina-27h] Tombol melayang pojok kanan bawah: satu-satunya pintu menu titik tiga mode tertanam. */
+    private fun setupFab() {
+        fabGlyph.text = "\u22EE"
+        fabGlyph.textSize = 24f
+        fabGlyph.gravity = Gravity.CENTER
+        fab.addView(fabGlyph, FrameLayout.LayoutParams(MATCH, MATCH))
+        // molina-27i: lencana jumlah item terpilih di sudut kanan atas tombol
+        fabBadge.textSize = 10f
+        fabBadge.typeface = Typeface.DEFAULT_BOLD
+        fabBadge.gravity = Gravity.CENTER
+        fabBadge.setTextColor(Color.BLACK)
+        val badgeBg = GradientDrawable()
+        badgeBg.shape = GradientDrawable.OVAL
+        badgeBg.setColor(Color.WHITE)
+        fabBadge.background = badgeBg
+        fabBadge.visibility = View.GONE
+        fab.addView(fabBadge, FrameLayout.LayoutParams(dp(20), dp(20), Gravity.TOP or Gravity.END))
+        fab.isClickable = true
+        fab.contentDescription = context.getString(R.string.drawer_more)
+        fab.elevation = dp(6).toFloat()
+        fab.setOnClickListener { showCentralMenu(fab, null, false, true) }
+        updateFab()
+        val lp = FrameLayout.LayoutParams(dp(52), dp(52), Gravity.BOTTOM or Gravity.END)
+        lp.setMargins(0, 0, dp(16), dp(20))
+        addView(fab, lp)
+    }
+
+    /** [molina-27i] Tombol aksen penuh + lencana jumlah saat mode pilih aktif; keadaan biasa: isi redup, bingkai aksen. */
+    private fun updateFab() {
+        val picking = selection.active
+        val bg = GradientDrawable()
+        bg.shape = GradientDrawable.OVAL
+        bg.setColor(if (picking) accent else ColorUtils.blendARGB(ContextCompat.getColor(context, UiR.color.molina_surface), accent, 0.18f))
+        bg.setStroke(dp(2), accent)
+        fab.background = RippleDrawable(ColorStateList.valueOf(ColorUtils.setAlphaComponent(Color.WHITE, 0x55)), bg, null)
+        fabGlyph.setTextColor(if (picking) Color.BLACK else white)
+        fabBadge.visibility = if (picking && selection.count > 0) View.VISIBLE else View.GONE
+        fabBadge.text = if (selection.count > 99) "99+" else selection.count.toString()
+    }
+
+    /** [molina-27i] Menu hamburger header: Favorit, lalu lokasi Internal / Debian / Sampah. */
+    private fun showNavMenu(anchor: View) {
+        val hasActions = actions !== FileManagerActions.None
+        val m = PopupMenu(context, anchor)
+        m.menu.add(0, 0, 0, "Favorit").isEnabled = hasActions
+        m.menu.add(0, 1, 1, "Internal")
+        m.menu.add(0, 2, 2, "Debian")
+        m.menu.add(0, 3, 3, "Sampah").isEnabled = hasActions
+        m.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                0 -> showFavorites()
+                1 -> setRoot(File(DrawerFs.INTERNAL_ROOT))
+                2 -> openDebian()
+                3 -> actions.openTrash()
+            }
+            true
+        }
+        m.gravity = Gravity.END
+        m.show()
+    }
+
+    /** [molina-27i] Rootfs Debian PRoot (filesDir/rootfs/debian, sama dengan DebianLayout) sebagai folder utama. */
+    private fun openDebian() {
+        val d = File(context.filesDir, "rootfs/debian")
+        if (!d.isDirectory) { toastText("Debian belum terpasang"); return }
+        setRoot(d)
+    }
+
+    /** [molina-27h] Ruang di bawah daftar untuk tombol melayang + geser baris: kanan = pilih, kiri = batal pilih. */
+    private fun setupEmbeddedList() {
+        list.clipToPadding = false
+        list.setPadding(0, 0, 0, dp(88))
+        if (actions === FileManagerActions.None) return
+        val swipePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        val cb = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean = false
+
+            override fun getSwipeThreshold(vh: RecyclerView.ViewHolder): Float = 0.3f
+
+            override fun onSwiped(vh: RecyclerView.ViewHolder, direction: Int) {
+                val pos = vh.bindingAdapterPosition
+                val path = adapter.currentList.getOrNull(pos)?.entry?.file?.path
+                if (path != null) swipeSelect(path, direction == ItemTouchHelper.RIGHT)
+                if (pos != RecyclerView.NO_POSITION) adapter.notifyItemChanged(pos) // baris kembali ke posisi semula
+            }
+
+            override fun onChildDraw(
+                c: Canvas, rv: RecyclerView, vh: RecyclerView.ViewHolder, dX: Float, dY: Float, state: Int, active: Boolean,
+            ) {
+                val v = vh.itemView
+                if (dX > 0f) {
+                    swipePaint.color = ColorUtils.setAlphaComponent(accent, 0x55)
+                    c.drawRect(v.left.toFloat(), v.top.toFloat(), v.left + dX, v.bottom.toFloat(), swipePaint)
+                } else if (dX < 0f) {
+                    swipePaint.color = ColorUtils.setAlphaComponent(danger, 0x55)
+                    c.drawRect(v.right + dX, v.top.toFloat(), v.right.toFloat(), v.bottom.toFloat(), swipePaint)
+                }
+                super.onChildDraw(c, rv, vh, dX, dY, state, active)
+            }
+        }
+        ItemTouchHelper(cb).attachToRecyclerView(list)
+    }
+
+    /** [molina-27h] Geser kanan = pilih (mode pilih aktif otomatis); geser kiri = batal pilih (hanya bila terpilih). */
+    private fun swipeSelect(path: String, on: Boolean) {
+        if (on) {
+            if (!selection.active) list.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+            selection.select(path)
+        } else {
+            if (!selection.active || !selection.contains(path)) return
+            selection.deselect(path)
+        }
+        selectionChanged()
     }
 
     // ---------- [molina-27e] pilih banyak dan Salin/Pindah/Tempel ----------
@@ -757,6 +887,18 @@ class FileDrawerView(
         headerDots = headerMenu // molina-27g3
         headerMenu.contentDescription = context.getString(R.string.drawer_more)
         headerMenu.setOnClickListener { showHeaderMenu(it) }
+        if (embedded) headerMenu.visibility = View.GONE // molina-27h: menu pindah ke tombol melayang
+        if (embedded) { // molina-27i: hamburger Favorit + Internal/Debian/Sampah
+            val burger = TextView(context)
+            burger.text = "\u2630"
+            burger.textSize = 18f
+            burger.setTextColor(white)
+            burger.gravity = Gravity.CENTER
+            burger.contentDescription = "Navigasi"
+            burger.background = RippleDrawable(ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x55)), null, ColorDrawable(Color.WHITE))
+            burger.setOnClickListener { showNavMenu(it) }
+            header.addView(burger, LinearLayout.LayoutParams(dp(34), dp(34)))
+        }
         header.addView(headerMenu, LinearLayout.LayoutParams(dp(34), dp(34)))
 
         val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
@@ -812,6 +954,7 @@ class FileDrawerView(
         list.adapter = adapter
         list.itemAnimator = null
         list.overScrollMode = View.OVER_SCROLL_NEVER
+        if (embedded) setupEmbeddedList() // molina-27h
         panel.addView(list, LinearLayout.LayoutParams(MATCH, 0, 1f))
 
         if (!embedded) panel.addView(divider(), LinearLayout.LayoutParams(MATCH, dp(1)))
@@ -926,6 +1069,7 @@ class FileDrawerView(
         empty.visibility = if (rows.isEmpty() && (found != null || state.children[root.path] != null)) View.VISIBLE else View.GONE
         renderChips(root)
         renderClip() // molina-27e
+        if (embedded) updateFab() // molina-27i
     }
 
     private fun renderChips(root: File) {
@@ -1063,7 +1207,7 @@ class FileDrawerView(
             h.more.setOnClickListener { showRowMenu(it, e) }
             // molina-27e: mode pilih menukar titik tiga dengan kotak centang; tekan lama = pilih
             val picking = embedded && selection.active
-            h.more.visibility = if (picking) View.GONE else View.VISIBLE
+            h.more.visibility = if (picking || embedded) View.GONE else View.VISIBLE // molina-27h: titik tiga baris dihapus di mode tertanam
             h.check.visibility = if (picking) View.VISIBLE else View.GONE
             h.check.isChecked = picking && selection.contains(e.file.path)
             // molina-27f: baris terpilih berlatar aksen (alpha 0x22, sama dengan bilah klip), ripple tetap
