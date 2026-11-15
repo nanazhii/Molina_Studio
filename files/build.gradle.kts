@@ -16,5 +16,6 @@ dependencies {
     implementation(project(":core-ui"))
     implementation(project(":core-log"))
     implementation(project(":core-storage"))
+    implementation(libs.androidx.exifinterface) // 26k5g:e03
     testImplementation(libs.junit)
 }

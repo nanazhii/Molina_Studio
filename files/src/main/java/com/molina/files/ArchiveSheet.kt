@@ -23,6 +23,7 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.exifinterface.media.ExifInterface // 26k5g:e05
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -39,6 +40,7 @@ import com.molina.core.storage.ConflictPolicy // 26k5d:e12
 import com.molina.core.storage.ExtractTarget
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix // 26k5g:e04
 import android.widget.FrameLayout
 import android.widget.ImageView
 import com.molina.core.storage.TreeNode
@@ -636,10 +638,34 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             val opts = BitmapFactory.Options().apply {
                 inSampleSize = ImagePreview.sampleSize(bounds.outWidth, bounds.outHeight, ImagePreview.MAX_EDGE)
             }
-            BitmapFactory.decodeFile(file.path, opts)
+            upright(BitmapFactory.decodeFile(file.path, opts), file) // 26k5g:e06
         }
     } catch (e: OutOfMemoryError) {
         null
+    }
+
+    /**
+     * Putar/cermin hasil decode sesuai tag orientasi EXIF (foto kamera tidak miring lagi). Gagal baca tag atau
+     * kehabisan memori = bitmap apa adanya. 26k5g:e08
+     */
+    private fun upright(src: Bitmap?, file: java.io.File): Bitmap? {
+        if (src == null) return null
+        val fix = try {
+            ExifOrientation.fix(ExifInterface(file.path).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifOrientation.NORMAL))
+        } catch (e: Exception) {
+            ExifOrientation.IDENTITY
+        }
+        if (fix.isIdentity) return src
+        return try {
+            val m = Matrix()
+            m.setRotate(fix.degrees.toFloat())
+            if (fix.flipX) m.postScale(-1f, 1f)
+            val out = Bitmap.createBitmap(src, 0, 0, src.width, src.height, m, true)
+            if (out !== src) src.recycle()
+            out
+        } catch (e: OutOfMemoryError) {
+            src
+        }
     }
 
     private fun extract(all: Boolean) {

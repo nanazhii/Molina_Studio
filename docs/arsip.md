@@ -101,7 +101,7 @@ breadcrumb, pencarian nama (maks. 200 hasil, ditandai bila dipotong), urut nama/
 - "Ekstrak ke..." dari lembar memasang klip arsip dengan `only` (bertahan saat rotasi lewat Bundle; maks. 500 kunci).
   Kata sandi TIDAK ikut klip: arsip bersandi diminta sandinya lewat alur kata sandi biasa saat Ekstrak di sini.
 - Gambar (jpg, jpeg, png, webp, bmp, gif) dipratinjau dalam aplikasi: decode `inSampleSize` hingga sisi terpanjang
-  2048 px, tanpa membaca rotasi EXIF; ada tombol "Buka di aplikasi lain". Hanya format yang bisa didecode
+  2048 px, rotasi EXIF dibaca dan diterapkan (androidx.exifinterface, foto kamera tegak) <!-- 26k5g:d01 -->; ada tombol "Buka di aplikasi lain". Hanya format yang bisa didecode
   BitmapFactory di Android 8 (jpg, jpeg, png, webp, bmp, gif); svg/ico/heic/avif tetap dibuka lewat aplikasi lain.
   Dialog pratinjau ditutup saat lembar dihancurkan (rotasi) supaya jendela tidak bocor. <!-- 26k5e:d03 -->
 - Menu ⋮ lembar: item "Ekstrak ke…" berlabel "Ekstrak terpilih ke…" bila ada pilihan dan "Ekstrak semua ke…" bila tidak

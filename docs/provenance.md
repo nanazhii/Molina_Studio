@@ -75,5 +75,6 @@ lama yang diikuti; kode mesin (`ArchiveEngine`, `ArchiveNames`) ditulis ulang un
 | `org.apache.commons:commons-compress` | 1.27.1 | 7z, tar, gz, bz2, xz | Apache-2.0 |
 | `org.tukaani:xz` | 1.10 | dekoder/enkoder xz dan LZMA2 | domain publik / 0BSD |
 
+- Modul `files` juga memakai `androidx.exifinterface:exifinterface` 1.3.7 (Apache-2.0; rotasi EXIF pratinjau gambar). Versi dipin di `gradle/libs.versions.toml`. <!-- 26k5g:d02 -->
 - [ ] Verifikasi lisensi tiap POM, lalu centang dan catat tanggalnya di sini.
 - [ ] Hasilkan `gradle/verification-metadata.xml` (workflow Verifikasi Gradle) setelah dependensi ini masuk.
