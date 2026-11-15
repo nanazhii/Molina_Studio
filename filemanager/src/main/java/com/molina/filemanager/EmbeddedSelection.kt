@@ -16,6 +16,17 @@ internal class EmbeddedSelection {
 
     fun contains(path: String): Boolean = path in items
 
+    /** [molina-27h] Geser kanan: pilih [path] (mode pilih otomatis aktif). */
+    fun select(path: String) {
+        active = true
+        items.add(path)
+    }
+
+    /** [molina-27h] Geser kiri: batal pilih [path]. Mode pilih tetap aktif walau kosong. */
+    fun deselect(path: String) {
+        items.remove(path)
+    }
+
     /** Masuk mode pilih; [first] (bila ada) langsung terpilih. */
     fun enter(first: String? = null) {
         active = true
