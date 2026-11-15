@@ -126,5 +126,17 @@ Penulis 7z commons-compress tidak bisa mengenkripsi, jadi 7z BERSANDI dibuat ole
 - Tautan simbolik dan berkas khusus dilewati (`-x!` untuk yang di dalam folder). Nama sumber berisi `*` atau `?` ditolak.
 - Kebijakan sandi 7z (`PasswordPolicy`): minimal 8 karakter, yang umum/berpola/lemah ditolak (`ArchiveFailure.WEAK_PASSWORD`).
   Berlaku untuk 7z saja; ZIP AES tidak berubah.
-- Prasyarat di perangkat: Debian terpasang dan `apt-get update && apt-get install -y --no-install-recommends 7zip`.
-- Belum: biner 7-Zip yang dibundel (lib7zz.so) seperti repo lama, tombol Buat acak, 7z bersandi untuk berkas > ruang staging.
+- Prasyarat di perangkat: tidak ada (7-Zip dibundel, lihat Patch 27r); Debian + paket `7zip` hanya cadangan bila biner bawaan tidak bisa dijalankan.
+- Belum: tombol Buat acak, 7z bersandi untuk berkas > ruang staging.
+
+### 7-Zip bawaan APK (Patch 27r)
+
+`lib7zz.so` (7-Zip 26.05, biner statis `7zzs` dari rilis resmi, dengan tiga `svc #0` set_robust_list diganti `nop` agar lolos
+seccomp Android 8) dibundel di `app/src/main/jniLibs/arm64-v8a/` dan diekstrak ke nativeLibraryDir
+(`packaging { jniLibs { useLegacyPackaging = true } }`). `DebianSevenZip` memakainya LANGSUNG (tanpa Debian) bila ada dan bisa
+dieksekusi; jalur Debian PRoot (27q) hanya cadangan. Jalur langsung memakai jalur host apa adanya (sumbernya berkas milik
+pengguna), sandi tetap hanya lewat stdin.
+
+- Pin: `scripts/sevenzip/pins.sha256`; `SevenZipBundlePinTest` (core-storage) menggagalkan CI bila hash `lib7zz.so` berubah.
+- Bangun ulang: `python3 scripts/sevenzip/build_lib7zz.py --out-lib ... --out-license ...` (tarball resmi + tambalan, hash dicek).
+- Lisensi: `app/src/main/assets/licenses/7zip-License.txt` (LGPL, sebagian BSD; dekoder RAR dengan batasan unRAR, tidak dipakai membuat RAR).

@@ -78,3 +78,11 @@ lama yang diikuti; kode mesin (`ArchiveEngine`, `ArchiveNames`) ditulis ulang un
 - Modul `files` juga memakai `androidx.exifinterface:exifinterface` 1.3.7 (Apache-2.0; rotasi EXIF pratinjau gambar). Versi dipin di `gradle/libs.versions.toml`. <!-- 26k5g:d02 -->
 - [ ] Verifikasi lisensi tiap POM, lalu centang dan catat tanggalnya di sini.
 - [ ] Hasilkan `gradle/verification-metadata.xml` (workflow Verifikasi Gradle) setelah dependensi ini masuk.
+
+## 7-Zip bawaan (Patch 27r)
+
+| Komponen | Versi | Asal | Lisensi |
+|---|---|---|---|
+| `lib7zz.so` | 7-Zip 26.05 | `7zzs` statis dari rilis resmi 7z2605-linux-arm64.tar.xz (ip7z/7zip), DIMODIFIKASI: tiga `svc #0` set_robust_list menjadi `nop` (seccomp Android 8), skrip `scripts/sevenzip/build_lib7zz.py` | GNU LGPL, sebagian BSD 2/3-clause, dekoder RAR dengan batasan unRAR (tidak dipakai membuat RAR) |
+
+Hash tarball, biner asli, dan hasil dipin di `scripts/sevenzip/pins.sha256` dan diperiksa `SevenZipBundlePinTest`. Teks lisensi: `app/src/main/assets/licenses/7zip-License.txt`.

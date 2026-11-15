@@ -1,4 +1,4 @@
-// molina-27q
+// molina-27q, molina-27r
 package com.molina.studio
 
 import android.content.Context
@@ -16,15 +16,21 @@ import java.io.InputStreamReader
 import java.nio.file.Files
 
 /**
- * [molina-27q] Penulis 7z bersandi: menjalankan `7z a` di Debian PRoot (meniru DebianArchive.create repo lama).
- * - Sandi hanya lewat stdin, tidak pernah di argumen proses atau log.
- * - Hanya folder sumber (/mnt/molina-in/<i>) dan staging (/mnt/molina-out) yang di-bind; bukan seluruh penyimpanan.
- * - Pembatalan mematikan proot (--kill-on-exit ikut mematikan 7z).
+ * Penulis 7z bersandi. Dua jalur, bawaan APK didahulukan:
+ * - [molina-27r] LANGSUNG: `lib7zz.so` (7-Zip 26.05 statis, ditambal seccomp Android 8) di nativeLibraryDir, tanpa Debian.
+ * - [molina-27q] CADANGAN: `7z a` di Debian PRoot (paket `7zip`), dipakai hanya bila biner bawaan tidak ada/tidak bisa dieksekusi.
+ * Dua jalur: sandi hanya lewat stdin, tidak pernah di argumen proses atau log; pembatalan mematikan prosesnya.
+ * Jalur Debian juga hanya mem-bind folder sumber (/mnt/molina-in/<i>) dan staging (/mnt/molina-out). Jalur langsung memakai
+ * jalur host apa adanya: sumbernya berkas milik pengguna sendiri (bukan arsip tak tepercaya), jadi tidak butuh sandbox bind.
  * Blocking: dipanggil dari dispatcher IO oleh ArchiveEngine.
  */
 class DebianSevenZip(private val context: Context) : SevenZipWriter {
 
     private fun layout() = DebianLayout(context.filesDir)
+
+    /** [molina-27r] Biner bawaan APK; null bila tidak ada atau tidak bisa dieksekusi (mis. paket tanpa ekstraksi native). */
+    private fun bundled(): File? =
+        File(context.applicationInfo.nativeLibraryDir, BUNDLED_LIB).takeIf { it.isFile && it.canExecute() }
 
     private fun binary(l: DebianLayout): String? = SevenZipCommand.GUEST_BINARIES.firstOrNull { g ->
         val f = File(l.rootfsDir, g.removePrefix("/"))
@@ -32,15 +38,46 @@ class DebianSevenZip(private val context: Context) : SevenZipWriter {
     }
 
     override fun unavailableReason(): String? {
+        if (bundled() != null) return null
         val l = layout()
         if (!l.isReady()) return "Debian belum terpasang. Pasang lewat Terminal terlebih dulu."
         return if (binary(l) == null) SevenZipCommand.HINT_INSTALL else null
     }
 
     override fun create(job: SevenZipJob, cancelled: () -> Boolean, onPercent: (Int) -> Unit) {
+        val stdin = SevenZipCommand.stdinFor(job.password) ?: throw IOException("Kata sandi wajib")
+        val lib = bundled()
+        val pb = if (lib != null) directProcess(lib, job) else debianProcess(job)
+        execute(pb, stdin, cancelled, onPercent)
+    }
+
+    /** [molina-27r] `lib7zz.so` langsung dengan jalur host; lingkungan bersih, TMPDIR di cache aplikasi. */
+    private fun directProcess(lib: File, job: SevenZipJob): ProcessBuilder {
+        val sources = job.sources.map { f ->
+            val parent = (f.absoluteFile.parentFile ?: throw IOException("Folder sumber tidak ditemukan")).canonicalFile
+            File(parent, f.name).path
+        }
+        val out = File(job.stageDir.canonicalFile, job.output.name).path
+        val args = SevenZipCommand.createArgs(
+            out, sources, job.level, hasPassword = true, encryptNames = job.encryptNames, excludes = job.excludes,
+        )
+        val tmp = File(context.cacheDir, "7z-tmp").apply { mkdirs() }
+        val pb = ProcessBuilder(listOf(lib.path) + args).directory(context.filesDir).redirectErrorStream(true)
+        pb.environment().apply {
+            clear()
+            put("TMPDIR", tmp.absolutePath)
+            put("PATH", "/system/bin")
+            put("HOME", context.filesDir.absolutePath)
+            put("LANG", "C.UTF-8")
+            put("LC_ALL", "C.UTF-8")
+        }
+        return pb
+    }
+
+    /** [molina-27q] `7z a` di Debian PRoot dengan bind berlingkup (jalur cadangan). */
+    private fun debianProcess(job: SevenZipJob): ProcessBuilder {
         val l = layout()
         val bin = binary(l) ?: throw IOException(SevenZipCommand.HINT_INSTALL)
-        val stdin = SevenZipCommand.stdinFor(job.password) ?: throw IOException("Kata sandi wajib")
 
         // Satu bind per folder induk sumber; jalur di arsip tetap hanya nama item.
         val parents = LinkedHashMap<String, Int>()
@@ -77,10 +114,15 @@ class DebianSevenZip(private val context: Context) : SevenZipWriter {
                 ),
             )
         }
+        return pb
+    }
+
+    /** Menjalankan [pb], mengirim sandi lewat stdin, membaca progres, dan memetakan kode keluar ke [SevenZipFailure]. */
+    private fun execute(pb: ProcessBuilder, stdin: ByteArray, cancelled: () -> Boolean, onPercent: (Int) -> Unit) {
         val proc = try {
             pb.start()
         } catch (e: IOException) {
-            throw IOException("Gagal memulai proot", e)
+            throw IOException("Gagal memulai 7z", e)
         }
         val watcher = Thread {
             try {
@@ -126,5 +168,8 @@ class DebianSevenZip(private val context: Context) : SevenZipWriter {
 
     private companion object {
         const val TAIL_MAX = 8192
+
+        /** [molina-27r] Nama berkas di nativeLibraryDir; harus sama dengan `app/src/main/jniLibs/arm64-v8a/lib7zz.so`. */
+        const val BUNDLED_LIB = "lib7zz.so"
     }
 }
