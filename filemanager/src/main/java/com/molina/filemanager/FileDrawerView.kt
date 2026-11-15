@@ -153,6 +153,7 @@ class FileDrawerView(
     private val adapter = RowAdapter()
     private val fab = FrameLayout(context) // molina-27h: tombol melayang pojok kanan bawah (menu terpusat)
     private val fabGlyph = TextView(context) // molina-27i
+    private val bentoArt = BentoGlyphDrawable() // molina-27n: ikon bento 4 kotak
     private val fabBadge = TextView(context) // molina-27i: jumlah item terpilih
 
     init {
@@ -268,7 +269,7 @@ class FileDrawerView(
     )
 
     /**
-     * [molina-27m] Menu melayang akar dari tombol melayang: dua baris, \u22EE Aksi (menu titik tiga lengkap) dan
+     * [molina-27m][molina-27n] Menu melayang akar dari tombol bento: dua tombol ikon vertikal, \u22EE Aksi (menu titik tiga lengkap) dan
      * \u2630 Lokasi (Favorit, Internal, Debian, Sampah). Tanpa kelompok Lokasi (mode pilih, menu baris) langsung ke daftar aksi.
      */
     private fun showMenuRoot(anchor: View, entries: List<EmbeddedMenu.Entry>, onPick: (EmbeddedMenu.Action) -> Unit) {
@@ -279,32 +280,24 @@ class FileDrawerView(
         val col = flyoutColumn()
         fun rootRow(glyph: String, label: String, open: () -> Unit) {
             val r = LinearLayout(context)
-            r.orientation = LinearLayout.HORIZONTAL
-            r.gravity = Gravity.CENTER_VERTICAL
-            r.setPadding(dp(10), 0, dp(14), 0)
+            r.gravity = Gravity.CENTER
             val g = TextView(context)
             g.text = glyph
-            g.textSize = 20f
+            g.textSize = 24f
             g.gravity = Gravity.CENTER
-            g.setTextColor(accent)
-            r.addView(g, LinearLayout.LayoutParams(dp(22), dp(22)))
-            val t = TextView(context)
-            t.text = label
-            t.textSize = 14f
-            t.setTextColor(white)
-            val tlp = LinearLayout.LayoutParams(0, WRAP, 1f)
-            tlp.marginStart = dp(12)
-            r.addView(t, tlp)
+            g.setTextColor(white)
+            r.addView(g, LinearLayout.LayoutParams(MATCH, MATCH))
+            r.contentDescription = label
             r.background = flyoutRipple()
             r.setOnClickListener {
                 popup.dismiss()
                 open()
             }
-            col.addView(r, LinearLayout.LayoutParams(MATCH, dp(44)))
+            col.addView(r, LinearLayout.LayoutParams(MATCH, dp(48)))
         }
         rootRow("\u22EE", context.getString(R.string.menu_group_actions)) { showFlyout(anchor, acts, onPick) }
         rootRow("\u2630", context.getString(R.string.menu_group_locations)) { showFlyout(anchor, nav, onPick) }
-        popup = presentFlyout(anchor, col, dp(200))
+        popup = presentFlyout(anchor, col, dp(60)) // molina-27n: tombol ikon vertikal di atas FAB
     }
 
     private fun flyoutColumn(): LinearLayout {
@@ -394,8 +387,7 @@ class FileDrawerView(
 
     /** [molina-27h] Tombol melayang pojok kanan bawah: satu-satunya pintu menu titik tiga mode tertanam. */
     private fun setupFab() {
-        fabGlyph.text = "\u22EE" // molina-27m: tombol kembali ke titik tiga polos; hamburger ada di menu akar
-        fabGlyph.textSize = 24f
+        fabGlyph.background = bentoArt // molina-27n: ikon bento; menu akar berisi \u22EE dan \u2630
         fabGlyph.gravity = Gravity.CENTER
         fab.addView(fabGlyph, FrameLayout.LayoutParams(MATCH, MATCH))
         // molina-27i: lencana jumlah item terpilih di sudut kanan atas tombol
@@ -427,7 +419,7 @@ class FileDrawerView(
         bg.setColor(if (picking) accent else ColorUtils.blendARGB(ContextCompat.getColor(context, UiR.color.molina_surface), accent, 0.18f))
         bg.setStroke(dp(2), accent)
         fab.background = RippleDrawable(ColorStateList.valueOf(ColorUtils.setAlphaComponent(Color.WHITE, 0x55)), bg, null)
-        fabGlyph.setTextColor(if (picking) Color.BLACK else white) // molina-27m
+        bentoArt.setColor(if (picking) Color.BLACK else white) // molina-27n
         fabBadge.visibility = if (picking && selection.count > 0) View.VISIBLE else View.GONE
         fabBadge.text = if (selection.count > 99) "99+" else selection.count.toString()
     }
@@ -979,7 +971,7 @@ class FileDrawerView(
         back.setOnClickListener {
             if (embedded && selection.active) cancelSelection() else currentRoot().parentFile?.let { setRoot(it) } // molina-27e
         }
-        header.addView(back, LinearLayout.LayoutParams(dp(if (embedded) 40 else 30), dp(if (embedded) 40 else 30))) // molina-27j
+        header.addView(back, LinearLayout.LayoutParams(dp(30), dp(30))) // molina-27j/27n: header tipis
 
         // [HEADER-FILL] kotak path melebar (bobot 1) sampai tombol titik tiga
         val box = LinearLayout(context)
@@ -1005,12 +997,12 @@ class FileDrawerView(
         box.addView(pathText)
         if (embedded) { // molina-27j: satu baris breadcrumb "Internal \u203A Molina \u203A ...", ujung kanan selalu terlihat
             title.typeface = Typeface.DEFAULT
-            title.textSize = 15f
+            title.textSize = 13f // molina-27n
             title.ellipsize = TextUtils.TruncateAt.START
             pathText.visibility = View.GONE
             box.setPadding(dp(12), 0, dp(12), 0)
         }
-        val boxLp = LinearLayout.LayoutParams(0, dp(if (embedded) 40 else 34), 1f) // molina-27j
+        val boxLp = LinearLayout.LayoutParams(0, dp(if (embedded) 30 else 34), 1f) // molina-27j/27n
         boxLp.marginStart = dp(4)
         boxLp.marginEnd = dp(4)
         header.addView(box, boxLp)
@@ -1023,7 +1015,7 @@ class FileDrawerView(
         header.addView(headerMenu, LinearLayout.LayoutParams(dp(34), dp(34)))
 
         val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
-        headerLp.setMargins(dp(6), dp(6), dp(6), dp(4))
+        if (embedded) headerLp.setMargins(dp(6), dp(3), dp(6), dp(3)) else headerLp.setMargins(dp(6), dp(6), dp(6), dp(4)) // molina-27n
         panel.addView(header, headerLp)
         if (embedded) panel.addView(divider(), LinearLayout.LayoutParams(MATCH, dp(1))) // molina-27j: garis pemisah di bawah header
 
@@ -1130,6 +1122,7 @@ class FileDrawerView(
     private fun setRoot(dir: File) {
         if (searchOn) closeSearch() // molina-27g3
         state.root = dir
+        focusPath = null // molina-27n
         state.expanded.clear()
         rebuild()
         load(dir)
@@ -1166,6 +1159,7 @@ class FileDrawerView(
     private fun afterChange(parent: File?, oldPath: String) {
         if (searchOn) scheduleSearch(150L) // molina-27g3
         state.expanded.removeAll { it == oldPath || it.startsWith("$oldPath/") }
+        if (focusPath?.let { it == oldPath || it.startsWith("$oldPath/") } == true) focusPath = null // molina-27n
         state.children.keys.filter { it == oldPath || it.startsWith("$oldPath/") }.forEach { state.children.remove(it) }
         if (parent != null) load(parent) else rebuild()
     }
@@ -1176,7 +1170,7 @@ class FileDrawerView(
         val rows = if (found != null) DrawerSort.sorted(found, sort).map { DrawerRow(it, 0, false) } else DrawerFs.flatten(state, root, sort)
         adapter.submitList(rows, onCommitted)
         headerDots?.statusColor = if (embedded && (searchOn || sort != DrawerSort.DEFAULT)) accent else null
-        title.text = if (embedded) crumbText(root) else root.name.ifEmpty { "/" } // molina-27j
+        title.text = if (embedded) crumbText(focusOrRoot(root)) else root.name.ifEmpty { "/" } // molina-27j/27n
         pathText.text = DrawerFs.displayPath(root.path)
         host.onRootChanged(root.path)
         val canUp = root.parentFile != null && vols.none { it.path == root.path }
@@ -1192,6 +1186,14 @@ class FileDrawerView(
         renderChips(root)
         renderClip() // molina-27e
         if (embedded) updateFab() // molina-27i
+    }
+
+    /** [molina-27n] Item terakhir yang diketuk di pohon; header menampilkan path-nya. Null = root aktif. */
+    private var focusPath: String? = null
+
+    private fun focusOrRoot(root: File): File {
+        val fp = focusPath ?: return root
+        return if (fp == root.path || fp.startsWith(root.path + "/")) File(fp) else root
     }
 
     /** [molina-27j] Breadcrumb "Internal \u203A Molina \u203A Film": pemisah redup, segmen putih. */
@@ -1239,6 +1241,7 @@ class FileDrawerView(
             if (selection.active) toggleSelected(f.path) else openFromSearch(row.entry)
             return
         }
+        if (embedded && !(selection.active && !row.entry.isDir)) focusPath = f.path // molina-27n: header mengikuti ketukan
         if (row.entry.isDir) {
             if (row.expanded) {
                 state.expanded.remove(f.path)
@@ -1251,6 +1254,8 @@ class FileDrawerView(
             close()
         } else if (embedded && selection.active) { // molina-27e: berkas = ganti status pilih; folder tetap buka/tutup
             toggleSelected(f.path)
+        } else if (embedded) {
+            rebuild() // molina-27n: berkas diketuk, perbarui path header
         }
     }
 
