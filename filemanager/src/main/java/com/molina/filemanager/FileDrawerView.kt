@@ -176,7 +176,7 @@ class FileDrawerView(
      * menu header (target = null, berlaku untuk folder aktif), dan menu header saat mode pilih (target = item terpilih).
      */
     private fun showCentralMenu(anchor: View, target: File?, targetIsDir: Boolean, fromHeader: Boolean) {
-        val base = currentRoot()
+        val base = activeDir() // molina-27o: menu header bekerja pada folder yang tampil di header, bukan root
         val picking = selection.active && fromHeader
         val targets: List<File> = when {
             picking -> EmbeddedSelection.topLevel(selection.paths).map { File(it) }
@@ -379,7 +379,7 @@ class FileDrawerView(
         popup.isOutsideTouchable = true
         popup.elevation = dp(10).toFloat()
         popup.showAsDropDown(anchor, 0, -(anchor.height + h + dp(8)), Gravity.END) // rata kanan, membuka ke atas dari tombol melayang
-        scroll.post { scroll.awakenScrollBars() }
+        scroll.isScrollbarFadingEnabled = col.measuredHeight <= avail // molina-27o: awakenScrollBars() protected; bilah tetap tampak bila isi meluap
         return popup
     }
 
@@ -893,7 +893,7 @@ class FileDrawerView(
     private fun toastText(s: String) = Toast.makeText(context, s, Toast.LENGTH_SHORT).show()
 
     /** [molina-27c] Dialog nama polos seperti promptCreate di Penjelajah; berkas baru tidak dibuka di nano. */
-    private fun promptCreateEmbedded(folder: Boolean, parent: File = currentRoot()) {
+    private fun promptCreateEmbedded(folder: Boolean, parent: File = activeDir()) { // molina-27o
         MolinaDialog.input(
             context,
             title = context.getString(if (folder) R.string.drawer_new_dir else R.string.drawer_new_file),
@@ -969,7 +969,7 @@ class FileDrawerView(
         ring.setStroke(dp(1), dim)
         if (embedded) { back.text = ""; back.background = backArt } else back.background = ring // molina-27j
         back.setOnClickListener {
-            if (embedded && selection.active) cancelSelection() else currentRoot().parentFile?.let { setRoot(it) } // molina-27e
+            if (embedded && selection.active) cancelSelection() else goUp() // molina-27e/27o
         }
         header.addView(back, LinearLayout.LayoutParams(dp(30), dp(30))) // molina-27j/27n: header tipis
 
@@ -1045,7 +1045,7 @@ class FileDrawerView(
         clipPaste.setTextColor(accent)
         clipPaste.gravity = Gravity.CENTER
         clipPaste.setPadding(dp(12), 0, dp(12), 0)
-        clipPaste.setOnClickListener { if (actions.archiveClipCount() > 0) extractClipHere(currentRoot()) else pasteInto(currentRoot()) } // molina-27f
+        clipPaste.setOnClickListener { if (actions.archiveClipCount() > 0) extractClipHere(activeDir()) else pasteInto(activeDir()) } // molina-27f/27o
         clipBar.addView(clipPaste, LinearLayout.LayoutParams(WRAP, MATCH))
         clipClear.text = "\u2715"
         clipClear.textSize = 14f
@@ -1173,7 +1173,7 @@ class FileDrawerView(
         title.text = if (embedded) crumbText(focusOrRoot(root)) else root.name.ifEmpty { "/" } // molina-27j/27n
         pathText.text = DrawerFs.displayPath(root.path)
         host.onRootChanged(root.path)
-        val canUp = root.parentFile != null && vols.none { it.path == root.path }
+        val canUp = (root.parentFile != null && vols.none { it.path == root.path }) || (embedded && focusOrRoot(root).path != root.path) // molina-27o
         val picking = embedded && selection.active // molina-27e: ‹ jadi ✕ dan judul menghitung item terpilih
         back.isEnabled = canUp || picking
         back.alpha = if (canUp || picking) 1f else 0.38f
@@ -1191,9 +1191,27 @@ class FileDrawerView(
     /** [molina-27n] Item terakhir yang diketuk di pohon; header menampilkan path-nya. Null = root aktif. */
     private var focusPath: String? = null
 
-    private fun focusOrRoot(root: File): File {
-        val fp = focusPath ?: return root
-        return if (fp == root.path || fp.startsWith(root.path + "/")) File(fp) else root
+    private fun focusOrRoot(root: File): File = File(FocusNav.effective(root.path, focusPath)) // molina-27o
+
+    /** [molina-27o] Folder yang dipakai Folder baru, Tempel, Properti: item di header bila folder, jika berkas maka induknya. */
+    private fun activeDir(): File {
+        val root = currentRoot()
+        if (!embedded) return root
+        return File(FocusNav.activeDir(root.path, focusPath) { File(it).isDirectory })
+    }
+
+    /** [molina-27o] Tombol \u2039: naik dari item di header; baru setelah header di root, root berpindah ke folder induknya. */
+    private fun goUp() {
+        val root = currentRoot()
+        if (embedded) {
+            val t = FocusNav.up(root.path, focusPath)
+            if (t != FocusNav.UP_AT_ROOT) {
+                focusPath = if (t == FocusNav.ROOT_FOCUS) null else t
+                rebuild()
+                return
+            }
+        }
+        root.parentFile?.takeIf { vols.none { v -> v.path == root.path } }?.let { setRoot(it) }
     }
 
     /** [molina-27j] Breadcrumb "Internal \u203A Molina \u203A Film": pemisah redup, segmen putih. */
@@ -1292,7 +1310,8 @@ class FileDrawerView(
             row.addView(arrow, LinearLayout.LayoutParams(dp(14), WRAP))
 
             val icon = TreeIconView(ctx)
-            val iconLp = LinearLayout.LayoutParams(dp(20), dp(20))
+            val iconSize = if (embedded) 26 else 20 // molina-27o: ikon Berkas lebih besar
+            val iconLp = LinearLayout.LayoutParams(dp(iconSize), dp(iconSize))
             iconLp.marginStart = dp(4)
             iconLp.marginEnd = dp(8)
             row.addView(icon, iconLp)
@@ -1341,6 +1360,7 @@ class FileDrawerView(
             h.icon.isDir = e.isDir
             val kind = if (e.isDir) FileKind.OTHER else FileKind.of(e.name)
             h.icon.kind = kind
+            h.icon.label = if (embedded && !e.isDir) ExtLabel.of(e.name) else "" // molina-27o
             h.name.setTextColor(kind.nameColor)
             h.name.text = if (searchEntries != null) searchLabel(e) else e.name // molina-27g3
             h.star.visibility = if (e.isDir && e.file.path in favPaths) View.VISIBLE else View.GONE // molina-27d2
@@ -1830,8 +1850,8 @@ private class DrawerPanel(
 }
 
 /**
- * [FILE-KIND] Ikon kecil: folder (kuning) atau berkas. Berkas diwarnai dan diberi lambang menurut [FileKind]
- * (skrip, kode, markup, data, gambar, video, audio, subtitle, arsip, teks); jenis tak dikenal tetap garis putih.
+ * [molina-27o] Ikon baris pohon. Folder: map kuning-amber berlapis (panel belakang + panel depan bergradien dan corak garis
+ * diagonal tipis). Berkas: lembar dengan lambang jenis di atas dan pita ekstensi berwarna di bawah (mis. KT, PY, SH, MKV).
  * Digambar manual agar tanpa aset tambahan.
  */
 internal class TreeIconView(context: Context) : View(context) {
@@ -1845,11 +1865,21 @@ internal class TreeIconView(context: Context) : View(context) {
             if (field != value) { field = value; invalidate() }
         }
 
+    /** Teks pita ekstensi (maks 4 huruf, huruf besar); kosong = tanpa pita (gaya lama). */
+    var label: String = ""
+        set(value) {
+            if (field != value) { field = value; invalidate() }
+        }
+
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
     private val line = Paint(Paint.ANTI_ALIAS_FLAG)
     private val glyph = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val stripe = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val text = Paint(Paint.ANTI_ALIAS_FLAG)
     private val rect = RectF()
     private val path = Path()
+    private val clip = Path()
+    private var frontShader: android.graphics.LinearGradient? = null
 
     init {
         fill.style = Paint.Style.FILL
@@ -1860,43 +1890,107 @@ internal class TreeIconView(context: Context) : View(context) {
         glyph.strokeWidth = 1.3f * resources.displayMetrics.density
         glyph.strokeJoin = Paint.Join.ROUND
         glyph.strokeCap = Paint.Cap.ROUND
+        stripe.style = Paint.Style.STROKE
+        stripe.strokeWidth = 1.2f * resources.displayMetrics.density
+        stripe.color = 0x40995F00 // garis cokelat-amber tipis di atas gradien
+        text.typeface = Typeface.DEFAULT_BOLD
+        text.textAlign = Paint.Align.CENTER
+        text.color = 0xFF10141A.toInt()
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        frontShader = android.graphics.LinearGradient(
+            0f, h * 0.32f, 0f, h * 0.92f, 0xFFFFE082.toInt(), 0xFFFFB300.toInt(), android.graphics.Shader.TileMode.CLAMP,
+        )
     }
 
     override fun onDraw(canvas: Canvas) {
         val w = width.toFloat()
         val h = height.toFloat()
+        if (isDir) drawFolder(canvas, w, h) else drawFile(canvas, w, h)
+    }
+
+    private fun drawFolder(canvas: Canvas, w: Float, h: Float) {
         val r = h * 0.1f
-        if (isDir) {
-            fill.color = 0xFFFFC107.toInt()
-            rect.set(0f, h * 0.18f, w * 0.45f, h * 0.5f)
-            canvas.drawRoundRect(rect, r, r, fill)
-            rect.set(0f, h * 0.3f, w, h * 0.88f)
-            canvas.drawRoundRect(rect, r, r, fill)
-        } else {
-            val c = kind.color
-            fill.color = c
-            line.color = c
-            glyph.color = c
-            path.reset()
-            path.moveTo(w * 0.2f, h * 0.08f)
-            path.lineTo(w * 0.62f, h * 0.08f)
-            path.lineTo(w * 0.82f, h * 0.28f)
-            path.lineTo(w * 0.82f, h * 0.92f)
-            path.lineTo(w * 0.2f, h * 0.92f)
-            path.close()
-            if (kind != FileKind.OTHER) {
-                fill.alpha = 0x2A // latar tipis sewarna jenis berkas
-                canvas.drawPath(path, fill)
-                fill.alpha = 0xFF
-            }
-            canvas.drawPath(path, line)
-            path.reset()
-            path.moveTo(w * 0.62f, h * 0.08f)
-            path.lineTo(w * 0.62f, h * 0.28f)
-            path.lineTo(w * 0.82f, h * 0.28f)
-            canvas.drawPath(path, line)
-            drawGlyph(canvas, w, h)
+        // panel belakang (lebih gelap) dengan tab di kiri atas
+        fill.color = 0xFFE59A00.toInt()
+        rect.set(w * 0.02f, h * 0.10f, w * 0.46f, h * 0.42f)
+        canvas.drawRoundRect(rect, r, r, fill)
+        rect.set(w * 0.02f, h * 0.22f, w * 0.98f, h * 0.88f)
+        canvas.drawRoundRect(rect, r, r, fill)
+        // panel depan: gradien + corak garis diagonal, dipotong mengikuti sudut membulat
+        rect.set(w * 0.02f, h * 0.32f, w * 0.98f, h * 0.92f)
+        fill.shader = frontShader
+        canvas.drawRoundRect(rect, r, r, fill)
+        fill.shader = null
+        clip.reset()
+        clip.addRoundRect(rect, r, r, Path.Direction.CW)
+        canvas.save()
+        canvas.clipPath(clip)
+        val gap = h * 0.2f
+        var x = -h
+        while (x < w) {
+            canvas.drawLine(x, rect.bottom, x + rect.height(), rect.top, stripe)
+            x += gap
         }
+        canvas.restore()
+        // kilau tipis di tepi atas panel depan
+        line.color = 0x99FFFFFF.toInt()
+        line.strokeWidth = 1f * resources.displayMetrics.density
+        canvas.drawLine(rect.left + r, rect.top + line.strokeWidth, rect.right - r, rect.top + line.strokeWidth, line)
+        line.strokeWidth = 1.5f * resources.displayMetrics.density
+    }
+
+    private fun drawFile(canvas: Canvas, w: Float, h: Float) {
+        val c = kind.color
+        fill.color = c
+        line.color = c
+        glyph.color = c
+        // badan lembar (lebih lebar dari versi lama agar pita ekstensi terbaca)
+        path.reset()
+        path.moveTo(w * 0.14f, h * 0.06f)
+        path.lineTo(w * 0.60f, h * 0.06f)
+        path.lineTo(w * 0.86f, h * 0.30f)
+        path.lineTo(w * 0.86f, h * 0.94f)
+        path.lineTo(w * 0.14f, h * 0.94f)
+        path.close()
+        if (kind != FileKind.OTHER) {
+            fill.alpha = 0x2A // latar tipis sewarna jenis berkas
+            canvas.drawPath(path, fill)
+            fill.alpha = 0xFF
+        }
+        canvas.drawPath(path, line)
+        path.reset()
+        path.moveTo(w * 0.60f, h * 0.06f)
+        path.lineTo(w * 0.60f, h * 0.30f)
+        path.lineTo(w * 0.86f, h * 0.30f)
+        canvas.drawPath(path, line)
+        // lambang jenis: digeser/diperkecil ke area di atas pita
+        val hasBand = label.isNotEmpty()
+        if (hasBand) {
+            canvas.save()
+            canvas.translate(0f, -h * 0.22f)
+            canvas.scale(0.7f, 0.7f, w * 0.5f, h * 0.64f)
+        }
+        drawGlyph(canvas, w, h)
+        if (hasBand) canvas.restore()
+        if (hasBand) drawBand(canvas, w, h)
+    }
+
+    /** Pita ekstensi di dasar lembar: latar warna jenis, huruf gelap tebal, diperkecil bila terlalu lebar. */
+    private fun drawBand(canvas: Canvas, w: Float, h: Float) {
+        fill.color = if (kind == FileKind.OTHER) 0xFF9AA0A8.toInt() else kind.color
+        rect.set(w * 0.14f, h * 0.62f, w * 0.86f, h * 0.94f)
+        canvas.drawRect(rect, fill)
+        text.textSize = h * 0.27f
+        val maxW = w * 0.64f
+        val mw = text.measureText(label)
+        if (mw > maxW) text.textSize = text.textSize * maxW / mw
+        val fm = text.fontMetrics
+        canvas.drawText(label, w * 0.5f, rect.centerY() - (fm.ascent + fm.descent) / 2f, text)
+        line.color = fill.color
+        canvas.drawRect(rect, line) // sisi bawah/samping mengikuti garis tepi lembar
     }
 
     /** Lambang kecil di badan berkas (di bawah lipatan sudut). */
