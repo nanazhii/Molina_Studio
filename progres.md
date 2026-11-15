@@ -176,3 +176,4 @@
 - [ ] 26k-8: 7z bersandi + 7z terpecah, menunggu keputusan (Debian p7zip / 7-Zip-JBinding / tetap fail-closed)
 - [x] fix FileKind NAME_TINT: galat CI core-ui FileKind.kt:25 (companion di inisialisasi enum, asal Patch 35); konstanta dipindah ke level berkas
 - [ ] Verifikasi CI ulang: setelah :core-ui lolos, :core-storage dan :files baru dikompilasi (galat 26k-1..3 mungkin muncul)
+- Patch 26k-4: sudah di-push (5d22c38) tetapi CI merah karena KDoc ganda di ArchiveEngine.kt; perbaikan hapus-duplikat disiapkan, menunggu CI hijau + Uji JVM
