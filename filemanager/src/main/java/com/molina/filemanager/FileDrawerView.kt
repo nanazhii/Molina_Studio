@@ -127,6 +127,18 @@ class FileDrawerView(
     private var sort: DrawerSort = if (embedded) loadSort() else DrawerSort.DEFAULT // molina-27g2
     private var flashPath: String? = null // molina-27g2: baris yang sedang berkilat
     private var flashClear: Runnable? = null // molina-27g2
+    private var headerDots: HeaderDotsView? = null // molina-27g3: titik aksen di ⋮ bila urutan/pencarian bukan bawaan
+    private var searchOn = false // molina-27g3
+    private var searchDeep = false
+    private var searchQuery = ""
+    private var searchEntries: List<DrawerEntry>? = null // hasil Cari; null = tampilan pohon
+    private var searchRel: Map<String, String> = emptyMap() // path -> folder induk relatif (hasil sampai subfolder)
+    private var searchInfoText = ""
+    private var searchJob: kotlinx.coroutines.Job? = null
+    private val searchBar = LinearLayout(context)
+    private val searchField = EditText(context)
+    private val searchDeepBtn = TextView(context)
+    private val searchInfo = TextView(context)
     private val clipBar = LinearLayout(context)
     private val clipText = TextView(context)
     private val clipPaste = TextView(context)
@@ -187,6 +199,7 @@ class FileDrawerView(
                 shareAvailable = managed && (if (picking) targets.any { !it.isDirectory } else !targetIsDir), // molina-27g
                 propsAvailable = if (picking) managed else hasActions, // molina-27g
                 sortLabel = if (embedded && fromHeader) sort.label else "", // molina-27g2
+                searchLabel = if (embedded && fromHeader) (if (searchOn) "Tutup pencarian" else "Cari\u2026") else "", // molina-27g3
             ),
         )
         val menu = PopupMenu(context, anchor)
@@ -214,6 +227,7 @@ class FileDrawerView(
                     if (!(hasActions && actions.properties(propsTargets))) showInfo(target ?: base, if (target == null) true else targetIsDir)
                 EmbeddedMenu.Action.SHARE -> actions.share(targets) // molina-27g
                 EmbeddedMenu.Action.SORT -> showSortMenu(anchor) // molina-27g2
+                EmbeddedMenu.Action.SEARCH -> if (searchOn) closeSearch() else openSearch() // molina-27g3
                 EmbeddedMenu.Action.TRASH -> if (picking) trashMany(targets) else target?.let { trashFlow(it) }
                 EmbeddedMenu.Action.DELETE_PERMANENT -> if (picking) deleteManyDialog(targets) else target?.let { deleteDialog(it) }
                 EmbeddedMenu.Action.FAVORITES_LIST -> showFavorites()
@@ -252,7 +266,11 @@ class FileDrawerView(
 
     /** Tutup mode pilih (tombol Back / ✕ di header). true bila ada mode pilih yang ditutup. */
     fun cancelSelection(): Boolean {
-        if (!selection.active) return false
+        if (!selection.active) { // molina-27g3: tanpa mode pilih, Back menutup pencarian bila terbuka
+            if (!searchOn) return false
+            closeSearch()
+            return true
+        }
         selection.exit()
         selectionChanged()
         return true
@@ -262,7 +280,7 @@ class FileDrawerView(
     private fun selectionChanged() {
         rebuild()
         adapter.notifyDataSetChanged()
-        onSelectionChanged(selection.active)
+        onSelectionChanged(selection.active || searchOn) // molina-27g3: Back juga menutup pencarian
     }
 
     private fun setClip(mode: TransferMode, files: List<File>) {
@@ -298,20 +316,177 @@ class FileDrawerView(
      * [molina-27g0] Buka [dir]: leluhur dari folder utama dimuat di IO dan dibentangkan, lalu baris digulir ke [dir].
      * [dir] di luar folder utama menjadi folder utama baru. Dipakai Tempel dan aksi Buka setelah Ekstrak.
      */
-    fun openDirectory(dir: File) {
+    fun openDirectory(dir: File, reveal: File = dir) { // molina-27g3: [reveal] = baris yang digulir dan dikilatkan
         scope.launch {
             if (!withContext(Dispatchers.IO) { dir.isDirectory }) return@launch
+            if (searchOn) closeSearch() // molina-27g3
             val root = currentRoot()
             val chain = DrawerFs.chainTo(root, dir)
             if (chain == null) { setRoot(dir); return@launch }
-            if (chain.isEmpty()) { refresh(); return@launch }
+            if (chain.isEmpty()) { if (reveal == dir) refresh() else rebuild(Runnable { revealRow(reveal) }); return@launch } // molina-27g3
             val loaded = withContext(Dispatchers.IO) {
                 (listOf(root) + chain).associate { it.path to (DrawerFs.list(it) ?: emptyList()) }
             }
             state.children.putAll(loaded)
             chain.forEach { state.expanded.add(it.path) }
-            rebuild(Runnable { revealRow(dir) }) // molina-27g2: gulir + kilatan setelah daftar baru terpasang
+            rebuild(Runnable { revealRow(reveal) }) // molina-27g2: gulir + kilatan setelah daftar baru terpasang
         }
+    }
+
+    // ---------- [molina-27g3] Cari ----------
+
+    private fun buildSearchBar() {
+        searchBar.orientation = LinearLayout.VERTICAL
+        searchBar.visibility = View.GONE
+        val row = LinearLayout(context)
+        row.orientation = LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER_VERTICAL
+        row.setPadding(dp(10), dp(4), dp(4), dp(4))
+        searchField.hint = "Cari nama\u2026"
+        searchField.setHintTextColor(dim)
+        searchField.setTextColor(white)
+        searchField.textSize = 13f
+        searchField.typeface = Typeface.MONOSPACE
+        searchField.isSingleLine = true
+        searchField.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        searchField.imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH
+        searchField.background = null
+        searchField.setPadding(dp(4), 0, dp(4), 0)
+        searchField.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: android.text.Editable?) {
+                searchQuery = s?.toString().orEmpty().trim()
+                scheduleSearch(SEARCH_DEBOUNCE_MS)
+            }
+        })
+        searchField.setOnEditorActionListener { v, _, _ -> hideSearchKeyboard(v); true }
+        row.addView(searchField, LinearLayout.LayoutParams(0, dp(36), 1f))
+
+        searchDeepBtn.text = "Sub"
+        searchDeepBtn.textSize = 12f
+        searchDeepBtn.typeface = Typeface.DEFAULT_BOLD
+        searchDeepBtn.gravity = Gravity.CENTER
+        searchDeepBtn.setPadding(dp(10), 0, dp(10), 0)
+        searchDeepBtn.contentDescription = "Cari sampai subfolder"
+        searchDeepBtn.setOnClickListener {
+            searchDeep = !searchDeep
+            renderSearchBar()
+            scheduleSearch(0L)
+        }
+        row.addView(searchDeepBtn, LinearLayout.LayoutParams(WRAP, dp(36)))
+
+        val close = TextView(context)
+        close.text = "\u2715"
+        close.textSize = 16f
+        close.setTextColor(white)
+        close.gravity = Gravity.CENTER
+        close.contentDescription = "Tutup pencarian"
+        close.setOnClickListener { closeSearch() }
+        row.addView(close, LinearLayout.LayoutParams(dp(40), dp(36)))
+        searchBar.addView(row, LinearLayout.LayoutParams(MATCH, WRAP))
+
+        searchInfo.textSize = 11f
+        searchInfo.setTextColor(dim)
+        searchInfo.setPadding(dp(14), 0, dp(10), dp(4))
+        searchInfo.visibility = View.GONE
+        searchBar.addView(searchInfo, LinearLayout.LayoutParams(MATCH, WRAP))
+        searchBar.addView(divider(), LinearLayout.LayoutParams(MATCH, dp(1)))
+        renderSearchBar()
+    }
+
+    private fun renderSearchBar() {
+        searchDeepBtn.setTextColor(if (searchDeep) accent else dim)
+        searchDeepBtn.background = if (searchDeep) ColorDrawable(ColorUtils.setAlphaComponent(accent, MATCH_ALPHA)) else null
+        searchInfo.text = searchInfoText
+        searchInfo.visibility = if (searchInfoText.isEmpty()) View.GONE else View.VISIBLE
+    }
+
+    private fun hideSearchKeyboard(v: View) {
+        (context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)?.hideSoftInputFromWindow(v.windowToken, 0)
+    }
+
+    private fun openSearch() {
+        searchOn = true
+        searchBar.visibility = View.VISIBLE
+        renderSearchBar()
+        rebuild()
+        onSelectionChanged(selection.active || searchOn)
+        searchField.post {
+            searchField.requestFocus()
+            (context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)?.showSoftInput(searchField, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+
+    private fun closeSearch() {
+        searchOn = false // lebih dulu, agar perubahan teks di bawah tidak memicu pencarian
+        searchJob?.cancel()
+        searchEntries = null
+        searchRel = emptyMap()
+        searchQuery = ""
+        searchInfoText = ""
+        hideSearchKeyboard(searchField)
+        searchField.setText("")
+        searchBar.visibility = View.GONE
+        renderSearchBar()
+        rebuild()
+        onSelectionChanged(selection.active)
+    }
+
+    private fun scheduleSearch(delayMs: Long) {
+        if (!searchOn) return
+        searchJob?.cancel()
+        searchJob = scope.launch {
+            if (delayMs > 0) kotlinx.coroutines.delay(delayMs)
+            runSearch(searchQuery, searchDeep)
+        }
+    }
+
+    /** Folder Molina: lewat [FileManagerActions.search] (EntryLister, bisa sampai subfolder). Lainnya: saring isi folder utama yang sudah dimuat. */
+    private suspend fun runSearch(q: String, deep: Boolean) {
+        if (q.isEmpty()) {
+            searchEntries = null
+            searchRel = emptyMap()
+            searchInfoText = ""
+            renderSearchBar()
+            rebuild()
+            return
+        }
+        val root = currentRoot()
+        searchInfoText = "Mencari\u2026"
+        renderSearchBar()
+        val outcome = if (actions !== FileManagerActions.None) actions.search(root, q, deep) else null
+        if (!searchOn || q != searchQuery) return // kueri berubah atau pencarian ditutup saat menunggu
+        if (outcome != null) {
+            searchEntries = outcome.hits.map { DrawerEntry(it.file, it.isDir, it.size, it.modified) }
+            searchRel = outcome.hits.mapNotNull { h -> h.relDir?.let { h.file.path to it } }.toMap()
+            searchInfoText = SearchMatch.info(outcome.hits.size, outcome.truncated, deep)
+        } else {
+            val local = state.children[root.path].orEmpty().filter { SearchMatch.matches(it.name, q) }
+            searchEntries = local
+            searchRel = emptyMap()
+            val base = SearchMatch.info(local.size, false, false)
+            searchInfoText = if (deep) "Subfolder hanya di folder Molina. $base" else base
+        }
+        renderSearchBar()
+        rebuild()
+    }
+
+    /** Nama hasil dengan teks cocok berlatar aksen (alpha sama dengan seleksi/klip/kilatan) dan tebal; folder induk relatif redup di belakang nama. */
+    private fun searchLabel(e: DrawerEntry): CharSequence {
+        val rel = searchRel[e.file.path]
+        val s = SpannableString(if (rel == null) e.name else e.name + "  " + rel)
+        for (r in SearchMatch.ranges(e.name, searchQuery)) {
+            s.setSpan(android.text.style.BackgroundColorSpan(ColorUtils.setAlphaComponent(accent, MATCH_ALPHA)), r.first, r.last + 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            s.setSpan(android.text.style.StyleSpan(Typeface.BOLD), r.first, r.last + 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        if (rel != null) s.setSpan(ForegroundColorSpan(dim), e.name.length, s.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        return s
+    }
+
+    /** Ketuk hasil: tutup pencarian, buka folder (hasil folder) atau folder induk (hasil berkas) dan kilatkan barisnya. */
+    private fun openFromSearch(e: DrawerEntry) {
+        if (e.isDir) openDirectory(e.file) else e.file.parentFile?.let { openDirectory(it, e.file) }
     }
 
     // ---------- [molina-27g2] Urut dan kilatan folder hasil ----------
@@ -438,7 +613,7 @@ class FileDrawerView(
     }
 
     /** [molina-27d] Muat ulang tree dari luar (mis. setelah Sampah dipulihkan). */
-    fun refresh() { rebuild(); refreshAll(); reloadFavs() }
+    fun refresh() { rebuild(); refreshAll(); reloadFavs(); if (searchOn) scheduleSearch(0L) } // molina-27g3
 
     /** [molina-27d2] Muat daftar Favorit di IO lalu gambar ulang baris agar bintang akurat. */
     private fun reloadFavs() {
@@ -579,6 +754,7 @@ class FileDrawerView(
         header.addView(box, boxLp)
 
         val headerMenu = HeaderDotsView(context)
+        headerDots = headerMenu // molina-27g3
         headerMenu.contentDescription = context.getString(R.string.drawer_more)
         headerMenu.setOnClickListener { showHeaderMenu(it) }
         header.addView(headerMenu, LinearLayout.LayoutParams(dp(34), dp(34)))
@@ -622,6 +798,7 @@ class FileDrawerView(
         clipClear.contentDescription = "Kosongkan papan klip"
         clipClear.setOnClickListener { clip.clear(); actions.clearArchiveClip(); renderClip() } // molina-27f
         clipBar.addView(clipClear, LinearLayout.LayoutParams(dp(40), MATCH))
+        if (embedded) { buildSearchBar(); panel.addView(searchBar, LinearLayout.LayoutParams(MATCH, WRAP)) } // molina-27g3
         if (embedded) panel.addView(clipBar, LinearLayout.LayoutParams(MATCH, dp(40)))
 
         empty.text = context.getString(R.string.drawer_empty)
@@ -686,6 +863,7 @@ class FileDrawerView(
     }
 
     private fun setRoot(dir: File) {
+        if (searchOn) closeSearch() // molina-27g3
         state.root = dir
         state.expanded.clear()
         rebuild()
@@ -721,6 +899,7 @@ class FileDrawerView(
     }
 
     private fun afterChange(parent: File?, oldPath: String) {
+        if (searchOn) scheduleSearch(150L) // molina-27g3
         state.expanded.removeAll { it == oldPath || it.startsWith("$oldPath/") }
         state.children.keys.filter { it == oldPath || it.startsWith("$oldPath/") }.forEach { state.children.remove(it) }
         if (parent != null) load(parent) else rebuild()
@@ -728,8 +907,10 @@ class FileDrawerView(
 
     private fun rebuild(onCommitted: Runnable? = null) { // molina-27g2
         val root = currentRoot()
-        val rows = DrawerFs.flatten(state, root, sort)
+        val found = searchEntries // molina-27g3: hasil Cari menggantikan pohon, memakai urutan aktif
+        val rows = if (found != null) DrawerSort.sorted(found, sort).map { DrawerRow(it, 0, false) } else DrawerFs.flatten(state, root, sort)
         adapter.submitList(rows, onCommitted)
+        headerDots?.statusColor = if (embedded && (searchOn || sort != DrawerSort.DEFAULT)) accent else null
         title.text = root.name.ifEmpty { "/" }
         pathText.text = DrawerFs.displayPath(root.path)
         host.onRootChanged(root.path)
@@ -741,7 +922,8 @@ class FileDrawerView(
             back.text = if (picking) "\u2715" else "\u2039"
             if (picking) title.text = if (selection.count == 0) "Mode pilih" else "${selection.count} dipilih"
         }
-        empty.visibility = if (rows.isEmpty() && state.children[root.path] != null) View.VISIBLE else View.GONE
+        empty.text = if (found != null) "Tidak ada hasil" else context.getString(R.string.drawer_empty) // molina-27g3
+        empty.visibility = if (rows.isEmpty() && (found != null || state.children[root.path] != null)) View.VISIBLE else View.GONE
         renderChips(root)
         renderClip() // molina-27e
     }
@@ -773,6 +955,10 @@ class FileDrawerView(
 
     private fun onRowTap(row: DrawerRow) {
         val f = row.entry.file
+        if (embedded && searchEntries != null) { // molina-27g3: pada hasil Cari, ketuk = buka lokasi (atau ganti pilih)
+            if (selection.active) toggleSelected(f.path) else openFromSearch(row.entry)
+            return
+        }
         if (row.entry.isDir) {
             if (row.expanded) {
                 state.expanded.remove(f.path)
@@ -871,7 +1057,7 @@ class FileDrawerView(
             val kind = if (e.isDir) FileKind.OTHER else FileKind.of(e.name)
             h.icon.kind = kind
             h.name.setTextColor(kind.nameColor)
-            h.name.text = e.name
+            h.name.text = if (searchEntries != null) searchLabel(e) else e.name // molina-27g3
             h.star.visibility = if (e.isDir && e.file.path in favPaths) View.VISIBLE else View.GONE // molina-27d2
             h.row.setOnClickListener { onRowTap(item) }
             h.more.setOnClickListener { showRowMenu(it, e) }
@@ -1272,6 +1458,8 @@ class FileDrawerView(
         const val PREFS = "molina_filemanager" // molina-27g2
         const val KEY_SORT = "sort"
         const val FLASH_MS = 1200L
+        const val SEARCH_DEBOUNCE_MS = 250L // molina-27g3
+        const val MATCH_ALPHA = 0x22 // molina-27g3: sama dengan seleksi, bilah klip, dan kilatan
         const val MAX_WIDTH_DP = 288
         const val FRACTION = 0.40f
         const val ID_CD = 1

@@ -13,6 +13,12 @@ enum class TransferMode { COPY, MOVE }
 /** [molina-27f] Aksi arsip yang diminta file manager tertanam; dijalankan oleh implementasi (:files). */
 enum class ArchiveAction { COMPRESS, EXTRACT_HERE, EXTRACT_FOLDER, EXTRACT_SUBS, EXTRACT_TO, VIEW, TEST }
 
+/** [molina-27g3] Satu hasil Cari; [relDir] = folder induk relatif terhadap folder yang dicari (null = langsung di sana). */
+class SearchHit(val file: File, val isDir: Boolean, val size: Long, val modified: Long, val relDir: String?)
+
+/** [molina-27g3] Hasil Cari; [truncated] true bila berhenti karena batas hasil/entri terpindai. */
+class SearchOutcome(val hits: List<SearchHit>, val truncated: Boolean)
+
 interface FileManagerActions {
     /** True bila [file] di dalam root Molina (Favorit dan Sampah berlaku). */
     fun canManage(file: File): Boolean
@@ -59,6 +65,12 @@ interface FileManagerActions {
 
     /** [molina-27g] Bagikan [files] lewat chooser sistem (folder dilewati). false bila ditolak. */
     fun share(files: List<File>): Boolean = false
+
+    /**
+     * [molina-27g3] Cari nama di [dir] (semua kata harus ada; [deep] = sampai subfolder). null = tidak didukung di [dir];
+     * View lalu menyaring isi folder utama yang sudah dimuat. Dipanggil dari main thread; implementasi pindah ke IO sendiri.
+     */
+    suspend fun search(dir: File, query: String, deep: Boolean): SearchOutcome? = null
 
     /** Tanpa aksi: perilaku bawaan (Hapus permanen, tanpa Favorit/Sampah). */
     object None : FileManagerActions {

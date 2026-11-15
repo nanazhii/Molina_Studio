@@ -24,6 +24,7 @@ import com.molina.core.storage.ArchiveNames
 import com.molina.core.storage.ConflictPolicy
 import com.molina.core.storage.ExplorerFavorites
 import com.molina.core.storage.ExtractTarget
+import com.molina.core.storage.ListOptions
 import com.molina.core.storage.LocalMolinaStorage
 import com.molina.core.storage.MolinaStorage
 import com.molina.core.storage.PathGuard
@@ -34,6 +35,8 @@ import com.molina.core.ui.R as UiR
 import com.molina.filemanager.ArchiveAction
 import com.molina.filemanager.FileManagerActions
 import com.molina.filemanager.FileManagerEmbed
+import com.molina.filemanager.SearchHit
+import com.molina.filemanager.SearchOutcome
 import com.molina.filemanager.TransferMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -131,6 +134,24 @@ class BerkasFragment : Fragment(), ArchiveSheetHost {
         override fun properties(files: List<File>): Boolean = propsShare.properties(files)
 
         override fun share(files: List<File>): Boolean = propsShare.share(files)
+
+        // molina-27g3: Cari memakai storage.browse (EntryLister: kata-kata, sampai subfolder, batas hasil) yang sudah ada
+        override suspend fun search(dir: File, query: String, deep: Boolean): SearchOutcome? {
+            val rel = BerkasPaths.destRelative(paths.root, dir) ?: return null
+            return when (val r = storage.browse(rel, ListOptions(query = query, deep = deep, showHidden = true))) {
+                is MolinaResult.Success -> {
+                    FilesEvents.searched(rel, r.value.entries.size, deep, r.value.truncated)
+                    SearchOutcome(
+                        r.value.entries.map { SearchHit(File(it.path), it.isDirectory, it.sizeBytes, it.lastModifiedMs, it.relDir) },
+                        r.value.truncated,
+                    )
+                }
+                is MolinaResult.Failure -> {
+                    FilesEvents.failed("search", r.error, rel)
+                    null
+                }
+            }
+        }
 
         override fun openTrash() {
             if (childFragmentManager.findFragmentByTag(TRASH_TAG) != null) return

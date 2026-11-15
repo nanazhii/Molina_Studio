@@ -14,6 +14,7 @@ internal object EmbeddedMenu {
         COMPRESS, EXTRACT_HERE, EXTRACT_FOLDER, EXTRACT_SUBS, EXTRACT_TO, EXTRACT_PASTE, VIEW_ARCHIVE, TEST_ARCHIVE, // molina-27f
         SHARE, // molina-27g
         SORT, // molina-27g2
+        SEARCH, // molina-27g3
         FAVORITE, COPY_PATH, INFO, TRASH, DELETE_PERMANENT, FAVORITES_LIST, OPEN_TRASH,
     }
 
@@ -41,6 +42,7 @@ internal object EmbeddedMenu {
         val shareAvailable: Boolean = false, // molina-27g: target di dalam root Molina dan bukan folder tunggal
         val propsAvailable: Boolean = false, // molina-27g: Properti kaya di menu mode pilih
         val sortLabel: String = "", // molina-27g2: label urutan aktif; kosong = tanpa item Urut
+        val searchLabel: String = "", // molina-27g3: "Cari\u2026" atau "Tutup pencarian"; kosong = tanpa item Cari
     ) {
         val hasTarget: Boolean get() = targetCount > 0
     }
@@ -89,6 +91,7 @@ internal object EmbeddedMenu {
         val l = ArrayList<Entry>()
         if (s.global) l += Entry(Action.REFRESH, "Segarkan")
         if (s.global && s.sortLabel.isNotEmpty()) l += Entry(Action.SORT, "Urut: ${s.sortLabel}") // molina-27g2
+        if (s.global && s.searchLabel.isNotEmpty()) l += Entry(Action.SEARCH, s.searchLabel) // molina-27g3
         l += Entry(Action.NEW_DIR, "Folder baru")
         l += Entry(Action.NEW_FILE, "Berkas baru")
         if (s.hasTarget) l += Entry(Action.RENAME, "Ubah nama")
