@@ -331,7 +331,6 @@ internal object ArchiveEngine {
         }
 
         /**
-         * Tulis isi [src] ke entri [clean]. [declared]        /**
          * Tulis isi [src] ke entri [clean]. [declared] = ukuran di header (-1 = tidak diketahui): isi yang melebihinya
          * dianggap arsip rusak/berbahaya. [byteProgress]: laporkan byte keluaran (tar/gz melaporkan byte terkompresi).
          */
