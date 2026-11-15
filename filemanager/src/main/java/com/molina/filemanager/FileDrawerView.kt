@@ -70,6 +70,7 @@ class FileDrawerView(
     private val state: FileDrawerState,
     private val scope: CoroutineScope,
     private val host: Host,
+    private val embedded: Boolean = false, // molina-27b
 ) : FrameLayout(context) {
 
     interface Host {
@@ -106,7 +107,7 @@ class FileDrawerView(
         context,
         ContextCompat.getColor(context, UiR.color.molina_surface),
         ContextCompat.getColor(context, UiR.color.molina_header_frame),
-        dp(16),
+        if (embedded) 0 else dp(16),
         dp(1),
     ) { close() }
     private val back = TextView(context)
@@ -119,7 +120,7 @@ class FileDrawerView(
     private val adapter = RowAdapter()
 
     init {
-        visibility = View.GONE
+        visibility = if (embedded) View.VISIBLE else View.GONE
         val scrim = View(context)
         scrim.setBackgroundColor(Color.argb(0x8C, 0, 0, 0))
         scrim.setOnClickListener { close() }
@@ -127,10 +128,15 @@ class FileDrawerView(
         panel.orientation = LinearLayout.VERTICAL
         panel.isClickable = true
         buildPanel()
-        addView(panel, FrameLayout.LayoutParams(dp(MIN_WIDTH_DP), MATCH))
+        addView(panel, FrameLayout.LayoutParams(if (embedded) MATCH else dp(MIN_WIDTH_DP), MATCH))
     }
 
     val isOpen: Boolean get() = visibility == View.VISIBLE
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (embedded) { rebuild(); refreshAll() }
+    }
 
     fun toggle() { if (isOpen) close() else open() }
 
@@ -149,7 +155,7 @@ class FileDrawerView(
     }
 
     fun close() {
-        if (!isOpen) return
+        if (!isOpen || embedded) return
         visibility = View.GONE
         host.onOpenChanged(false)
     }
@@ -210,6 +216,7 @@ class FileDrawerView(
         val headerMenu = HeaderDotsView(context)
         headerMenu.contentDescription = context.getString(R.string.drawer_more)
         headerMenu.setOnClickListener { showHeaderMenu(it) }
+        if (embedded) headerMenu.visibility = View.GONE
         header.addView(headerMenu, LinearLayout.LayoutParams(dp(34), dp(34)))
 
         val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
@@ -376,7 +383,7 @@ class FileDrawerView(
                 state.expanded.add(f.path)
                 if (state.children[f.path] == null) load(f) else rebuild()
             }
-        } else if (editInNano(f)) {
+        } else if (!embedded && editInNano(f)) {
             close()
         }
     }
@@ -459,12 +466,12 @@ class FileDrawerView(
         val menu = PopupMenu(context, anchor)
         val m = menu.menu
         if (e.isDir) {
-            m.add(0, ID_CD_ROOT, 0, context.getString(R.string.drawer_cd_root))
+            if (!embedded) m.add(0, ID_CD_ROOT, 0, context.getString(R.string.drawer_cd_root))
             m.add(0, ID_NEW_DIR, 2, context.getString(R.string.drawer_new_dir_here))
             m.add(0, ID_NEW_FILE, 3, context.getString(R.string.drawer_new_file_here))
         } else {
-            m.add(0, ID_NANO, 0, context.getString(R.string.drawer_nano))
-            if (RunnableFile.interpreter(e.name) != null) {
+            if (!embedded) m.add(0, ID_NANO, 0, context.getString(R.string.drawer_nano))
+            if (!embedded && RunnableFile.interpreter(e.name) != null) {
                 val run = SpannableString("\u25B6 " + context.getString(R.string.drawer_run))
                 run.setSpan(ForegroundColorSpan(runGreen), 0, 1, 0)
                 m.add(0, ID_RUN, 1, run)
