@@ -34,6 +34,23 @@ class ArchiveViewTextTest {
         assertEquals("/" + dot + "100 B", ArchiveViewText.hitLine(top))
     }
 
+    @Test fun ringkasanKepalaSatuBaris() { // molina-27y
+        assertEquals("ZIP" + dot + "3 berkas" + dot + "1 folder" + dot + "2.0 KB", ArchiveViewText.summaryLine("zip", 3, 1, 2048L, false))
+        assertEquals("TAR.GZ" + dot + "2 berkas" + dot + "10 B" + dot + "bersandi", ArchiveViewText.summaryLine("tar.gz", 2, 0, 10L, true))
+    }
+
+    @Test fun labelEkstrakSemuaMemuatUkuran() { // molina-27y
+        assertEquals("Ekstrak semua" + dot + "2.0 KB", ArchiveViewText.extractAllLabel(2048L))
+    }
+
+    @Test fun labelBersihkanCacheDiMenu() { // molina-27y
+        val mb = 1024L * 1024L
+        assertEquals("Bersihkan cache", ArchiveViewText.clearCacheLabel(-1L, 300 * mb))
+        assertEquals("Bersihkan cache" + dot + "120 / 300 MB", ArchiveViewText.clearCacheLabel(120 * mb, 300 * mb))
+        assertEquals("Bersihkan cache" + dot + "<1 / 300 MB", ArchiveViewText.clearCacheLabel(500L, 300 * mb))
+        assertEquals("Bersihkan cache" + dot + "0 / 300 MB", ArchiveViewText.clearCacheLabel(0L, 300 * mb))
+    }
+
     @Test fun bannerPotongMenyebutJumlahDanKonsekuensi() {
         val t = ArchiveViewText.truncatedBanner(50_000)
         assertTrue(t, t.contains("50.000"))
