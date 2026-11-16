@@ -39,7 +39,7 @@ Aplikasi sistem dilewati. Pengumpul data Android (`PackageManager`) belum dibuat
 1. `:app` membuat `LocalShieldProxy`, memanggil `start()` sebelum mpv diinisialisasi.
 2. Cinema memasang `http_proxy` lewat `stream-lavf-o` dan `demuxer-lavf-o` (nilai berawalan panjang `%n%nilai`) beserta `protocol_blacklist`.
 3. Bila `failClosed()` true, Cinema menolak sumber jarak jauh.
-4. Setelan: sakelar Shield, pelacak, LAN, daftar pengecualian, kartu ringkasan dari `snapshot` dan `recentBlocks()`.
+4. Setelan: sakelar Shield, pelacak, LAN, Referer, kebijakan rtmp/rtsp, ringkasan dari `snapshot` dan `recentBlocks()` (SELESAI: Setelan > Keamanan, `ShieldPrefs`). Daftar pengecualian pelacak belum punya UI.
 5. Pengumpul `AppFootprint` di lapisan Android, pemindaian dijalankan atas permintaan pengguna.
 
 ## Cakupan diperluas (Patch 2)
