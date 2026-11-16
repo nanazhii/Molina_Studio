@@ -52,8 +52,8 @@ internal class PropsSheet(
         val bg = ContextCompat.getColor(ctx, UiR.color.molina_bg)
         val white = ContextCompat.getColor(ctx, UiR.color.molina_on_surface)
         val dim = ContextCompat.getColor(ctx, UiR.color.molina_on_surface_variant)
-        val accent = ContextCompat.getColor(ctx, UiR.color.molina_cinema_accent)
-        val onAccent = ContextCompat.getColor(ctx, UiR.color.molina_on_cinema_accent)
+        val accent = ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent) // molina-27x: teal Molina, selaras Berkas (sebelumnya amber cinema)
+        val onAccent = ContextCompat.getColor(ctx, UiR.color.molina_on_terminal_accent)
         val tile = ContextCompat.getColor(ctx, UiR.color.molina_surface_variant)
 
         val single = items.singleOrNull()
