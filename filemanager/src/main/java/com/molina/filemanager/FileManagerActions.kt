@@ -60,6 +60,9 @@ interface FileManagerActions {
     /** [molina-27g] Bagikan [files] lewat chooser sistem (folder dilewati). false bila ditolak. */
     fun share(files: List<File>): Boolean = false
 
+    /** [molina-27m] Putar [file] media di Molina Cinema (mpv). false bila ditolak; View menampilkan toast. */
+    fun play(file: File): Boolean = false
+
     /** Tanpa aksi: perilaku bawaan (Hapus permanen, tanpa Favorit/Sampah). */
     object None : FileManagerActions {
         override fun canManage(file: File): Boolean = false

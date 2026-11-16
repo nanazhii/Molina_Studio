@@ -53,6 +53,7 @@ import com.molina.log.MolinaEvents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
@@ -192,16 +193,20 @@ class FileDrawerView(
                 archiveClipCount = if (hasActions) actions.archiveClipCount() else 0,
                 shareAvailable = managed && (if (picking) targets.any { !it.isDirectory } else !targetIsDir), // molina-27g
                 propsAvailable = if (picking) managed else hasActions, // molina-27g
+                showHidden = state.showHidden, // molina-27k
+                playAvailable = hasActions && tgt != null && !tgtIsDir && targets.size <= 1 && MediaExt.isPlayable(tgt), // molina-27m
             ),
         )
-        val menu = PopupMenu(context, anchor)
-        entries.forEachIndexed { i, en ->
-            val title: CharSequence =
-                if (en.danger) SpannableString(en.label).also { it.setSpan(ForegroundColorSpan(danger), 0, it.length, 0) } else en.label
-            menu.menu.add(0, i, i, title).isEnabled = en.enabled
-        }
-        menu.setOnMenuItemClickListener { item ->
-            when (entries[item.itemId].action) {
+        // molina-27l: menu berikon (DrawerMenuPopup) menggantikan PopupMenu teks
+        DrawerMenuPopup.show(
+            anchor,
+            entries,
+            ContextCompat.getColor(context, UiR.color.molina_surface),
+            ContextCompat.getColor(context, UiR.color.molina_header_frame),
+            accent,
+            danger,
+        ) { picked ->
+            when (picked.action) {
                 EmbeddedMenu.Action.REFRESH -> refresh()
                 EmbeddedMenu.Action.NEW_DIR -> promptCreateEmbedded(true, dir)
                 EmbeddedMenu.Action.NEW_FILE -> promptCreateEmbedded(false, dir)
@@ -227,6 +232,17 @@ class FileDrawerView(
                 EmbeddedMenu.Action.OPEN_TRASH -> actions.openTrash()
                 EmbeddedMenu.Action.GO_INTERNAL -> setRoot(File(DrawerFs.INTERNAL_ROOT)) // molina-27i
                 EmbeddedMenu.Action.GO_DEBIAN -> openDebian() // molina-27i
+                EmbeddedMenu.Action.GO_MOLINA -> goTo(File(DrawerFs.DEFAULT_ROOT)) // molina-27k
+                EmbeddedMenu.Action.GO_DOWNLOAD -> goTo(File(DrawerFs.INTERNAL_ROOT, "Download"))
+                EmbeddedMenu.Action.GO_DCIM -> goTo(File(DrawerFs.INTERNAL_ROOT, "DCIM"))
+                EmbeddedMenu.Action.GO_DOCUMENTS -> goTo(File(DrawerFs.INTERNAL_ROOT, "Documents"))
+                EmbeddedMenu.Action.TOGGLE_HIDDEN -> toggleHidden()
+                EmbeddedMenu.Action.SORT -> sortDialog()
+                EmbeddedMenu.Action.SEARCH -> searchDialog(base)
+                EmbeddedMenu.Action.PLAY -> tgt?.let { // molina-27m
+                    if (picking) { selection.exit(); selectionChanged() }
+                    playFile(it)
+                }
                 // molina-27f: arsip
                 EmbeddedMenu.Action.COMPRESS -> runArchive(ArchiveAction.COMPRESS, targets, dir)
                 EmbeddedMenu.Action.EXTRACT_HERE -> runArchive(ArchiveAction.EXTRACT_HERE, targets, dir)
@@ -237,10 +253,7 @@ class FileDrawerView(
                 EmbeddedMenu.Action.TEST_ARCHIVE -> runArchive(ArchiveAction.TEST, targets, dir)
                 EmbeddedMenu.Action.EXTRACT_PASTE -> extractClipHere(dir)
             }
-            true
         }
-        menu.gravity = Gravity.END // molina-27h: rata kanan, membuka ke atas dari tombol melayang
-        menu.show()
     }
 
     // ---------- [molina-27h] tombol melayang + geser pilih ----------
@@ -283,6 +296,66 @@ class FileDrawerView(
         fabGlyph.setTextColor(if (picking) Color.BLACK else white)
         fabBadge.visibility = if (picking && selection.count > 0) View.VISIBLE else View.GONE
         fabBadge.text = if (selection.count > 99) "99+" else selection.count.toString()
+    }
+
+    /** [molina-27k] Pintasan lokasi: folder utama pindah ke [dir]; toast bila folder tidak ada. */
+    private fun goTo(dir: File) {
+        scope.launch {
+            if (!withContext(Dispatchers.IO) { dir.isDirectory }) {
+                toastText("Folder ${dir.name} tidak ada")
+                return@launch
+            }
+            setRoot(dir)
+        }
+    }
+
+    /** [molina-27k] Tampilkan/sembunyikan file berawalan titik; hanya tampilan, tree tidak dimuat ulang. */
+    private fun toggleHidden() {
+        state.showHidden = !state.showHidden
+        rebuild()
+        toastText(if (state.showHidden) "File tersembunyi ditampilkan" else "File tersembunyi disembunyikan")
+    }
+
+    /** [molina-27k] Dialog Urut: satu pilihan, langsung berlaku pada seluruh tree yang terbuka. */
+    private fun sortDialog() {
+        val all = DrawerSort.values()
+        AlertDialog.Builder(context)
+            .setTitle("Urut")
+            .setSingleChoiceItems(all.map { it.label }.toTypedArray(), all.indexOf(state.sort)) { d, i ->
+                state.sort = all[i]
+                rebuild()
+                d.dismiss()
+            }
+            .setNegativeButton(R.string.drawer_cancel, null)
+            .show()
+    }
+
+    /** [molina-27k] Cari nama di bawah folder utama (melebar di IO, maks 300 hasil); ketuk hasil = buka folder letaknya. */
+    private fun searchDialog(base: File) {
+        MolinaDialog.input(
+            context,
+            title = "Cari di ${base.name.ifEmpty { "/" }}",
+            initial = "",
+            positive = "Cari",
+            selectBase = false,
+        ) { raw ->
+            val q = raw.trim()
+            if (q.isNotEmpty()) {
+                scope.launch {
+                    val hits = withContext(Dispatchers.IO) { DrawerFs.search(base, q, state.showHidden) { !isActive } }
+                    if (hits.isEmpty()) {
+                        toastText("Tidak ada hasil untuk \"$q\"")
+                        return@launch
+                    }
+                    val labels = hits.map { it.path.removePrefix(base.path).trimStart('/') + if (it.isDirectory) "/" else "" }.toTypedArray()
+                    AlertDialog.Builder(context)
+                        .setTitle("${hits.size} hasil" + if (hits.size >= 300) "+" else "")
+                        .setItems(labels) { _, i -> openDirectory(if (hits[i].isDirectory) hits[i] else hits[i].parentFile ?: base) }
+                        .setNegativeButton(R.string.drawer_cancel, null)
+                        .show()
+                }
+            }
+        }
     }
 
     /** [molina-27i] Beranda Debian PRoot (filesDir/rootfs/debian/root) sebagai folder utama; pola w7DebianPlaces repo lama. */
@@ -401,7 +474,7 @@ class FileDrawerView(
         val files = clip.paths.map { File(it) }
         if (files.isEmpty()) return
         if (!actions.canPasteInto(dir) || !files.all { actions.canManage(it) }) {
-            toastText("Sumber atau tujuan di luar folder Molina")
+            toastText("Sumber atau tujuan di luar penyimpanan Internal") // molina-27j
             return
         }
         if (actions.transfer(mode, files, dir)) pasteDest = dir else toastText("Operasi lain masih berjalan") // molina-27g0
@@ -452,6 +525,7 @@ class FileDrawerView(
     }
 
     private fun extractClipHere(dir: File) {
+        if (!actions.canPasteInto(dir)) { toastText("Tujuan di luar penyimpanan Internal"); return } // molina-27j
         if (!actions.extractClipInto(dir)) toastText("Operasi lain masih berjalan")
     }
 
@@ -505,7 +579,7 @@ class FileDrawerView(
         clipPaste.text = if (an > 0) "Ekstrak" else "Tempel"
         clipText.text = if (an > 0) "Ekstrak $an arsip ke\u2026" else (if (clip.mode == TransferMode.MOVE) "Pindah " else "Salin ") + "$n item"
         val ok = actions.canPasteInto(currentRoot())
-        clipPaste.isEnabled = ok
+        clipPaste.isEnabled = true // molina-27j: tetap bisa diketuk; penolakan dijelaskan lewat toast
         clipPaste.alpha = if (ok) 1f else 0.38f
     }
 
@@ -526,7 +600,7 @@ class FileDrawerView(
         scope.launch {
             val dirs = actions.favoriteDirs()
             if (dirs.isEmpty()) { toastText("Belum ada Favorit"); return@launch }
-            val labels = dirs.map { DrawerFs.displayPath(it.path) }.toTypedArray()
+            val labels = dirs.map { (if (DrawerFs.isMolinaHome(it.path)) "\u2605 " else "") + DrawerFs.displayPath(it.path) }.toTypedArray() // molina-27k
             AlertDialog.Builder(context)
                 .setTitle("Favorit")
                 .setItems(labels) { _, i -> setRoot(dirs[i]) }
@@ -860,7 +934,14 @@ class FileDrawerView(
             close()
         } else if (embedded && selection.active) { // molina-27e: berkas = ganti status pilih; folder tetap buka/tutup
             toggleSelected(f.path)
+        } else if (embedded && MediaExt.isPlayable(f)) { // molina-27m: berkas media terbuka default di mpv
+            playFile(f)
         }
+    }
+
+    /** [molina-27m] Putar [f] di Molina Cinema lewat implementasi aksi; toast bila ditolak. */
+    private fun playFile(f: File) {
+        if (!actions.play(f)) Toast.makeText(context, "Molina Cinema tidak tersedia", Toast.LENGTH_SHORT).show()
     }
 
     private class RowHolder(
@@ -947,6 +1028,10 @@ class FileDrawerView(
             h.icon.kind = kind
             h.name.setTextColor(kind.nameColor)
             h.name.text = e.name
+            val home = e.isDir && DrawerFs.isMolinaHome(e.file.path) // molina-27k: rumah Molina berikon bintang dan bernama aksen
+            h.icon.molina = home
+            h.name.typeface = if (home) Typeface.create(Typeface.MONOSPACE, Typeface.BOLD) else Typeface.MONOSPACE
+            if (home) h.name.setTextColor(accent)
             h.star.visibility = if (e.isDir && e.file.path in favPaths) View.VISIBLE else View.GONE // molina-27d2
             h.row.setOnClickListener { onRowTap(item) }
             h.more.setOnClickListener { showRowMenu(it, e) }
@@ -1443,6 +1528,12 @@ internal class TreeIconView(context: Context) : View(context) {
             if (field != value) { field = value; invalidate() }
         }
 
+    /** [molina-27k] Folder rumah Molina: bintang gelap di badan folder. */
+    var molina: Boolean = false
+        set(value) {
+            if (field != value) { field = value; invalidate() }
+        }
+
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
     private val line = Paint(Paint.ANTI_ALIAS_FLAG)
     private val glyph = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -1460,6 +1551,21 @@ internal class TreeIconView(context: Context) : View(context) {
         glyph.strokeCap = Paint.Cap.ROUND
     }
 
+    private fun drawStar(canvas: Canvas, cx: Float, cy: Float, outer: Float) { // molina-27k
+        val inner = outer * 0.45f
+        path.reset()
+        for (i in 0 until 10) {
+            val rad = if (i % 2 == 0) outer else inner
+            val ang = Math.PI / 5 * i - Math.PI / 2
+            val x = cx + (rad * Math.cos(ang)).toFloat()
+            val y = cy + (rad * Math.sin(ang)).toFloat()
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        path.close()
+        fill.color = 0xFF5D4037.toInt()
+        canvas.drawPath(path, fill)
+    }
+
     override fun onDraw(canvas: Canvas) {
         val w = width.toFloat()
         val h = height.toFloat()
@@ -1470,6 +1576,7 @@ internal class TreeIconView(context: Context) : View(context) {
             canvas.drawRoundRect(rect, r, r, fill)
             rect.set(0f, h * 0.3f, w, h * 0.88f)
             canvas.drawRoundRect(rect, r, r, fill)
+            if (molina) drawStar(canvas, w * 0.5f, h * 0.6f, h * 0.22f) // molina-27k
         } else {
             val c = kind.color
             fill.color = c

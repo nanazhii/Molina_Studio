@@ -24,10 +24,17 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
     private var playback: MpvPlayback? = null
     private var status: TextView? = null
     private var toggle: MaterialButton? = null
+    private var inputField: EditText? = null // molina-27m
+    private var pendingPath: String? = null // molina-27m: permintaan dari Berkas, diputar setelah surface siap
     private var state = PlayerState.IDLE
     private var positionMs = 0L
     private var durationMs = 0L
     private var note = ""
+
+    companion object {
+        /** [molina-27m-fix] Argumen: path media yang diputar begitu surface siap. */
+        const val ARG_PLAY = "molina.play_path"
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val ctx = requireContext()
@@ -65,6 +72,7 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
         root.addView(row)
         status = st
         toggle = tg
+        inputField = input
         return root
     }
 
@@ -75,6 +83,7 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
             return
         }
         playback = pb
+        if (savedInstanceState == null) pendingPath = arguments?.getString(ARG_PLAY) // molina-27m-fix: tidak diputar ulang setelah rotasi
         render()
         viewLifecycleOwner.lifecycleScope.launch {
             pb.session.events.collect { ev ->
@@ -95,6 +104,8 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
         playback = null
         status = null
         toggle = null
+        inputField = null
+        pendingPath = null
         super.onDestroyView()
     }
 
@@ -109,7 +120,17 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
         return "%d:%02d".format(s / 60, s % 60)
     }
 
-    override fun surfaceCreated(holder: SurfaceHolder) { playback?.surface?.attach(holder.surface) }
+    override fun surfaceCreated(holder: SurfaceHolder) {
+        playback?.surface?.attach(holder.surface)
+        // molina-27m: berkas dari Berkas dimuat setelah surface terpasang agar video langsung tampil
+        val path = pendingPath ?: return
+        pendingPath = null
+        val s = playback?.session ?: return
+        note = ""
+        inputField?.setText(path)
+        s.load(path)
+        s.play()
+    }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
         playback?.surface?.resize(width, height)

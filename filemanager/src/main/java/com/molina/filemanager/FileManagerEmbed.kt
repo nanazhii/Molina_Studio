@@ -37,7 +37,7 @@ object FileManagerEmbed {
         onSelectionChanged: (Boolean) -> Unit = {}, // molina-27e: true saat mode pilih aktif (untuk mengaktifkan Back)
     ): Handle {
         val v = FileDrawerView(
-            context, FileDrawerState(), scope, NoopHost,
+            context, FileDrawerState().also { it.showHidden = false }, scope, NoopHost, // molina-27k
             embedded = true, actions = actions, onSelectionChanged = onSelectionChanged,
         )
         return Handle(v, { v.refresh() }, { v.onTransferFinished(it) }, { v.cancelSelection() }, { v.onArchiveClipChanged() }, { v.openDirectory(it) })
