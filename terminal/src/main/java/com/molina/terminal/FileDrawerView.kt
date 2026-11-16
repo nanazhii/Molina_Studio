@@ -48,6 +48,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.molina.core.ui.BlueBackDrawable
+import com.molina.core.ui.DrawerMetrics
 import com.molina.core.ui.ExtLabel
 import com.molina.core.ui.FileKind
 import com.molina.core.ui.R as UiR
@@ -437,7 +438,7 @@ internal class FileDrawerView(
 
             val name = TextView(ctx)
             name.setTextColor(white)
-            name.textSize = 15f
+            name.textSize = DrawerMetrics.NAME_STANDARD_SP // molina-28b
             name.typeface = Typeface.MONOSPACE
             name.maxLines = 1
             name.ellipsize = TextUtils.TruncateAt.END
@@ -843,8 +844,8 @@ internal class FileDrawerView(
     private companion object {
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
-        const val ROW_DP = 44 // molina-term-drawer-parity: sama dengan ROW_EMBEDDED_DP Berkas
-        const val ICON_DP = 30 // molina-term-drawer-parity: sama dengan ikon Berkas
+        const val ROW_DP = DrawerMetrics.ROW_STANDARD_DP // molina-28b
+        const val ICON_DP = DrawerMetrics.ICON_STANDARD_DP // molina-28b
         const val MIN_WIDTH_DP = 248
         const val MAX_WIDTH_DP = 288
         const val FRACTION = 0.40f
