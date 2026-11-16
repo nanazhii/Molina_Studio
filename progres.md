@@ -222,3 +222,9 @@
 - [ ] Verifikasi CI: kompilasi :mpv-native dan :app (Gradle), jvm-tests
 - [ ] Uji perangkat Android 8: file lokal, https publik, LAN ditolak, rtmp, Shield mati (prefs molina_shield), blok dicatat BUG mpv.shield-blocked
 - [ ] Berikutnya: UI Setelan Keamanan, pengumpul AppFootprint (PackageManager), env proxy opt-in untuk sesi terminal
+
+## P5c env proxy opt-in Terminal/Debian (2026-11-16)
+- [x] terminal-proot: ShieldGuestEnv (profile.d, mode OFF/PROXY/FAIL_CLOSED, tulis atomik, token tidak dicatat); 7 uji lulus + uji ujung-ke-ujung curl di sandbox
+- [x] TerminalPrefs.shieldProxy + sakelar di Setelan > Terminal; TerminalWiring memanggil ShieldGuestEnv.install setelah NanoSupport
+- [ ] Verifikasi CI: kompilasi :terminal-proot, :settings, :app; jvm-tests :terminal-proot:testDebugUnitTest
+- [ ] Uji perangkat: nyalakan sakelar, sesi baru, `env | grep -i proxy`, `curl -I https://example.com`, `apt update`, pelacak ditolak; matikan sakelar dan pastikan variabel hilang

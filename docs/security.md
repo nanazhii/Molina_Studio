@@ -54,3 +54,19 @@ Aplikasi sistem dilewati. Pengumpul data Android (`PackageManager`) belum dibuat
 
 Batas: preflight rtmp/rtsp tidak menutup DNS rebinding cepat (mpv meresolve ulang); gunakan `BLOCK` bila perlu.
 Uji perangkat wajib: pemutaran lokal, https publik, LAN (harus ditolak), rtmp, dan Shield dimatikan lewat prefs.
+
+## Proxy opt-in untuk Terminal/Debian (Patch 3)
+Setelan > Terminal > "Lalu lintas Debian lewat Molina Shield" (bawaan mati, berlaku di sesi baru).
+Guest berjalan dengan `env -i`, jadi variabel proxy ditulis ke `etc/profile.d/molina-shield.sh` di rootfs (dibaca `bash --login`),
+bukan lewat argumen proses: token tidak tampil di `ps`. Berkas dibuat ulang tiap sesi, hanya dapat dibaca pemilik.
+
+| Keadaan | Hasil |
+|---|---|
+| opt-in mati, Shield mati, atau Shield tidak ada | berkas dihapus, lalu lintas langsung |
+| opt-in + Shield berjalan | `http_proxy`/`https_proxy` ke proxy lokal; `localhost,127.0.0.1,::1` dikecualikan (server pengembangan lokal tetap jalan) |
+| opt-in + Shield menyala tetapi gagal start | variabel ke `127.0.0.1:9` (port mati): alat gagal tersambung, tidak keluar tanpa saringan |
+
+Batas: ssh dan git+ssh tidak lewat proxy HTTP; program yang mengabaikan variabel proxy tidak tersaring; hanya GET/HEAD
+untuk http biasa (POST http ditolak 405, https lewat CONNECT tidak terbatas); sesi yang sudah berjalan memakai token lama
+dan perlu sesi baru setelah Shield dimulai ulang; bila penulisan berkas gagal, dicatat `BUG proot.shield-env-failed` dan lalu lintas langsung.
+Diuji dengan curl sungguhan (403 untuk pelacak dan IP metadata, gagal tersambung saat fail-closed).

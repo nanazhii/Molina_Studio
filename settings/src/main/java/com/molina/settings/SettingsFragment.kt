@@ -55,6 +55,15 @@ class SettingsFragment : Fragment() {
                 text = "Berlaku di sesi terminal baru. Hanya mengubah tampilan prompt; hak akses di Debian tidak berubah."
                 textSize = 12f
             })
+            addView(MaterialSwitch(ctx).apply {
+                text = "Lalu lintas Debian lewat Molina Shield"
+                isChecked = TerminalPrefs.shieldProxy(ctx)
+                setOnCheckedChangeListener { _, on -> TerminalPrefs.setShieldProxy(ctx, on) }
+            })
+            addView(TextView(ctx).apply {
+                text = "Berlaku di sesi terminal baru. Mengarahkan http/https (apt, pip, curl, wget, yt-dlp) lewat Shield: pelacak, alamat lokal, dan port sensitif diblokir. Tidak mencakup ssh. Bila Shield mati, lalu lintas langsung; bila Shield menyala tetapi gagal start, koneksi ditolak."
+                textSize = 12f
+            })
             addView(TextView(ctx).apply { text = "Jalankan berkas dari drawer"; textSize = 14f; setPadding(0, pad / 2, 0, 0) })
             addView(RadioGroup(ctx).apply {
                 val current = TerminalPrefs.runMode(ctx)
