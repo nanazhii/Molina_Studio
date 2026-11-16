@@ -44,7 +44,7 @@ class MpvEventMapperTest {
     fun pauseAndPositionIgnoredBeforeLoadAndPauseCarriesIntoLoaded() {
         val m = MpvEventMapper()
         assertTrue(m.onPause(true).isEmpty())
-        assertTrue(m.onTimePos(3).isEmpty())
+        assertTrue(m.onTimePos(3.0).isEmpty())
         m.onEvent(start)
         assertEquals(PlayerEvent.StateChanged(PlayerState.PAUSED), m.onEvent(loadedEv)[1])
     }
@@ -53,8 +53,47 @@ class MpvEventMapperTest {
     fun positionUsesMillisecondsAndDuration() {
         val m = MpvEventMapper()
         m.onEvent(start); m.onEvent(loadedEv)
-        m.onDuration(120)
-        assertEquals(listOf<PlayerEvent>(PlayerEvent.Position(5_000L, 120_000L)), m.onTimePos(5))
+        m.onDuration(120.0)
+        assertEquals(listOf<PlayerEvent>(PlayerEvent.Position(5_000L, 120_000L)), m.onTimePos(5.0))
+    }
+
+    @Test
+    fun positionKeepsSubSecondResolution() {
+        val m = MpvEventMapper()
+        m.onEvent(start); m.onEvent(loadedEv)
+        assertEquals(listOf<PlayerEvent>(PlayerEvent.Position(1_234L, 0L)), m.onTimePos(1.234))
+    }
+
+    @Test
+    fun positionThrottledByStepButSeeksPassThrough() {
+        val m = MpvEventMapper()
+        m.onEvent(start); m.onEvent(loadedEv)
+        assertEquals(1, m.onTimePos(0.0).size)
+        assertTrue(m.onTimePos(0.05).isEmpty())
+        assertTrue(m.onTimePos(0.15).isEmpty())
+        assertEquals(1, m.onTimePos(0.25).size)
+        assertEquals(listOf<PlayerEvent>(PlayerEvent.Position(60_000L, 0L)), m.onTimePos(60.0))
+        assertTrue(m.onTimePos(59.9).isEmpty())
+        assertEquals(listOf<PlayerEvent>(PlayerEvent.Position(10_000L, 0L)), m.onTimePos(10.0))
+    }
+
+    @Test
+    fun firstPositionAfterNewFileAlwaysEmits() {
+        val m = MpvEventMapper()
+        m.onEvent(start); m.onEvent(loadedEv)
+        assertEquals(1, m.onTimePos(5.0).size)
+        m.onEvent(start); m.onEvent(loadedEv)
+        assertEquals(1, m.onTimePos(5.05).size)
+    }
+
+    @Test
+    fun invalidTimePosAndDurationAreSafe() {
+        val m = MpvEventMapper()
+        m.onEvent(start); m.onEvent(loadedEv)
+        m.onDuration(Double.NaN)
+        assertTrue(m.onTimePos(Double.NaN).isEmpty())
+        assertTrue(m.onTimePos(Double.POSITIVE_INFINITY).isEmpty())
+        assertEquals(listOf<PlayerEvent>(PlayerEvent.Position(0L, 0L)), m.onTimePos(-1.0))
     }
 
     @Test

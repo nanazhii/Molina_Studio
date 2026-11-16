@@ -88,6 +88,8 @@ Baris chip kedua memuat `Semua sesi | Term t1 | Cinema p1 | ...` (teal untuk ses
 | `mpv.native-missing` | BUG | libmpv/libplayer tidak termuat saat sesi dibuka | - |
 | `mpv.init-failed` | BUG | MPVLib.create/init melempar exception | - |
 | `mpv.release-failed` | BUG | MPVLib.destroy melempar exception | - |
+| `mpv.tls-ca-missing` | BUG (W) | cacert.pem gagal disiapkan di config-dir; HTTPS gagal verifikasi (tls-verify=yes) | - |
+| `mpv.fonts-conf-missing` | BUG (W) | fonts.conf gagal ditulis; font subtitle sistem mungkin tidak ditemukan | - |
 
 Path dan URL media tidak pernah dicatat; hanya nama berkas.
 

@@ -228,3 +228,11 @@
 - [x] TerminalPrefs.shieldProxy + sakelar di Setelan > Terminal; TerminalWiring memanggil ShieldGuestEnv.install setelah NanoSupport
 - [ ] Verifikasi CI: kompilasi :terminal-proot, :settings, :app; jvm-tests :terminal-proot:testDebugUnitTest
 - [ ] Uji perangkat: nyalakan sakelar, sesi baru, `env | grep -i proxy`, `curl -I https://example.com`, `apt update`, pelacak ditolak; matikan sakelar dan pastikan variabel hilang
+
+## Patch A mpv (2026-11-17)
+- [x] mpv-native: MpvConfig (config-dir filesDir/mpv: cacert.pem + fonts.conf), tls-verify=yes + tls-ca-file, cache shader/ICC
+- [x] time-pos/duration diobservasi DOUBLE; Position ms resolusi halus, throttle 200 ms (seek tetap lolos); uji mapper + MpvConfigTest
+- [x] log-contract: mpv.tls-ca-missing, mpv.fonts-conf-missing; provenance: aset cacert.pem
+- [ ] Verifikasi CI: :mpv-native:testDebugUnitTest + kompilasi :mpv-native, :app; gate secret/telemetry/module
+- [ ] Uji perangkat Android 8: https publik (sertifikat), subtitle .srt/.ass tampil dengan font sistem, seekbar halus
+- [ ] Berikutnya: Patch B (kontrak player-api: trek audio/subtitle, kecepatan, seek relatif) dan pemilih berkas
