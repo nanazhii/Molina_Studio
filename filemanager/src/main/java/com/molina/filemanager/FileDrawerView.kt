@@ -302,6 +302,34 @@ class FileDrawerView(
         popup = presentFlyout(anchor, col, dp(60)) // molina-27n: tombol ikon vertikal di atas FAB
     }
 
+    /** [molina-27t] Pemetaan aksi ke ikon garis; null = tanpa ikon (aksi lokasi memakai FlyoutIconDrawable). */
+    private fun menuIconKind(a: EmbeddedMenu.Action): MenuIconDrawable.Kind? = when (a) {
+        EmbeddedMenu.Action.REFRESH -> MenuIconDrawable.Kind.REFRESH
+        EmbeddedMenu.Action.NEW_DIR -> MenuIconDrawable.Kind.NEW_DIR
+        EmbeddedMenu.Action.NEW_FILE -> MenuIconDrawable.Kind.NEW_FILE
+        EmbeddedMenu.Action.RENAME -> MenuIconDrawable.Kind.RENAME
+        EmbeddedMenu.Action.SELECT -> MenuIconDrawable.Kind.SELECT
+        EmbeddedMenu.Action.SELECT_ALL -> MenuIconDrawable.Kind.SELECT_ALL
+        EmbeddedMenu.Action.EXIT_SELECT -> MenuIconDrawable.Kind.EXIT
+        EmbeddedMenu.Action.COPY -> MenuIconDrawable.Kind.COPY
+        EmbeddedMenu.Action.MOVE -> MenuIconDrawable.Kind.MOVE
+        EmbeddedMenu.Action.PASTE, EmbeddedMenu.Action.EXTRACT_PASTE -> MenuIconDrawable.Kind.PASTE
+        EmbeddedMenu.Action.COMPRESS -> MenuIconDrawable.Kind.COMPRESS
+        EmbeddedMenu.Action.EXTRACT_HERE, EmbeddedMenu.Action.EXTRACT_FOLDER, EmbeddedMenu.Action.EXTRACT_SUBS,
+        EmbeddedMenu.Action.EXTRACT_TO -> MenuIconDrawable.Kind.EXTRACT
+        EmbeddedMenu.Action.VIEW_ARCHIVE -> MenuIconDrawable.Kind.VIEW
+        EmbeddedMenu.Action.TEST_ARCHIVE -> MenuIconDrawable.Kind.TEST
+        EmbeddedMenu.Action.SHARE -> MenuIconDrawable.Kind.SHARE
+        EmbeddedMenu.Action.SORT -> MenuIconDrawable.Kind.SORT
+        EmbeddedMenu.Action.SEARCH -> MenuIconDrawable.Kind.SEARCH
+        EmbeddedMenu.Action.FAVORITE -> MenuIconDrawable.Kind.FAVORITE
+        EmbeddedMenu.Action.COPY_PATH -> MenuIconDrawable.Kind.LINK
+        EmbeddedMenu.Action.INFO -> MenuIconDrawable.Kind.INFO
+        EmbeddedMenu.Action.TRASH -> MenuIconDrawable.Kind.TRASH
+        EmbeddedMenu.Action.DELETE_PERMANENT -> MenuIconDrawable.Kind.DELETE_FOREVER
+        else -> null
+    }
+
     private fun flyoutColumn(): LinearLayout {
         val col = LinearLayout(context)
         col.orientation = LinearLayout.VERTICAL
@@ -331,10 +359,12 @@ class FileDrawerView(
                 EmbeddedMenu.Action.OPEN_TRASH -> FlyoutIconDrawable.Kind.TRASH
                 else -> null
             }
-            if (kind != null) {
+            val plain = menuIconKind(en.action)
+            val tint = if (en.danger) danger else plain?.let { MenuIconDrawable.colorFor(it) } ?: white // molina-27v: ikon berwarna per kelompok, teks tetap putih/merah
+            if (kind != null || plain != null) {
                 val iv = ImageView(context)
-                iv.setImageDrawable(FlyoutIconDrawable(kind))
-                r.addView(iv, LinearLayout.LayoutParams(dp(22), dp(22)))
+                iv.setImageDrawable(if (kind != null) FlyoutIconDrawable(kind) else MenuIconDrawable(plain!!, tint))
+                r.addView(iv, LinearLayout.LayoutParams(dp(20), dp(20)))
             }
             val t = TextView(context)
             t.text = context.getString(en.labelRes, *en.labelArgs.toTypedArray()) // molina-27l
@@ -343,7 +373,7 @@ class FileDrawerView(
             t.maxLines = 1
             t.ellipsize = TextUtils.TruncateAt.END
             val tlp = LinearLayout.LayoutParams(0, WRAP, 1f)
-            if (kind != null) tlp.marginStart = dp(12)
+            if (kind != null || plain != null) tlp.marginStart = dp(12)
             r.addView(t, tlp)
             r.alpha = if (en.enabled) 1f else 0.38f
             if (en.enabled) {
@@ -355,12 +385,14 @@ class FileDrawerView(
             }
             col.addView(r, LinearLayout.LayoutParams(MATCH, dp(42)))
         }
-        popup = presentFlyout(anchor, col, dp(260))
+        popup = presentFlyout(anchor, col, dp(210), fit = true) // molina-27t: lebar menyesuaikan isi
     }
 
     /** [molina-27m] Tinggi kartu = seluruh ruang di atas tombol (bukan 70% layar), bilah gulir aktif agar baris bawah terlihat. */
-    private fun presentFlyout(anchor: View, col: LinearLayout, maxWidth: Int): PopupWindow {
-        val w = minOf(maxWidth, resources.displayMetrics.widthPixels - dp(24))
+    private fun presentFlyout(anchor: View, col: LinearLayout, maxWidth: Int, fit: Boolean = false): PopupWindow {
+        val cap = minOf(maxWidth, resources.displayMetrics.widthPixels - dp(24))
+        col.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+        val w = if (fit) col.measuredWidth.coerceIn(minOf(dp(150), cap), cap) else cap // molina-27t
         val scroll = ScrollView(context)
         scroll.isVerticalScrollBarEnabled = true
         scroll.addView(col, FrameLayout.LayoutParams(MATCH, WRAP))
@@ -525,11 +557,27 @@ class FileDrawerView(
         return true
     }
 
+    /** [molina-27u] Back luar dibutuhkan bila mode pilih, pencarian, atau folder bisa naik. */
+    private fun notifyBack() {
+        if (embedded) onSelectionChanged(selection.active || searchOn || canGoUp(currentRoot()))
+    }
+
+    private fun canGoUp(root: File): Boolean =
+        (root.parentFile != null && vols.none { it.path == root.path }) || (embedded && focusOrRoot(root).path != root.path)
+
+    /** [molina-27u] Tombol Back sistem: tutup mode pilih/pencarian dulu, lalu naik satu folder. false = tidak ada yang ditangani. */
+    fun navigateUp(): Boolean {
+        if (cancelSelection()) return true
+        if (!canGoUp(currentRoot())) return false
+        goUp()
+        return true
+    }
+
     /** Header, kotak centang baris, dan Back luar diperbarui. Baris tidak berubah isi, jadi bind dipaksa ulang. */
     private fun selectionChanged() {
         rebuild()
         adapter.notifyDataSetChanged()
-        onSelectionChanged(selection.active || searchOn) // molina-27g3: Back juga menutup pencarian
+        notifyBack() // molina-27g3/27u: Back menutup pilih, pencarian, atau naik folder
     }
 
     private fun setClip(mode: TransferMode, files: List<File>) {
@@ -546,7 +594,7 @@ class FileDrawerView(
         val files = clip.paths.map { File(it) }
         if (files.isEmpty()) return
         if (!actions.canPasteInto(dir) || !files.all { actions.canManage(it) }) {
-            toastText("Sumber atau tujuan di luar folder Molina")
+            toastText("Sumber atau tujuan di luar penyimpanan Internal") // molina-27j
             return
         }
         if (actions.transfer(mode, files, dir)) pasteDest = dir else toastText("Operasi lain masih berjalan") // molina-27g0
@@ -660,7 +708,7 @@ class FileDrawerView(
         searchBar.visibility = View.VISIBLE
         renderSearchBar()
         rebuild()
-        onSelectionChanged(selection.active || searchOn)
+        notifyBack() // molina-27u: pencarian dibuka
         searchField.post {
             searchField.requestFocus()
             (context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)?.showSoftInput(searchField, InputMethodManager.SHOW_IMPLICIT)
@@ -678,8 +726,7 @@ class FileDrawerView(
         searchField.setText("")
         searchBar.visibility = View.GONE
         renderSearchBar()
-        rebuild()
-        onSelectionChanged(selection.active)
+        rebuild() // molina-27u: pencarian ditutup; rebuild memanggil notifyBack
     }
 
     private fun scheduleSearch(delayMs: Long) {
@@ -804,6 +851,7 @@ class FileDrawerView(
     }
 
     private fun extractClipHere(dir: File) {
+        if (!actions.canPasteInto(dir)) { toastText("Tujuan di luar penyimpanan Internal"); return } // molina-27j
         if (!actions.extractClipInto(dir)) toastText("Operasi lain masih berjalan")
     }
 
@@ -857,7 +905,7 @@ class FileDrawerView(
         clipPaste.text = if (an > 0) "Ekstrak" else "Tempel"
         clipText.text = if (an > 0) "Ekstrak $an arsip ke\u2026" else (if (clip.mode == TransferMode.MOVE) "Pindah " else "Salin ") + "$n item"
         val ok = actions.canPasteInto(currentRoot())
-        clipPaste.isEnabled = ok
+        clipPaste.isEnabled = true // molina-27j: tetap bisa diketuk; penolakan dijelaskan lewat toast
         clipPaste.alpha = if (ok) 1f else 0.38f
     }
 
@@ -954,22 +1002,15 @@ class FileDrawerView(
         header.orientation = LinearLayout.HORIZONTAL
         header.gravity = Gravity.CENTER_VERTICAL
         header.setPadding(dp(2), dp(2), dp(2), dp(2))
-        val headerFrame = GradientDrawable()
-        headerFrame.setColor(Color.TRANSPARENT)
-        headerFrame.cornerRadius = dp(8).toFloat()
-        headerFrame.setStroke(dp(1), ContextCompat.getColor(context, UiR.color.molina_header_frame))
-        if (!embedded) header.background = headerFrame // molina-27j: Berkas tanpa bingkai luar
+        // molina-27j/27w: tanpa bingkai luar; header Terminal dan Berkas memakai tampilan yang sama
 
         back.text = "\u2039"
         back.textSize = 22f
         back.gravity = Gravity.CENTER
         back.setTextColor(white)
         back.contentDescription = context.getString(R.string.drawer_up)
-        val ring = GradientDrawable()
-        ring.shape = GradientDrawable.OVAL
-        ring.setColor(Color.TRANSPARENT)
-        ring.setStroke(dp(1), dim)
-        if (embedded) { back.text = ""; back.background = backArt } else back.background = ring // molina-27j
+        back.text = ""
+        back.background = backArt // molina-27j/27w: tombol kembali bulat biru di Terminal dan Berkas
         back.setOnClickListener {
             if (embedded && selection.active) cancelSelection() else goUp() // molina-27e/27o
         }
@@ -982,8 +1023,8 @@ class FileDrawerView(
         box.setPadding(dp(10), dp(2), dp(10), dp(2))
         val boxBg = GradientDrawable()
         boxBg.setColor(ContextCompat.getColor(context, UiR.color.molina_bg))
-        boxBg.cornerRadius = dp(if (embedded) 2 else 4).toFloat() // molina-27j
-        boxBg.setStroke(dp(1), if (embedded) ColorUtils.setAlphaComponent(ContextCompat.getColor(context, UiR.color.molina_header_frame), 0xAA) else ContextCompat.getColor(context, UiR.color.molina_outline)) // molina-27j
+        boxBg.cornerRadius = dp(2).toFloat() // molina-27j/27w
+        boxBg.setStroke(dp(1), ColorUtils.setAlphaComponent(ContextCompat.getColor(context, UiR.color.molina_header_frame), 0xAA)) // molina-27j/27w
         box.background = boxBg
         title.setTextColor(white)
         title.textSize = 14f
@@ -997,14 +1038,14 @@ class FileDrawerView(
         pathText.ellipsize = TextUtils.TruncateAt.MIDDLE
         box.addView(title)
         box.addView(pathText)
-        if (embedded) { // molina-27j: satu baris breadcrumb "Internal \u203A Molina \u203A ...", ujung kanan selalu terlihat
+        run { // molina-27j/27w: satu baris breadcrumb "Internal \u203A Molina \u203A ...", ujung kanan selalu terlihat
             title.typeface = Typeface.DEFAULT
             title.textSize = 13f // molina-27n
             title.ellipsize = TextUtils.TruncateAt.START
             pathText.visibility = View.GONE
             box.setPadding(dp(12), 0, dp(12), 0)
         }
-        val boxLp = LinearLayout.LayoutParams(0, dp(if (embedded) 30 else 34), 1f) // molina-27j/27n
+        val boxLp = LinearLayout.LayoutParams(0, dp(30), 1f) // molina-27j/27n/27w
         boxLp.marginStart = dp(4)
         boxLp.marginEnd = dp(4)
         header.addView(box, boxLp)
@@ -1017,9 +1058,9 @@ class FileDrawerView(
         header.addView(headerMenu, LinearLayout.LayoutParams(dp(34), dp(34)))
 
         val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
-        if (embedded) headerLp.setMargins(dp(6), dp(3), dp(6), dp(3)) else headerLp.setMargins(dp(6), dp(6), dp(6), dp(4)) // molina-27n
+        headerLp.setMargins(dp(6), dp(3), dp(6), dp(3)) // molina-27n/27w
         panel.addView(header, headerLp)
-        if (embedded) panel.addView(divider(), LinearLayout.LayoutParams(MATCH, dp(1))) // molina-27j: garis pemisah di bawah header
+        panel.addView(divider(), LinearLayout.LayoutParams(MATCH, dp(1))) // molina-27j/27w: garis pemisah di bawah header
 
         chips.orientation = LinearLayout.HORIZONTAL
         chipScroll.isHorizontalScrollBarEnabled = false
@@ -1172,10 +1213,11 @@ class FileDrawerView(
         val rows = if (found != null) DrawerSort.sorted(found, sort).map { DrawerRow(it, 0, false) } else DrawerFs.flatten(state, root, sort)
         adapter.submitList(rows, onCommitted)
         headerDots?.statusColor = if (embedded && (searchOn || sort != DrawerSort.DEFAULT)) accent else null
-        title.text = if (embedded) crumbText(focusOrRoot(root)) else root.name.ifEmpty { "/" } // molina-27j/27n
+        title.text = crumbText(if (embedded) focusOrRoot(root) else root) // molina-27j/27n/27w: breadcrumb di Terminal juga
         pathText.text = DrawerFs.displayPath(root.path)
         host.onRootChanged(root.path)
-        val canUp = (root.parentFile != null && vols.none { it.path == root.path }) || (embedded && focusOrRoot(root).path != root.path) // molina-27o
+        val canUp = canGoUp(root) // molina-27o/27u
+        notifyBack()
         val picking = embedded && selection.active // molina-27e: ‹ jadi ✕ dan judul menghitung item terpilih
         back.isEnabled = canUp || picking
         back.alpha = if (canUp || picking) 1f else 0.38f
@@ -1266,6 +1308,17 @@ class FileDrawerView(
             if (row.expanded) {
                 state.expanded.remove(f.path)
                 rebuild()
+            } else if (embedded && !selection.active) { // molina-27s: folder kosong dibuka sebagai folder utama
+                scope.launch {
+                    val entries = state.children[f.path] ?: withContext(Dispatchers.IO) { DrawerFs.list(f) ?: emptyList() }
+                    if (entries.isEmpty()) {
+                        setRoot(f)
+                    } else {
+                        state.children[f.path] = entries
+                        state.expanded.add(f.path)
+                        rebuild()
+                    }
+                }
             } else {
                 state.expanded.add(f.path)
                 if (state.children[f.path] == null) load(f) else rebuild()
@@ -1301,7 +1354,7 @@ class FileDrawerView(
             val row = LinearLayout(ctx)
             row.orientation = LinearLayout.HORIZONTAL
             row.gravity = Gravity.CENTER_VERTICAL
-            row.layoutParams = RecyclerView.LayoutParams(MATCH, dp(ROW_DP))
+            row.layoutParams = RecyclerView.LayoutParams(MATCH, dp(if (embedded) ROW_EMBEDDED_DP else ROW_DP)) // molina-27t
             row.isClickable = true
             row.background = RippleDrawable(ripple, null, ColorDrawable(Color.WHITE))
 
@@ -1312,7 +1365,7 @@ class FileDrawerView(
             row.addView(arrow, LinearLayout.LayoutParams(dp(14), WRAP))
 
             val icon = TreeIconView(ctx)
-            val iconSize = if (embedded) 26 else 20 // molina-27o: ikon Berkas lebih besar
+            val iconSize = if (embedded) 30 else 20 // molina-27o/27t: ikon Berkas lebih besar
             val iconLp = LinearLayout.LayoutParams(dp(iconSize), dp(iconSize))
             iconLp.marginStart = dp(4)
             iconLp.marginEnd = dp(8)
@@ -1320,7 +1373,7 @@ class FileDrawerView(
 
             val name = TextView(ctx)
             name.setTextColor(white)
-            name.textSize = 13f
+            name.textSize = if (embedded) 15f else 13f // molina-27t
             name.typeface = Typeface.MONOSPACE
             name.maxLines = 1
             name.ellipsize = TextUtils.TruncateAt.END
@@ -1761,6 +1814,7 @@ class FileDrawerView(
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
         const val ROW_DP = 36
+        const val ROW_EMBEDDED_DP = 44 // molina-27t
         const val MIN_WIDTH_DP = 248
         const val PREFS = "molina_filemanager" // molina-27g2
         const val KEY_SORT = "sort"

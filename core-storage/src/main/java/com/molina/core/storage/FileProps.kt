@@ -23,6 +23,9 @@ data class FileProps(
     val canRead: Boolean,
     val canWrite: Boolean,
     val isSymlink: Boolean,
+    val canExecute: Boolean = false, // molina-27u
+    val linkTarget: String? = null, // molina-27u: target tautan simbolik
+    val hiddenCount: Int = 0, // molina-27u: item berawalan titik di dalam folder (rekursif)
 )
 
 /** Berkas yang boleh dibagikan. [skipped]: item yang dilewati (folder atau isi Sampah). */
@@ -45,6 +48,7 @@ internal object PropsReader {
         var size = 0L
         var files = 0
         var folders = 0
+        var hidden = 0 // molina-27u
         if (dir) {
             val stack = ArrayDeque<File>()
             stack.addLast(f)
@@ -52,6 +56,7 @@ internal object PropsReader {
                 if (isCancelled()) throw Cancelled()
                 val kids = stack.removeLast().listFiles() ?: continue
                 for (k in kids) {
+                    if (k.name.startsWith('.')) hidden++ // molina-27u
                     if (isLink(k)) {
                         files++
                     } else if (k.isDirectory) {
@@ -66,7 +71,8 @@ internal object PropsReader {
         } else {
             size = f.length()
         }
-        return FileProps(f.name, relative, dir, size, files, folders, f.lastModified(), f.canRead(), f.canWrite(), link)
+        val target = if (link) runCatching { Files.readSymbolicLink(f.toPath()).toString() }.getOrNull() else null // molina-27u
+        return FileProps(f.name, relative, dir, size, files, folders, f.lastModified(), f.canRead(), f.canWrite(), link, f.canExecute(), target, hidden)
     }
 
     /** SHA-256 heksadesimal isi [f], dibaca bertahap; [onProgress] menerima (selesai, total) byte. */

@@ -14,5 +14,6 @@ android {
 }
 dependencies {
     api(project(":core-log"))
+    implementation(project(":core-security"))
     testImplementation("junit:junit:4.13.2")
 }

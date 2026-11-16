@@ -47,7 +47,10 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import com.molina.core.storage.TreeNode
 import com.molina.core.storage.TreeSort
+import com.molina.core.ui.ExtLabel
+import com.molina.core.ui.FileKind
 import com.molina.core.ui.MolinaDialog
+import com.molina.core.ui.TreeIconView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -132,7 +135,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         val white = ContextCompat.getColor(ctx, UiR.color.molina_on_surface)
         val dim = ContextCompat.getColor(ctx, UiR.color.molina_on_surface_variant)
         val frame = ContextCompat.getColor(ctx, UiR.color.molina_header_frame)
-        val green = ContextCompat.getColor(ctx, UiR.color.molina_key_green)
+        val green = ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent) // molina-27x: aksen teal Molina untuk yang bisa diketuk
         val amber = ContextCompat.getColor(ctx, UiR.color.molina_cinema_accent)
 
         val root = LinearLayout(ctx).apply {
@@ -261,8 +264,17 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         recycler = RecyclerView(ctx).apply {
             layoutManager = LinearLayoutManager(ctx)
             adapter = this@ArchiveSheet.adapter
+            // molina-27x: bingkai tipis di sekeliling daftar + garis pemisah antarbaris (dimulai setelah kolom ikon)
+            setPadding(dp(1), dp(1), dp(1), dp(1))
+            clipToPadding = true
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(android.graphics.Color.TRANSPARENT)
+                cornerRadius = dp(6).toFloat()
+                setStroke(dp(1), androidx.core.graphics.ColorUtils.setAlphaComponent(frame, 0xAA))
+            }
+            addItemDecoration(rowDivider(frame, dp(58)))
         }
-        root.addView(recycler, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        root.addView(recycler, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply { topMargin = dp(8) })
 
         val bar = LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -460,10 +472,26 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         actionCount?.text = ArchiveViewText.selectionLine(browse.selected.size)
     }
 
+    /** [molina-27x] Garis pemisah tipis antarbaris, dimulai [startPx] dari kiri (sejajar teks, setelah kolom ikon). */
+    private fun rowDivider(lineColor: Int, startPx: Int) = object : RecyclerView.ItemDecoration() {
+        private val paint = android.graphics.Paint().apply {
+            color = androidx.core.graphics.ColorUtils.setAlphaComponent(lineColor, 0x44)
+            strokeWidth = 1f
+        }
+
+        override fun onDrawOver(c: android.graphics.Canvas, parent: RecyclerView, state: RecyclerView.State) {
+            for (i in 0 until parent.childCount - 1) {
+                val v = parent.getChildAt(i)
+                val y = v.bottom.toFloat()
+                c.drawLine(parent.paddingLeft + startPx.toFloat(), y, (parent.width - parent.paddingRight).toFloat(), y, paint)
+            }
+        }
+    }
+
     private fun renderCrumbs(ctx: android.content.Context) {
         val box = crumbBox ?: return
         val d = ctx.resources.displayMetrics.density
-        val green = ContextCompat.getColor(ctx, UiR.color.molina_key_green)
+        val green = ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent) // molina-27x
         val dim = ContextCompat.getColor(ctx, UiR.color.molina_on_surface_variant)
         box.removeAllViews()
         if (browse.searching) {
@@ -882,7 +910,13 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         private var selected: Set<String> = emptySet()
         private var searching = false
 
-        inner class Holder(val text: TextView) : RecyclerView.ViewHolder(text)
+        inner class Holder(
+            val row: LinearLayout,
+            val icon: TreeIconView,
+            val name: TextView,
+            val info: TextView,
+            val tick: TextView,
+        ) : RecyclerView.ViewHolder(row)
 
         fun submit(list: List<TreeNode>, sel: Set<String>, search: Boolean) {
             nodes = list
@@ -891,43 +925,67 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             notifyDataSetChanged()
         }
 
+        // molina-27x: baris bergaya Berkas: ikon Mint (TreeIconView) di kolom tetap, nama putih, baris kedua redup, centang di kanan
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
             val ctx = parent.context
             val d = ctx.resources.displayMetrics.density
-            val tv = TextView(ctx).apply {
-                textSize = 15f
-                maxLines = 2
-                ellipsize = android.text.TextUtils.TruncateAt.MIDDLE
-                setPadding((8 * d).toInt(), (10 * d).toInt(), (8 * d).toInt(), (10 * d).toInt())
+            fun dp(v: Int) = (v * d).toInt()
+            val white = ContextCompat.getColor(ctx, UiR.color.molina_on_surface)
+            val dim = ContextCompat.getColor(ctx, UiR.color.molina_on_surface_variant)
+            val accent = ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent)
+            val row = LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                minimumHeight = dp(56)
+                setPadding(dp(10), dp(6), dp(12), dp(6))
                 layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             }
-            return Holder(tv)
+            val icon = TreeIconView(ctx)
+            row.addView(icon, LinearLayout.LayoutParams(dp(32), dp(32)).apply { marginEnd = dp(12) })
+            val col = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+            val name = TextView(ctx).apply {
+                textSize = 15f
+                setTextColor(white)
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.MIDDLE
+            }
+            val info = TextView(ctx).apply {
+                textSize = 12f
+                setTextColor(dim)
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.END
+            }
+            col.addView(name)
+            col.addView(info)
+            row.addView(col, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            val tick = TextView(ctx).apply {
+                text = "\u2713"
+                textSize = 18f
+                setTextColor(accent)
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                visibility = View.GONE
+            }
+            row.addView(tick)
+            return Holder(row, icon, name, info, tick)
         }
 
         override fun getItemCount(): Int = nodes.size
 
         override fun onBindViewHolder(holder: Holder, position: Int) {
             val n = nodes[position]
-            val ctx = holder.text.context
-            val white = ContextCompat.getColor(ctx, UiR.color.molina_on_surface)
-            val dim = ContextCompat.getColor(ctx, UiR.color.molina_on_surface_variant)
-            val green = ContextCompat.getColor(ctx, UiR.color.molina_key_green)
+            val ctx = holder.row.context
             val picked = n.path in selected
-            val iconColor = ArchiveIcons.iconColor(n, green, dim) // 26k5e:e01
-            val lead = (if (picked) "\u2713 " else "") + ArchiveIcons.glyph(n) + "  "
-            val name = lead + n.name + (if (n.isDirectory) "/" else "")
-            val line2 = "\n" + if (searching) ArchiveViewText.hitLine(n) else ArchiveViewText.nodeLine(n)
-            val span = SpannableString(name + line2)
-            span.setSpan(ForegroundColorSpan(iconColor), 0, lead.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) // 26k5e:e02
-            span.setSpan(ForegroundColorSpan(ArchiveIcons.nameColor(n, green, white)), lead.length, name.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) // 26k5e:e03
-            span.setSpan(ForegroundColorSpan(dim), name.length, span.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            span.setSpan(RelativeSizeSpan(0.85f), name.length, span.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            holder.text.text = span
-            holder.text.setBackgroundColor(
-                if (picked) ContextCompat.getColor(ctx, UiR.color.molina_outline) else android.graphics.Color.TRANSPARENT,
+            holder.icon.isDir = n.isDirectory
+            holder.icon.kind = if (n.isDirectory) FileKind.OTHER else FileKind.of(n.name)
+            holder.icon.label = if (n.isDirectory) "" else ExtLabel.of(n.name)
+            holder.name.text = n.name
+            holder.info.text = ArchiveRowText.second(n, searching)
+            holder.tick.visibility = if (picked) View.VISIBLE else View.GONE
+            holder.row.setBackgroundColor(
+                if (picked) androidx.core.graphics.ColorUtils.setAlphaComponent(ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent), 0x2A) else android.graphics.Color.TRANSPARENT,
             )
-            holder.text.setOnClickListener { onRowClick(n) }
-            holder.text.setOnLongClickListener {
+            holder.row.setOnClickListener { onRowClick(n) }
+            holder.row.setOnLongClickListener {
                 onRowLong(n)
                 true
             }

@@ -14,7 +14,11 @@ object FileManagerEmbed {
         private val onCancelSelection: () -> Boolean,
         private val onArchiveClip: () -> Unit, // molina-27f
         private val onOpenDir: (java.io.File) -> Unit, // molina-27g0
+        private val onNavigateUp: () -> Boolean, // molina-27u
     ) {
+        /** [molina-27u] Back sistem: tutup mode pilih/pencarian, jika tidak ada naik satu folder; true bila ditangani. */
+        fun navigateUp(): Boolean = onNavigateUp()
+
         /** [molina-27f] Klip "Ekstrak ke..." berubah (dari lembar Lihat isi): bilah klip digambar ulang. */
         fun archiveClipChanged() = onArchiveClip()
 
@@ -40,7 +44,7 @@ object FileManagerEmbed {
             context, FileDrawerState(), scope, NoopHost,
             embedded = true, actions = actions, onSelectionChanged = onSelectionChanged,
         )
-        return Handle(v, { v.refresh() }, { v.onTransferFinished(it) }, { v.cancelSelection() }, { v.onArchiveClipChanged() }, { v.openDirectory(it) })
+        return Handle(v, { v.refresh() }, { v.onTransferFinished(it) }, { v.cancelSelection() }, { v.onArchiveClipChanged() }, { v.openDirectory(it) }, { v.navigateUp() })
     }
 
     private object NoopHost : FileDrawerView.Host {

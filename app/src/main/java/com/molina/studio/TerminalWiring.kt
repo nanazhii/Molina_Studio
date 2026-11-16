@@ -3,6 +3,7 @@ package com.molina.studio
 
 import android.content.Context
 import android.os.Build
+import com.molina.core.security.ShieldRegistry
 import com.molina.log.MolinaEvents
 import com.molina.settings.TerminalPrefs
 import com.molina.terminal.TerminalSessionFactory
@@ -14,6 +15,7 @@ import com.molina.terminal.proot.NanoSupport
 import com.molina.terminal.proot.ProotCompat
 import com.molina.terminal.proot.ProotLauncher
 import com.molina.terminal.proot.ShellPrompt
+import com.molina.terminal.proot.ShieldGuestEnv
 import java.io.File
 
 private const val SHELL = "/system/bin/sh"
@@ -43,6 +45,7 @@ internal fun createTerminalSessionFactory(context: Context): TerminalSessionFact
                 ProotLauncher.prepareGuest(layout.rootfsDir, id = sessionId)
                 ShellPrompt.install(layout.rootfsDir, TerminalPrefs.showRoot(app), id = sessionId)
                 NanoSupport.install(layout.rootfsDir, id = sessionId)
+                ShieldGuestEnv.install(layout.rootfsDir, ShieldRegistry.current(), TerminalPrefs.shieldProxy(app), id = sessionId)
                 ProotLauncher.build(layout, home, noSeccomp = Build.VERSION.SDK_INT <= Build.VERSION_CODES.O_MR1, id = sessionId, compat = ProotCompat.enabled)
             } catch (e: Exception) {
                 prepareFailed = true

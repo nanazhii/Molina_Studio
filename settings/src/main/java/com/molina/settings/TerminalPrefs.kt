@@ -10,6 +10,7 @@ object TerminalPrefs {
     private const val KEY_NANO_OPEN = "nano_keys_open"
     private const val KEY_RUN_MODE = "run_mode_v3"
     private const val KEY_RUN_LOG = "run_log"
+    private const val KEY_SHIELD = "shield_proxy"
     const val RUN_ASK = "ask"
     const val RUN_ACTIVE = "active"
     const val RUN_NEW = "new"
@@ -42,5 +43,13 @@ object TerminalPrefs {
 
     fun setRunLog(ctx: Context, value: Boolean) {
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putBoolean(KEY_RUN_LOG, value).apply()
+    }
+
+    /** Opt-in: lalu lintas http/https Debian lewat Molina Shield (bawaan: mati). Berlaku di sesi baru. */
+    fun shieldProxy(ctx: Context): Boolean =
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).getBoolean(KEY_SHIELD, false)
+
+    fun setShieldProxy(ctx: Context, value: Boolean) {
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putBoolean(KEY_SHIELD, value).apply()
     }
 }

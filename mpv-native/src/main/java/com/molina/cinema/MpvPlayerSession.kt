@@ -4,10 +4,19 @@ package com.molina.cinema
 import android.content.Context
 import android.view.Surface
 import com.molina.log.ExitHooks
+import com.molina.core.security.DirectStreamPreflight
+import com.molina.core.security.GuardVerdict
+import com.molina.core.security.LavfOptions
+import com.molina.core.security.MolinaShield
+import com.molina.core.security.PlaybackGuard
+import com.molina.core.security.ShieldRegistry
+import com.molina.log.LogLevel
 import com.molina.log.MolinaEvents
 import com.molina.log.MolinaLog
 import com.molina.log.MolinaLogger
 import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.channels.BufferOverflow
@@ -33,13 +42,17 @@ class MpvPlayback(val sessionId: String, val session: MolinaPlayerSession, val s
 
 object MpvPlayerFactory {
     /** null bila libmpv/libplayer tidak termuat atau inisialisasi gagal (alasan tercatat sebagai BUG mpv.*). */
-    fun open(context: Context, logger: MolinaLogger = MolinaLog.logger): MpvPlayback? {
+    fun open(
+        context: Context,
+        logger: MolinaLogger = MolinaLog.logger,
+        shield: MolinaShield? = ShieldRegistry.current(),
+    ): MpvPlayback? {
         val id = PlayerSessionIds.next()
         if (!MpvNative.isLoaded) {
             MolinaEvents.bug("mpv", "native-missing", "libmpv/libplayer tidak termuat", id = id, logger = logger)
             return null
         }
-        val raw = MpvPlayerSession(context.applicationContext, id, logger)
+        val raw = MpvPlayerSession(context.applicationContext, id, logger, shield)
         if (!raw.start()) return null
         return MpvPlayback(id, LoggingMolinaPlayerSession(raw, id, logger), raw)
     }
@@ -53,7 +66,13 @@ class MpvPlayerSession internal constructor(
     private val appContext: Context,
     private val sessionId: String,
     private val logger: MolinaLogger,
+    private val shield: MolinaShield? = null,
 ) : MolinaPlayerSession, PlayerSurface {
+
+    // molina-shield-wiring: guard dan preflight rtmp/rtsp (di thread latar agar DNS tidak memblokir main thread)
+    @Volatile private var guard: PlaybackGuard? = null
+    private val preflight = DirectStreamPreflight()
+    private var io: ExecutorService? = null
 
     private val mapper = MpvEventMapper()
     private val channel = Channel<PlayerEvent>(64, BufferOverflow.DROP_OLDEST)
@@ -98,6 +117,11 @@ class MpvPlayerSession internal constructor(
             // Batas memori: cache demuxer maju 32 MiB, mundur 8 MiB (bawaan mpv jauh lebih besar).
             MPVLib.setOptionString("demuxer-max-bytes", "32MiB")
             MPVLib.setOptionString("demuxer-max-back-bytes", "8MiB")
+            // Opsi lavf (blacklist protokol + http_proxy Shield) harus dipasang sebelum init.
+            val lavf = LavfOptions.forShield(shield)
+            MPVLib.setOptionString("stream-lavf-o", lavf)
+            MPVLib.setOptionString("demuxer-lavf-o", lavf)
+            guard = PlaybackGuard(shield, shield?.endpoint()?.url())
             MPVLib.init()
             MPVLib.addObserver(observer)
             MPVLib.observeProperty("pause", MPVLib.MpvFormat.MPV_FORMAT_FLAG)
@@ -120,7 +144,31 @@ class MpvPlayerSession internal constructor(
     override fun load(uri: String) {
         if (released.get()) return
         mapper.onLoadRequested(uri)
+        val g = guard
+        if (g != null) {
+            val v = g.checkSync(uri)
+            if (v is GuardVerdict.Block) return deny(v)
+            if (g.needsPreflight(uri)) {
+                val cfg = g.config()
+                executor().execute {
+                    if (released.get()) return@execute
+                    val r = preflight.check(uri, cfg)
+                    if (r is GuardVerdict.Block) deny(r) else if (!released.get()) MPVLib.command(arrayOf("loadfile", uri))
+                }
+                return
+            }
+        }
         MPVLib.command(arrayOf("loadfile", uri))
+    }
+
+    private fun executor(): ExecutorService = synchronized(this) {
+        io ?: Executors.newSingleThreadExecutor { r -> Thread(r, "molina-mpv-preflight").apply { isDaemon = true } }.also { io = it }
+    }
+
+    /** Catat alasan (kode saja, tidak pernah URL) dan laporkan sebagai galat pemutar. */
+    private fun deny(v: GuardVerdict.Block) {
+        MolinaEvents.bug("mpv", "shield-blocked", "pemuatan diblokir Shield", fields = mapOf("code" to v.code), id = sessionId, level = LogLevel.WARN, logger = logger)
+        emit(listOf(PlayerEvent.Error(-403, v.message), PlayerEvent.StateChanged(PlayerState.ERROR)))
     }
 
     override fun play() { if (!released.get()) MPVLib.setPropertyBoolean("pause", false) }
@@ -136,6 +184,7 @@ class MpvPlayerSession internal constructor(
     override fun release() {
         if (!released.compareAndSet(false, true)) return
         ExitHooks.remove("mpv-$sessionId")
+        synchronized(this) { io?.shutdownNow(); io = null }
         cleanup()
         channel.close()
     }

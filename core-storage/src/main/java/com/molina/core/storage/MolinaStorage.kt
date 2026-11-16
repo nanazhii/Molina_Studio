@@ -168,7 +168,9 @@ class LocalMolinaStorage(
 ) : MolinaStorage {
 
     /** Root dan folder standar: tidak boleh dihapus atau diganti namanya. */
-    private val protectedPaths: Set<File> get() = paths.layout.toSet() + paths.trash
+    // molina-27j: root bisa Internal; Molina dan Molina_Studio beserta folder standarnya tetap terlindungi
+    private val protectedPaths: Set<File> get() =
+        paths.layout.toSet() + paths.trash + MolinaPaths().layout + File("/storage/emulated/0/Molina_Studio")
 
     // molina-patch26h
     private val bin by lazy { TrashBin(paths.root) }

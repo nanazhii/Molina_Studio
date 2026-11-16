@@ -48,7 +48,7 @@ import java.io.File
  * [molina-27d] Favorit dan Sampah memakai ExplorerFavorites/TrashBin/TrashSheet yang sudah ada; tidak ada logika yang disalin ulang.
  */
 class BerkasFragment : Fragment(), ArchiveSheetHost {
-    private val paths = MolinaPaths()
+    private val paths = MolinaPaths(File(MolinaPaths.INTERNAL_ROOT)) // molina-27j: Berkas = penyimpanan Internal
     private val storage: MolinaStorage by lazy { LocalMolinaStorage(paths) }
     private val explorerStore by lazy { SharedPrefsKeyValueStore(requireContext()) }
     // Favorit memakai path relatif terhadap root, sama dengan FilesFragment, jadi daftarnya dibagi.
@@ -182,20 +182,23 @@ class BerkasFragment : Fragment(), ArchiveSheetHost {
         FrameLayout(requireContext())
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        // molina-27e: Back menutup mode pilih lebih dulu (aktif hanya saat mode pilih menyala)
+        // molina-27e/27u: Back menutup mode pilih/pencarian lebih dulu, lalu naik satu folder (aktif hanya bila ada yang bisa ditangani)
         val cb = object : OnBackPressedCallback(false) {
             override fun handleOnBackPressed() {
-                handle?.cancelSelection()
+                handle?.navigateUp() // molina-27u: tutup pilih/pencarian, lalu naik satu folder
             }
         }
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, cb)
         backCallback = cb
-        val h = FileManagerEmbed.create(requireContext(), viewLifecycleOwner.lifecycleScope, actions) { picking ->
-            backCallback?.isEnabled = picking
+        val h = FileManagerEmbed.create(requireContext(), viewLifecycleOwner.lifecycleScope, actions) { needsBack ->
+            backCallback?.isEnabled = needsBack
         }
         handle = h
         (view as FrameLayout).addView(h.view, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         strip = buildStrip(view)
+        FilesTransfer.useRoot(paths) // molina-27j
+        FilesArchive.useRoot(paths)
+        migrateFavorites27j()
         FilesArchive.sweepCache("start") // molina-27f
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -207,6 +210,15 @@ class BerkasFragment : Fragment(), ArchiveSheetHost {
             val r = storage.purgeExpiredTrash()
             if (r is MolinaResult.Success && r.value > 0) FilesEvents.trashPurged("auto", r.value)
         }
+    }
+
+    /** [molina-27j] Favorit lama relatif terhadap Molina; root baru Internal, jadi diberi awalan "Molina/" sekali saja. */
+    private fun migrateFavorites27j() {
+        val flag = "berkas_fav_migrated_27j"
+        if (explorerStore.getBoolean(flag, false)) return
+        val old = ExplorerFavorites(ScopedKeyValueStore(explorerStore, MolinaPaths.DEFAULT_ROOT))
+        for (p in old.paths()) favStore.add("Molina/$p")
+        explorerStore.putBoolean(flag, true)
     }
 
     override fun onDestroy() { // molina-27f

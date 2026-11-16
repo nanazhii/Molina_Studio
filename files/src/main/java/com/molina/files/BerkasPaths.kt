@@ -23,4 +23,7 @@ internal object BerkasPaths {
         if (p == base) return ""
         return relative(root, dir)
     }
+
+    /** [molina-27s] Lokasi untuk pengguna: "Internal" untuk root, selain itu "Internal/<relatif>". */
+    fun lokasi(rel: String): String = if (rel.isEmpty()) "Internal" else "Internal/$rel"
 }

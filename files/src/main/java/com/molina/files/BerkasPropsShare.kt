@@ -10,7 +10,6 @@ import com.molina.core.common.MolinaError
 import com.molina.core.common.MolinaResult
 import com.molina.core.storage.FileProps
 import com.molina.core.storage.MolinaStorage
-import com.molina.core.ui.MolinaDialog
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
@@ -82,49 +81,7 @@ internal class BerkasPropsShare(
         if (items.isEmpty()) return
         val scope = if (items.size > 1) "multi" else if (items[0].isDirectory) "folder" else "file"
         FilesEvents.props(scope, items.size, items[0].path)
-        val hashTarget = items.singleOrNull()?.takeIf { !it.isDirectory && !it.isSymlink }
-        val body = PropsText.body(items)
-        var hashJob: Job? = null
-        MolinaDialog.info(
-            context = host.requireContext(),
-            title = PropsText.title(items),
-            message = body,
-            positive = "Tutup",
-            secondary = if (hashTarget != null) "SHA-256" else null,
-            onSecondary = { handle ->
-                if (hashTarget != null && hashJob?.isActive != true) {
-                    handle.setMessage(body + "\n\nSHA-256: menghitung…")
-                    hashJob = host.viewLifecycleOwner.lifecycleScope.launch { hash(hashTarget, body, handle) }
-                }
-            },
-            onDismiss = { hashJob?.cancel() },
-        )
-    }
-
-    private suspend fun hash(target: FileProps, body: String, handle: MolinaDialog.Info) {
-        var lastPct = -1
-        try {
-            val r = storage.sha256(target.path) { done, total ->
-                val pct = if (total > 0) (done * 100 / total).toInt() else 0
-                if (pct != lastPct) {
-                    lastPct = pct
-                    handle.setMessage(body + "\n\nSHA-256: menghitung… " + pct + "%")
-                }
-            }
-            when (r) {
-                is MolinaResult.Success -> {
-                    FilesEvents.propsHash("ok")
-                    handle.setMessage(body + "\n\nSHA-256:\n" + r.value)
-                }
-                is MolinaResult.Failure -> {
-                    FilesEvents.failed("hash", r.error, target.path)
-                    handle.setMessage(body + "\n\nSHA-256 gagal: " + FilesErrorText.forOp(r.error.kind))
-                }
-            }
-        } catch (e: kotlin.coroutines.cancellation.CancellationException) {
-            FilesEvents.propsHash("cancelled")
-            throw e
-        }
+        PropsSheet(host, storage, root, items).show() // molina-27v: lembar bawah (hash dihitung di dalamnya)
     }
 
     private fun snack(text: String) {
