@@ -302,6 +302,34 @@ class FileDrawerView(
         popup = presentFlyout(anchor, col, dp(60)) // molina-27n: tombol ikon vertikal di atas FAB
     }
 
+    /** [molina-27t] Pemetaan aksi ke ikon garis; null = tanpa ikon (aksi lokasi memakai FlyoutIconDrawable). */
+    private fun menuIconKind(a: EmbeddedMenu.Action): MenuIconDrawable.Kind? = when (a) {
+        EmbeddedMenu.Action.REFRESH -> MenuIconDrawable.Kind.REFRESH
+        EmbeddedMenu.Action.NEW_DIR -> MenuIconDrawable.Kind.NEW_DIR
+        EmbeddedMenu.Action.NEW_FILE -> MenuIconDrawable.Kind.NEW_FILE
+        EmbeddedMenu.Action.RENAME -> MenuIconDrawable.Kind.RENAME
+        EmbeddedMenu.Action.SELECT -> MenuIconDrawable.Kind.SELECT
+        EmbeddedMenu.Action.SELECT_ALL -> MenuIconDrawable.Kind.SELECT_ALL
+        EmbeddedMenu.Action.EXIT_SELECT -> MenuIconDrawable.Kind.EXIT
+        EmbeddedMenu.Action.COPY -> MenuIconDrawable.Kind.COPY
+        EmbeddedMenu.Action.MOVE -> MenuIconDrawable.Kind.MOVE
+        EmbeddedMenu.Action.PASTE, EmbeddedMenu.Action.EXTRACT_PASTE -> MenuIconDrawable.Kind.PASTE
+        EmbeddedMenu.Action.COMPRESS -> MenuIconDrawable.Kind.COMPRESS
+        EmbeddedMenu.Action.EXTRACT_HERE, EmbeddedMenu.Action.EXTRACT_FOLDER, EmbeddedMenu.Action.EXTRACT_SUBS,
+        EmbeddedMenu.Action.EXTRACT_TO -> MenuIconDrawable.Kind.EXTRACT
+        EmbeddedMenu.Action.VIEW_ARCHIVE -> MenuIconDrawable.Kind.VIEW
+        EmbeddedMenu.Action.TEST_ARCHIVE -> MenuIconDrawable.Kind.TEST
+        EmbeddedMenu.Action.SHARE -> MenuIconDrawable.Kind.SHARE
+        EmbeddedMenu.Action.SORT -> MenuIconDrawable.Kind.SORT
+        EmbeddedMenu.Action.SEARCH -> MenuIconDrawable.Kind.SEARCH
+        EmbeddedMenu.Action.FAVORITE -> MenuIconDrawable.Kind.FAVORITE
+        EmbeddedMenu.Action.COPY_PATH -> MenuIconDrawable.Kind.LINK
+        EmbeddedMenu.Action.INFO -> MenuIconDrawable.Kind.INFO
+        EmbeddedMenu.Action.TRASH -> MenuIconDrawable.Kind.TRASH
+        EmbeddedMenu.Action.DELETE_PERMANENT -> MenuIconDrawable.Kind.DELETE_FOREVER
+        else -> null
+    }
+
     private fun flyoutColumn(): LinearLayout {
         val col = LinearLayout(context)
         col.orientation = LinearLayout.VERTICAL
@@ -331,10 +359,12 @@ class FileDrawerView(
                 EmbeddedMenu.Action.OPEN_TRASH -> FlyoutIconDrawable.Kind.TRASH
                 else -> null
             }
-            if (kind != null) {
+            val tint = if (en.danger) danger else white // molina-27t: ikon garis mengikuti warna teks
+            val plain = menuIconKind(en.action)
+            if (kind != null || plain != null) {
                 val iv = ImageView(context)
-                iv.setImageDrawable(FlyoutIconDrawable(kind))
-                r.addView(iv, LinearLayout.LayoutParams(dp(22), dp(22)))
+                iv.setImageDrawable(if (kind != null) FlyoutIconDrawable(kind) else MenuIconDrawable(plain!!, tint))
+                r.addView(iv, LinearLayout.LayoutParams(dp(20), dp(20)))
             }
             val t = TextView(context)
             t.text = context.getString(en.labelRes, *en.labelArgs.toTypedArray()) // molina-27l
@@ -343,7 +373,7 @@ class FileDrawerView(
             t.maxLines = 1
             t.ellipsize = TextUtils.TruncateAt.END
             val tlp = LinearLayout.LayoutParams(0, WRAP, 1f)
-            if (kind != null) tlp.marginStart = dp(12)
+            if (kind != null || plain != null) tlp.marginStart = dp(12)
             r.addView(t, tlp)
             r.alpha = if (en.enabled) 1f else 0.38f
             if (en.enabled) {
@@ -355,12 +385,14 @@ class FileDrawerView(
             }
             col.addView(r, LinearLayout.LayoutParams(MATCH, dp(42)))
         }
-        popup = presentFlyout(anchor, col, dp(260))
+        popup = presentFlyout(anchor, col, dp(210), fit = true) // molina-27t: lebar menyesuaikan isi
     }
 
     /** [molina-27m] Tinggi kartu = seluruh ruang di atas tombol (bukan 70% layar), bilah gulir aktif agar baris bawah terlihat. */
-    private fun presentFlyout(anchor: View, col: LinearLayout, maxWidth: Int): PopupWindow {
-        val w = minOf(maxWidth, resources.displayMetrics.widthPixels - dp(24))
+    private fun presentFlyout(anchor: View, col: LinearLayout, maxWidth: Int, fit: Boolean = false): PopupWindow {
+        val cap = minOf(maxWidth, resources.displayMetrics.widthPixels - dp(24))
+        col.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+        val w = if (fit) col.measuredWidth.coerceIn(minOf(dp(150), cap), cap) else cap // molina-27t
         val scroll = ScrollView(context)
         scroll.isVerticalScrollBarEnabled = true
         scroll.addView(col, FrameLayout.LayoutParams(MATCH, WRAP))
@@ -1313,7 +1345,7 @@ class FileDrawerView(
             val row = LinearLayout(ctx)
             row.orientation = LinearLayout.HORIZONTAL
             row.gravity = Gravity.CENTER_VERTICAL
-            row.layoutParams = RecyclerView.LayoutParams(MATCH, dp(ROW_DP))
+            row.layoutParams = RecyclerView.LayoutParams(MATCH, dp(if (embedded) ROW_EMBEDDED_DP else ROW_DP)) // molina-27t
             row.isClickable = true
             row.background = RippleDrawable(ripple, null, ColorDrawable(Color.WHITE))
 
@@ -1324,7 +1356,7 @@ class FileDrawerView(
             row.addView(arrow, LinearLayout.LayoutParams(dp(14), WRAP))
 
             val icon = TreeIconView(ctx)
-            val iconSize = if (embedded) 26 else 20 // molina-27o: ikon Berkas lebih besar
+            val iconSize = if (embedded) 30 else 20 // molina-27o/27t: ikon Berkas lebih besar
             val iconLp = LinearLayout.LayoutParams(dp(iconSize), dp(iconSize))
             iconLp.marginStart = dp(4)
             iconLp.marginEnd = dp(8)
@@ -1332,7 +1364,7 @@ class FileDrawerView(
 
             val name = TextView(ctx)
             name.setTextColor(white)
-            name.textSize = 13f
+            name.textSize = if (embedded) 15f else 13f // molina-27t
             name.typeface = Typeface.MONOSPACE
             name.maxLines = 1
             name.ellipsize = TextUtils.TruncateAt.END
@@ -1773,6 +1805,7 @@ class FileDrawerView(
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
         const val ROW_DP = 36
+        const val ROW_EMBEDDED_DP = 44 // molina-27t
         const val MIN_WIDTH_DP = 248
         const val PREFS = "molina_filemanager" // molina-27g2
         const val KEY_SORT = "sort"
