@@ -496,6 +496,7 @@ class FileDrawerView(
     fun openDirectory(dir: File) {
         scope.launch {
             if (!withContext(Dispatchers.IO) { dir.isDirectory }) return@launch
+            if (embedded) { setRoot(dir); return@launch } // molina-27s: header = folder tujuan
             val root = currentRoot()
             val chain = DrawerFs.chainTo(root, dir)
             if (chain == null) { setRoot(dir); return@launch }
@@ -922,7 +923,9 @@ class FileDrawerView(
 
     private fun onRowTap(row: DrawerRow) {
         val f = row.entry.file
-        if (row.entry.isDir) {
+        if (row.entry.isDir && embedded && !selection.active) { // molina-27s: ketuk folder = masuk (folder kosong ikut), header + menu mengikuti
+            setRoot(f)
+        } else if (row.entry.isDir) {
             if (row.expanded) {
                 state.expanded.remove(f.path)
                 rebuild()
