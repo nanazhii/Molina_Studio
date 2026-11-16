@@ -124,6 +124,7 @@ class FileDrawerView(
     ) { close() }
     private val back = TextView(context)
     private val backArt = BlueBackDrawable() // molina-27j: tombol kembali bulat biru (hanya mode Berkas)
+    private val rowDate = SimpleDateFormat("dd/MM/yy HH.mm", Locale.forLanguageTag("id-ID")) // molina-28a: tanggal ubah di keterangan baris (hanya dipakai di main thread)
     private val title = TextView(context)
     private val pathText = TextView(context)
     private val chips = LinearLayout(context)
@@ -1176,6 +1177,7 @@ class FileDrawerView(
         scope.launch {
             val entries = withContext(Dispatchers.IO) { DrawerFs.list(dir) ?: emptyList() }
             state.children[dir.path] = entries
+            syncCount(dir, entries) // molina-28a
             rebuild()
         }
     }
@@ -1194,10 +1196,19 @@ class FileDrawerView(
             }
             vols = fresh.second
             for ((p, entries) in fresh.first) {
-                if (entries != null) state.children[p] = entries else { state.children.remove(p); state.expanded.remove(p) }
+                if (entries != null) { state.children[p] = entries; syncCount(File(p), entries) } else { state.children.remove(p); state.expanded.remove(p) } // molina-28a
             }
             rebuild()
         }
+    }
+
+    /** [molina-28a] Setelah [dir] dimuat ulang, perbarui jumlah itemnya pada daftar induk supaya keterangan tidak basi. */
+    private fun syncCount(dir: File, entries: List<DrawerEntry>) {
+        val parent = dir.parentFile ?: return
+        val siblings = state.children[parent.path] ?: return
+        val i = siblings.indexOfFirst { it.file.path == dir.path }
+        if (i < 0 || siblings[i].childCount == entries.size) return
+        state.children[parent.path] = siblings.toMutableList().also { it[i] = siblings[i].copy(childCount = entries.size) }
     }
 
     private fun afterChange(parent: File?, oldPath: String) {
@@ -1316,6 +1327,7 @@ class FileDrawerView(
                         setRoot(f)
                     } else {
                         state.children[f.path] = entries
+                        syncCount(f, entries) // molina-28a
                         state.expanded.add(f.path)
                         rebuild()
                     }
@@ -1338,6 +1350,8 @@ class FileDrawerView(
         val arrow: TextView,
         val icon: TreeIconView,
         val name: TextView,
+        val sub: TextView, // molina-28a: tanggal ubah
+        val meta: TextView, // molina-28a: jumlah item (folder) / ukuran (berkas)
         val star: TextView,
         val check: CheckBox, // molina-27e
         val more: TextView,
@@ -1378,7 +1392,32 @@ class FileDrawerView(
             name.typeface = Typeface.MONOSPACE
             name.maxLines = 1
             name.ellipsize = TextUtils.TruncateAt.END
-            row.addView(name, LinearLayout.LayoutParams(0, WRAP, 1f))
+            // molina-28a: nama di atas; di bawahnya tanggal ubah (kiri) dan jumlah item / ukuran (kanan). Hanya mode Berkas.
+            val textCol = LinearLayout(ctx)
+            textCol.orientation = LinearLayout.VERTICAL
+            textCol.gravity = Gravity.CENTER_VERTICAL
+            textCol.addView(name, LinearLayout.LayoutParams(MATCH, WRAP))
+            val subRow = LinearLayout(ctx)
+            subRow.orientation = LinearLayout.HORIZONTAL
+            subRow.gravity = Gravity.CENTER_VERTICAL
+            subRow.visibility = if (embedded) View.VISIBLE else View.GONE
+            val sub = TextView(ctx)
+            sub.setTextColor(dim)
+            sub.textSize = 11f
+            sub.typeface = Typeface.MONOSPACE
+            sub.maxLines = 1
+            sub.ellipsize = TextUtils.TruncateAt.END
+            subRow.addView(sub, LinearLayout.LayoutParams(0, WRAP, 1f))
+            val meta = TextView(ctx)
+            meta.setTextColor(dim)
+            meta.textSize = 11f
+            meta.typeface = Typeface.MONOSPACE
+            meta.maxLines = 1
+            meta.gravity = Gravity.END
+            meta.setPadding(dp(8), 0, dp(10), 0)
+            subRow.addView(meta, LinearLayout.LayoutParams(WRAP, WRAP))
+            textCol.addView(subRow, LinearLayout.LayoutParams(MATCH, WRAP))
+            row.addView(textCol, LinearLayout.LayoutParams(0, WRAP, 1f))
 
             val star = TextView(ctx) // molina-27d2: penanda folder Favorit, warna aksen Terminal
             star.text = "\u2605"
@@ -1404,7 +1443,7 @@ class FileDrawerView(
             more.contentDescription = ctx.getString(R.string.drawer_more)
             more.background = RippleDrawable(ripple, null, ColorDrawable(Color.WHITE))
             row.addView(more, LinearLayout.LayoutParams(dp(40), MATCH))
-            return RowHolder(row, arrow, icon, name, star, check, more)
+            return RowHolder(row, arrow, icon, name, sub, meta, star, check, more)
         }
 
         override fun onBindViewHolder(h: RowHolder, position: Int) {
@@ -1419,6 +1458,10 @@ class FileDrawerView(
             h.icon.label = if (embedded && !e.isDir) ExtLabel.of(e.name) else "" // molina-27o
             h.name.setTextColor(kind.nameColor)
             h.name.text = if (searchEntries != null) searchLabel(e) else e.name // molina-27g3
+            if (embedded) { // molina-28a: keterangan baris
+                h.sub.text = if (e.modified > 0L) rowDate.format(Date(e.modified)) else ""
+                h.meta.text = if (e.isDir) EntryInfo.countLabel(e.childCount) else Formatter.formatShortFileSize(context, e.size)
+            }
             h.star.visibility = if (e.isDir && e.file.path in favPaths) View.VISIBLE else View.GONE // molina-27d2
             h.row.setOnClickListener { onRowTap(item) }
             h.more.setOnClickListener { showRowMenu(it, e) }
@@ -1815,7 +1858,7 @@ class FileDrawerView(
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
         const val ROW_DP = 36
-        const val ROW_EMBEDDED_DP = 44 // molina-27t
+        const val ROW_EMBEDDED_DP = 56 // molina-27t, molina-28a: dua baris (nama + keterangan)
         const val MIN_WIDTH_DP = 248
         const val PREFS = "molina_filemanager" // molina-27g2
         const val KEY_SORT = "sort"
