@@ -546,7 +546,7 @@ class FileDrawerView(
         val files = clip.paths.map { File(it) }
         if (files.isEmpty()) return
         if (!actions.canPasteInto(dir) || !files.all { actions.canManage(it) }) {
-            toastText("Sumber atau tujuan di luar folder Molina")
+            toastText("Sumber atau tujuan di luar penyimpanan Internal") // molina-27j
             return
         }
         if (actions.transfer(mode, files, dir)) pasteDest = dir else toastText("Operasi lain masih berjalan") // molina-27g0
@@ -804,6 +804,7 @@ class FileDrawerView(
     }
 
     private fun extractClipHere(dir: File) {
+        if (!actions.canPasteInto(dir)) { toastText("Tujuan di luar penyimpanan Internal"); return } // molina-27j
         if (!actions.extractClipInto(dir)) toastText("Operasi lain masih berjalan")
     }
 
@@ -857,7 +858,7 @@ class FileDrawerView(
         clipPaste.text = if (an > 0) "Ekstrak" else "Tempel"
         clipText.text = if (an > 0) "Ekstrak $an arsip ke\u2026" else (if (clip.mode == TransferMode.MOVE) "Pindah " else "Salin ") + "$n item"
         val ok = actions.canPasteInto(currentRoot())
-        clipPaste.isEnabled = ok
+        clipPaste.isEnabled = true // molina-27j: tetap bisa diketuk; penolakan dijelaskan lewat toast
         clipPaste.alpha = if (ok) 1f else 0.38f
     }
 
