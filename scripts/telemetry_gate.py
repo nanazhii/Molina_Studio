@@ -27,6 +27,10 @@ BUILD_FILES = {"scripts/native_mpv.sh", "scripts/native_wget.sh", "scripts/ensur
                "scripts/ffmpeg_components_audit.sh", "native/molina_ffmpeg_profile.sh"}
 BUILD_HOSTS = {"github.com", "dl.google.com"}
 
+# Berkas DATA daftar blokir pelacak (nama pelacak memang harus tertulis). Hanya pola SDK yang dilonggarkan;
+# URL pelacak/donasi tetap ditolak. Tambah berkas hanya jika isinya data murni.
+BLOCKLIST_FILES = {"core-security/src/main/java/com/molina/core/security/TrackerDomains.kt"}
+
 DONATION_HOSTS = {"ko-fi.com", "patreon.com", "buymeacoffee.com", "paypal.me",
                   "paypal.com", "opencollective.com", "liberapay.com",
                   "saweria.co", "trakteer.id", "sociabuzz.com"}
@@ -75,6 +79,7 @@ def emit(kind, rel, no, msg):
 
 def scan_line(rel, no, line, errors, warns):
     build = rel.replace(os.sep, "/") in BUILD_FILES
+    blocklist = rel.replace(os.sep, "/") in BLOCKLIST_FILES
     for m in URL_RE.finditer(line):
         url = m.group(0)
         u = urlparse(url)
@@ -91,7 +96,7 @@ def scan_line(rel, no, line, errors, warns):
             continue
         else:
             errors.append((rel, no, "URL di luar allowlist: " + url))
-    for pat in TRACKER_PATTERNS:
+    for pat in ([] if blocklist else TRACKER_PATTERNS):
         if re.search(pat, line, re.I):
             errors.append((rel, no, "SDK pelacak terdeteksi (%s)" % pat))
     for pat in ([] if build else OLD_IDENTITY):

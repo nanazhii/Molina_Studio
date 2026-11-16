@@ -206,3 +206,12 @@
 - [27o] Tab Berkas: tombol ‹, Folder baru, dan Tempel mengikuti path header; ikon folder berpola dan ikon berkas berpita ekstensi. Menunggu hasil CI.
 - [27p] TreeIconView bersama gaya Mint di :core-ui, dipakai Terminal dan Berkas. Menunggu hasil CI.
 - [27q] Kompres 7z bersandi: 7z a di Debian PRoot (sandi via stdin, -mhe=on opsional, bind berlingkup, staging atomik) meniru repo lama; SevenZipCommand + PasswordPolicy di :core-common, SevenZipBackend di :core-storage, DebianSevenZip di :app, ProotExec di :terminal-proot. Belum: lib7zz.so bawaan, tombol Buat acak. Menunggu hasil CI + uji di perangkat (butuh paket 7zip di Debian).
+- [27x] Berkas/Arsip: daftar isi arsip bergaya Berkas (TreeIconView, baris kedua ukuran+jenis, "Folder kosong", centang terpilih, bingkai tipis + pemisah baris). Aksen interaktif jadi teal Molina (arsip + Properti). Tes: ArchiveRowTextTest. Menunggu hasil CI.
+
+## P5 core-security (2026-11-16)
+- [x] Modul core-security (murni JVM): kontrak MolinaShield/ShieldConfig/ThreatScanner/Finding, UrlPolicy + ShieldPolicy, TrackerBlocklist, LocalShieldProxy, AppRiskAnalyzer
+- [x] telemetry_gate: BLOCKLIST_FILES (TrackerDomains.kt dikecualikan dari pola SDK pelacak); settings.gradle.kts, jvm-tests.yml, docs/arsitektur.md, docs/security.md
+- [x] 23 uji JUnit ditulis (UrlPolicy, TrackerBlocklist, AppRiskAnalyzer, LocalShieldProxy); lulus di sandbox dengan kotlinc 2.0.21
+- [ ] Verifikasi CI: jalankan Actions > Uji JVM (:core-security:testDebugUnitTest) dan gerbang module/telemetry/secret
+- [ ] Penyambungan: MolinaApplication start Shield, http_proxy + protocol_blacklist di Cinema, failClosed
+- [ ] UI Setelan Keamanan (sakelar, kartu ringkasan, daftar pengecualian) + pengumpul AppFootprint Android
