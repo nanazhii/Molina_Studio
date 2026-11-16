@@ -10,10 +10,12 @@ class FileDrawerState {
     var root: File? = null
     val children = HashMap<String, List<DrawerEntry>>()
     val expanded = LinkedHashSet<String>()
+    var showHidden: Boolean = true // molina-27k: Berkas tertanam menyembunyikan file berawalan titik (seperti Android)
+    var sort: DrawerSort = DrawerSort.NAME_ASC // molina-27k
 }
 
 /** Satu isi folder. [isDir] dihitung di thread IO supaya main thread tidak menyentuh disk. */
-data class DrawerEntry(val file: File, val isDir: Boolean) {
+data class DrawerEntry(val file: File, val isDir: Boolean, val size: Long = 0L, val modified: Long = 0L) {
     val name: String get() = file.name
     val hidden: Boolean get() = file.name.startsWith(".")
 }
@@ -25,25 +27,64 @@ object DrawerFs {
     const val INTERNAL_ROOT = "/storage/emulated/0"
     const val DEFAULT_ROOT = "/storage/emulated/0/Molina"
     private val PROTECTED = setOf("/storage/emulated/0/Molina", "/storage/emulated/0/Molina_Studio")
+    const val MOLINA_STUDIO = "/storage/emulated/0/Molina_Studio" // molina-27k
+
+    /** [molina-27k] Folder rumah Molina (Molina, Molina_Studio): diberi aksen dan bintang di daftar. */
+    fun isMolinaHome(path: String): Boolean = path == DEFAULT_ROOT || path == MOLINA_STUDIO
 
     /** BLOCKING: panggil dari Dispatchers.IO. Folder dulu, lalu berkas, urut nama. */
     fun list(dir: File): List<DrawerEntry>? {
         val kids = dir.listFiles() ?: return null
         return kids.filter { it.name != ".molina-trash" && it.name != ".arsip-cache" } // molina-27j: folder internal Molina disembunyikan
-            .map { DrawerEntry(it, it.isDirectory) }
+            .map { val d = it.isDirectory; DrawerEntry(it, d, if (d) 0L else it.length(), it.lastModified()) } // molina-27k
             .sortedWith(compareByDescending<DrawerEntry> { it.isDir }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 
     fun flatten(state: FileDrawerState, root: File): List<DrawerRow> {
         val out = ArrayList<DrawerRow>()
+        val cmp = DrawerSort.comparator(state.sort) // molina-27k
         fun walk(dir: File, depth: Int) {
-            state.children[dir.path]?.forEach { e ->
+            state.children[dir.path]?.filter { state.showHidden || !it.hidden }?.sortedWith(cmp)?.forEach { e ->
                 val open = e.isDir && e.file.path in state.expanded
                 out.add(DrawerRow(e, depth, open))
                 if (open) walk(e.file, depth + 1)
             }
         }
         walk(root, 0)
+        return out
+    }
+
+    /**
+     * [molina-27k] BLOCKING (IO). Cari nama yang memuat [query] (tanpa beda huruf) di bawah [root], melebar per tingkat
+     * (hasil dangkal dulu). Symlink tidak diikuti; folder internal Molina disembunyikan; maksimum [limit] hasil.
+     */
+    fun search(
+        root: File,
+        query: String,
+        showHidden: Boolean,
+        limit: Int = 300,
+        maxVisited: Int = 50000,
+        cancelled: () -> Boolean = { false },
+    ): List<File> {
+        val q = query.trim().lowercase()
+        if (q.isEmpty()) return emptyList()
+        val out = ArrayList<File>()
+        val queue = ArrayDeque<File>()
+        queue.addLast(root)
+        var visited = 0
+        while (queue.isNotEmpty() && out.size < limit && visited < maxVisited && !cancelled()) {
+            val kids = queue.removeFirst().listFiles() ?: continue
+            for (k in kids.sortedBy { it.name.lowercase() }) {
+                if (k.name == ".molina-trash" || k.name == ".arsip-cache") continue
+                if (!showHidden && k.name.startsWith(".")) continue
+                visited++
+                if (k.name.lowercase().contains(q)) {
+                    out.add(k)
+                    if (out.size >= limit) break
+                }
+                if (k.isDirectory && !Files.isSymbolicLink(k.toPath())) queue.addLast(k)
+            }
+        }
         return out
     }
 

@@ -15,6 +15,7 @@ internal object EmbeddedMenu {
         SHARE, // molina-27g
         FAVORITE, COPY_PATH, INFO, TRASH, DELETE_PERMANENT, FAVORITES_LIST, OPEN_TRASH,
         GO_INTERNAL, GO_DEBIAN, // molina-27i: kelompok hamburger di bawah menu titik tiga
+        TOGGLE_HIDDEN, SORT, SEARCH, GO_MOLINA, GO_DOWNLOAD, GO_DCIM, GO_DOCUMENTS, // molina-27k
     }
 
     data class Entry(val action: Action, val label: String, val enabled: Boolean = true, val danger: Boolean = false)
@@ -40,6 +41,7 @@ internal object EmbeddedMenu {
         val archiveClipCount: Int = 0,
         val shareAvailable: Boolean = false, // molina-27g: target di dalam root Molina dan bukan folder tunggal
         val propsAvailable: Boolean = false, // molina-27g: Properti kaya di menu mode pilih
+        val showHidden: Boolean = false, // molina-27k: file tersembunyi sedang ditampilkan
     ) {
         val hasTarget: Boolean get() = targetCount > 0
     }
@@ -112,7 +114,16 @@ internal object EmbeddedMenu {
             if (s.trashAvailable) l += Entry(Action.TRASH, "Hapus", danger = true)
             l += Entry(Action.DELETE_PERMANENT, "Hapus permanen\u2026", danger = true)
         }
+        if (s.global) { // molina-27k: Cari, Urut, file tersembunyi (tampilan saja; tidak butuh actions)
+            l += Entry(Action.SEARCH, "Cari\u2026")
+            l += Entry(Action.SORT, "Urut\u2026")
+            l += Entry(Action.TOGGLE_HIDDEN, if (s.showHidden) "Sembunyikan file tersembunyi" else "Tampilkan file tersembunyi")
+        }
         if (s.global) { // molina-27i: kelompok hamburger di bawah (pola DROP-HAMBURGER repo lama): Favorit, Internal, Debian, Sampah
+            l += Entry(Action.GO_MOLINA, "\u2630 \u2605 Molina") // molina-27k
+            l += Entry(Action.GO_DOWNLOAD, "\u2630 Download")
+            l += Entry(Action.GO_DCIM, "\u2630 DCIM")
+            l += Entry(Action.GO_DOCUMENTS, "\u2630 Dokumen")
             if (s.hasActions) l += Entry(Action.FAVORITES_LIST, "\u2630 Favorit")
             l += Entry(Action.GO_INTERNAL, "\u2630 Internal")
             l += Entry(Action.GO_DEBIAN, "\u2630 Debian")
