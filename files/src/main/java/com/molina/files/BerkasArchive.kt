@@ -124,7 +124,7 @@ internal class BerkasArchive(
     /** [molina-27g0] Folder hasil Ekstrak (tidak dibatalkan, ada berkas) untuk aksi "Buka"; null bila tidak ada. */
     private fun openTarget(state: ArchiveState.Finished): File? {
         val r = state.extract ?: return null
-        if (state.request.op != ArchiveOp.EXTRACT || r.cancelled || r.files == 0 || r.destRelative.isEmpty()) return null
+        if (state.request.op != ArchiveOp.EXTRACT || r.cancelled || r.files == 0) return null // molina-27s: destRelative kosong = root Internal, tetap bisa dibuka
         return File(root, r.destRelative)
     }
 
@@ -143,7 +143,9 @@ internal class BerkasArchive(
         } else {
             val opened = openTarget(state) // molina-27g0
             fragment.view?.let { v ->
-                Snackbar.make(v, ArchiveText.finished(state), Snackbar.LENGTH_LONG).also { sb ->
+                val ex = state.extract // molina-27s: sebut lokasi hasil ekstrak
+                val lokasi = if (ex != null && !ex.cancelled && ex.files > 0 && request.op != ArchiveOp.TEST) "\nHasil di " + BerkasPaths.lokasi(ex.destRelative) else ""
+                Snackbar.make(v, ArchiveText.finished(state) + lokasi, if (lokasi.isNotEmpty()) 8000 else Snackbar.LENGTH_LONG).also { sb ->
                     if (opened != null) sb.setAction("Buka") { onOpen(opened) }
                 }.show()
             }

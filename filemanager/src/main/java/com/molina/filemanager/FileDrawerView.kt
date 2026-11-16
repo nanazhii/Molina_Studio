@@ -1267,6 +1267,17 @@ class FileDrawerView(
             if (row.expanded) {
                 state.expanded.remove(f.path)
                 rebuild()
+            } else if (embedded && !selection.active) { // molina-27s: folder kosong dibuka sebagai folder utama
+                scope.launch {
+                    val entries = state.children[f.path] ?: withContext(Dispatchers.IO) { DrawerFs.list(f) ?: emptyList() }
+                    if (entries.isEmpty()) {
+                        setRoot(f)
+                    } else {
+                        state.children[f.path] = entries
+                        state.expanded.add(f.path)
+                        rebuild()
+                    }
+                }
             } else {
                 state.expanded.add(f.path)
                 if (state.children[f.path] == null) load(f) else rebuild()
