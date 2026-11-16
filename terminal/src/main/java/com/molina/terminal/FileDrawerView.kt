@@ -946,17 +946,25 @@ internal class TreeIconView(context: Context) : View(context) {
         val w = width.toFloat()
         val h = height.toFloat()
         val r = h * 0.1f
-        if (isDir) {
-            fill.color = 0xFFFFC107.toInt()
-            rect.set(0f, h * 0.18f, w * 0.45f, h * 0.5f)
+        if (isDir) { // molina-27t: folder gaya Mint-Y (dua nada hijau, tab kiri atas, sorotan tipis di tepi atas)
+            fill.color = 0xFF6B8E3E.toInt()
+            rect.set(w * 0.04f, h * 0.14f, w * 0.46f, h * 0.36f)
             canvas.drawRoundRect(rect, r, r, fill)
-            rect.set(0f, h * 0.3f, w, h * 0.88f)
+            rect.set(w * 0.04f, h * 0.24f, w * 0.96f, h * 0.84f)
             canvas.drawRoundRect(rect, r, r, fill)
-        } else {
-            val c = kind.color
-            fill.color = c
-            line.color = c
-            glyph.color = c
+            fill.color = 0xFF8DB255.toInt()
+            rect.set(w * 0.04f, h * 0.36f, w * 0.96f, h * 0.88f)
+            canvas.drawRoundRect(rect, r, r, fill)
+            glyph.color = 0x66FFFFFF
+            canvas.drawLine(w * 0.1f, h * 0.39f, w * 0.9f, h * 0.39f, glyph)
+        } else { // molina-27t: berkas gaya Mint-Y (kertas terang, sudut terlipat, lambang berwarna jenis)
+            fun deep(c: Int): Int {
+                val rr = ((c shr 16) and 0xFF) * 7 / 10
+                val gg = ((c shr 8) and 0xFF) * 7 / 10
+                val bb = (c and 0xFF) * 7 / 10
+                return (0xFF shl 24) or (rr shl 16) or (gg shl 8) or bb
+            }
+            val c = deep(kind.color) // digelapkan agar terbaca di kertas terang
             path.reset()
             path.moveTo(w * 0.2f, h * 0.08f)
             path.lineTo(w * 0.62f, h * 0.08f)
@@ -964,17 +972,20 @@ internal class TreeIconView(context: Context) : View(context) {
             path.lineTo(w * 0.82f, h * 0.92f)
             path.lineTo(w * 0.2f, h * 0.92f)
             path.close()
-            if (kind != FileKind.OTHER) {
-                fill.alpha = 0x2A // latar tipis sewarna jenis berkas
-                canvas.drawPath(path, fill)
-                fill.alpha = 0xFF
-            }
+            fill.color = 0xFFF1F3F4.toInt()
+            canvas.drawPath(path, fill)
+            line.color = 0xFF90A4AE.toInt()
             canvas.drawPath(path, line)
             path.reset()
             path.moveTo(w * 0.62f, h * 0.08f)
             path.lineTo(w * 0.62f, h * 0.28f)
             path.lineTo(w * 0.82f, h * 0.28f)
+            path.close()
+            fill.color = 0xFFCFD8DC.toInt()
+            canvas.drawPath(path, fill)
             canvas.drawPath(path, line)
+            fill.color = c
+            glyph.color = c
             drawGlyph(canvas, w, h)
         }
     }

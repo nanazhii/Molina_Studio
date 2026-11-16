@@ -206,3 +206,4 @@
 - Reset ke 27r tidak mengubah main (sudah di 766fb5c); patch 27n-27p tidak pernah masuk repo
 - Masalah terbuka: ikon belum Mint-Y; folder kosong tidak bisa dimasuki; hasil Ekstrak tanpa path tujuan/"Buka" di root; ekstrak keluar Molina belum direproduksi
 - Berikutnya: 27s (folder kosong + lokasi hasil ekstrak), lalu ikon Mint-Y
+- [27s] Berkas: ketuk folder = masuk (folder kosong bisa dibuka; header, ‹, Folder baru, Tempel, Ekstrak mengikuti), openDirectory (Tempel/Buka/Cari) memindah header ke folder tujuan. Snackbar hasil ekstrak menyebut "Hasil di Internal/..." dan "Buka" juga untuk root Internal. Terminal tidak berubah. Tes JVM: BerkasLokasiTest. Menunggu hasil CI.
