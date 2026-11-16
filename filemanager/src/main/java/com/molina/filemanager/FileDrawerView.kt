@@ -1002,22 +1002,15 @@ class FileDrawerView(
         header.orientation = LinearLayout.HORIZONTAL
         header.gravity = Gravity.CENTER_VERTICAL
         header.setPadding(dp(2), dp(2), dp(2), dp(2))
-        val headerFrame = GradientDrawable()
-        headerFrame.setColor(Color.TRANSPARENT)
-        headerFrame.cornerRadius = dp(8).toFloat()
-        headerFrame.setStroke(dp(1), ContextCompat.getColor(context, UiR.color.molina_header_frame))
-        if (!embedded) header.background = headerFrame // molina-27j: Berkas tanpa bingkai luar
+        // molina-27j/27w: tanpa bingkai luar; header Terminal dan Berkas memakai tampilan yang sama
 
         back.text = "\u2039"
         back.textSize = 22f
         back.gravity = Gravity.CENTER
         back.setTextColor(white)
         back.contentDescription = context.getString(R.string.drawer_up)
-        val ring = GradientDrawable()
-        ring.shape = GradientDrawable.OVAL
-        ring.setColor(Color.TRANSPARENT)
-        ring.setStroke(dp(1), dim)
-        if (embedded) { back.text = ""; back.background = backArt } else back.background = ring // molina-27j
+        back.text = ""
+        back.background = backArt // molina-27j/27w: tombol kembali bulat biru di Terminal dan Berkas
         back.setOnClickListener {
             if (embedded && selection.active) cancelSelection() else goUp() // molina-27e/27o
         }
@@ -1030,8 +1023,8 @@ class FileDrawerView(
         box.setPadding(dp(10), dp(2), dp(10), dp(2))
         val boxBg = GradientDrawable()
         boxBg.setColor(ContextCompat.getColor(context, UiR.color.molina_bg))
-        boxBg.cornerRadius = dp(if (embedded) 2 else 4).toFloat() // molina-27j
-        boxBg.setStroke(dp(1), if (embedded) ColorUtils.setAlphaComponent(ContextCompat.getColor(context, UiR.color.molina_header_frame), 0xAA) else ContextCompat.getColor(context, UiR.color.molina_outline)) // molina-27j
+        boxBg.cornerRadius = dp(2).toFloat() // molina-27j/27w
+        boxBg.setStroke(dp(1), ColorUtils.setAlphaComponent(ContextCompat.getColor(context, UiR.color.molina_header_frame), 0xAA)) // molina-27j/27w
         box.background = boxBg
         title.setTextColor(white)
         title.textSize = 14f
@@ -1045,14 +1038,14 @@ class FileDrawerView(
         pathText.ellipsize = TextUtils.TruncateAt.MIDDLE
         box.addView(title)
         box.addView(pathText)
-        if (embedded) { // molina-27j: satu baris breadcrumb "Internal \u203A Molina \u203A ...", ujung kanan selalu terlihat
+        run { // molina-27j/27w: satu baris breadcrumb "Internal \u203A Molina \u203A ...", ujung kanan selalu terlihat
             title.typeface = Typeface.DEFAULT
             title.textSize = 13f // molina-27n
             title.ellipsize = TextUtils.TruncateAt.START
             pathText.visibility = View.GONE
             box.setPadding(dp(12), 0, dp(12), 0)
         }
-        val boxLp = LinearLayout.LayoutParams(0, dp(if (embedded) 30 else 34), 1f) // molina-27j/27n
+        val boxLp = LinearLayout.LayoutParams(0, dp(30), 1f) // molina-27j/27n/27w
         boxLp.marginStart = dp(4)
         boxLp.marginEnd = dp(4)
         header.addView(box, boxLp)
@@ -1065,9 +1058,9 @@ class FileDrawerView(
         header.addView(headerMenu, LinearLayout.LayoutParams(dp(34), dp(34)))
 
         val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
-        if (embedded) headerLp.setMargins(dp(6), dp(3), dp(6), dp(3)) else headerLp.setMargins(dp(6), dp(6), dp(6), dp(4)) // molina-27n
+        headerLp.setMargins(dp(6), dp(3), dp(6), dp(3)) // molina-27n/27w
         panel.addView(header, headerLp)
-        if (embedded) panel.addView(divider(), LinearLayout.LayoutParams(MATCH, dp(1))) // molina-27j: garis pemisah di bawah header
+        panel.addView(divider(), LinearLayout.LayoutParams(MATCH, dp(1))) // molina-27j/27w: garis pemisah di bawah header
 
         chips.orientation = LinearLayout.HORIZONTAL
         chipScroll.isHorizontalScrollBarEnabled = false
@@ -1220,7 +1213,7 @@ class FileDrawerView(
         val rows = if (found != null) DrawerSort.sorted(found, sort).map { DrawerRow(it, 0, false) } else DrawerFs.flatten(state, root, sort)
         adapter.submitList(rows, onCommitted)
         headerDots?.statusColor = if (embedded && (searchOn || sort != DrawerSort.DEFAULT)) accent else null
-        title.text = if (embedded) crumbText(focusOrRoot(root)) else root.name.ifEmpty { "/" } // molina-27j/27n
+        title.text = crumbText(if (embedded) focusOrRoot(root) else root) // molina-27j/27n/27w: breadcrumb di Terminal juga
         pathText.text = DrawerFs.displayPath(root.path)
         host.onRootChanged(root.path)
         val canUp = canGoUp(root) // molina-27o/27u
