@@ -83,11 +83,12 @@ internal class BerkasPropsShare(
         val scope = if (items.size > 1) "multi" else if (items[0].isDirectory) "folder" else "file"
         FilesEvents.props(scope, items.size, items[0].path)
         val hashTarget = items.singleOrNull()?.takeIf { !it.isDirectory && !it.isSymlink }
-        val body = PropsText.body(items)
+        val view = PropsText.View("Internal", root.absolutePath) // molina-27u: root Berkas = penyimpanan Internal
+        val body = PropsText.body(items, view = view)
         var hashJob: Job? = null
         MolinaDialog.info(
             context = host.requireContext(),
-            title = PropsText.title(items),
+            title = PropsText.title(items, "Internal"),
             message = body,
             positive = "Tutup",
             secondary = if (hashTarget != null) "SHA-256" else null,

@@ -557,11 +557,27 @@ class FileDrawerView(
         return true
     }
 
+    /** [molina-27u] Back luar dibutuhkan bila mode pilih, pencarian, atau folder bisa naik. */
+    private fun notifyBack() {
+        if (embedded) onSelectionChanged(selection.active || searchOn || canGoUp(currentRoot()))
+    }
+
+    private fun canGoUp(root: File): Boolean =
+        (root.parentFile != null && vols.none { it.path == root.path }) || (embedded && focusOrRoot(root).path != root.path)
+
+    /** [molina-27u] Tombol Back sistem: tutup mode pilih/pencarian dulu, lalu naik satu folder. false = tidak ada yang ditangani. */
+    fun navigateUp(): Boolean {
+        if (cancelSelection()) return true
+        if (!canGoUp(currentRoot())) return false
+        goUp()
+        return true
+    }
+
     /** Header, kotak centang baris, dan Back luar diperbarui. Baris tidak berubah isi, jadi bind dipaksa ulang. */
     private fun selectionChanged() {
         rebuild()
         adapter.notifyDataSetChanged()
-        onSelectionChanged(selection.active || searchOn) // molina-27g3: Back juga menutup pencarian
+        notifyBack() // molina-27g3/27u: Back menutup pilih, pencarian, atau naik folder
     }
 
     private fun setClip(mode: TransferMode, files: List<File>) {
@@ -692,7 +708,7 @@ class FileDrawerView(
         searchBar.visibility = View.VISIBLE
         renderSearchBar()
         rebuild()
-        onSelectionChanged(selection.active || searchOn)
+        notifyBack() // molina-27u: pencarian dibuka
         searchField.post {
             searchField.requestFocus()
             (context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)?.showSoftInput(searchField, InputMethodManager.SHOW_IMPLICIT)
@@ -710,8 +726,7 @@ class FileDrawerView(
         searchField.setText("")
         searchBar.visibility = View.GONE
         renderSearchBar()
-        rebuild()
-        onSelectionChanged(selection.active)
+        rebuild() // molina-27u: pencarian ditutup; rebuild memanggil notifyBack
     }
 
     private fun scheduleSearch(delayMs: Long) {
@@ -1208,7 +1223,8 @@ class FileDrawerView(
         title.text = if (embedded) crumbText(focusOrRoot(root)) else root.name.ifEmpty { "/" } // molina-27j/27n
         pathText.text = DrawerFs.displayPath(root.path)
         host.onRootChanged(root.path)
-        val canUp = (root.parentFile != null && vols.none { it.path == root.path }) || (embedded && focusOrRoot(root).path != root.path) // molina-27o
+        val canUp = canGoUp(root) // molina-27o/27u
+        notifyBack()
         val picking = embedded && selection.active // molina-27e: ‹ jadi ✕ dan judul menghitung item terpilih
         back.isEnabled = canUp || picking
         back.alpha = if (canUp || picking) 1f else 0.38f
