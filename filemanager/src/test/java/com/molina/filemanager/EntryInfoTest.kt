@@ -70,4 +70,32 @@ class EntryInfoTest {
         assertEquals("Kemarin 23.50", EntryInfo.dateLabel(m, n, utc))
         assertTrue(EntryInfo.isFresh(m, n))
     }
+
+    @Test fun acuanBukaPertamaTanpaPenanda() = assertEquals(0L, EntryInfo.baselineFor(0L, now))
+
+    @Test fun acuanMemakaiWaktuBukaTerakhir() {
+        val last = now - 3_600_000L
+        assertEquals(last, EntryInfo.baselineFor(last, now))
+    }
+
+    @Test fun acuanDibatasiTujuhHari() {
+        val last = now - 30L * 24L * 3_600_000L
+        assertEquals(now - EntryInfo.NEW_LOOKBACK_MS, EntryInfo.baselineFor(last, now))
+    }
+
+    @Test fun baruSejakDibukaTerakhir() {
+        val base = now - 3_600_000L
+        assertTrue(EntryInfo.isNewSince(now - 60_000L, base))
+        assertFalse(EntryInfo.isNewSince(base - 1L, base))
+        assertFalse(EntryInfo.isNewSince(base, base)) // sama persis: bukan baru
+    }
+
+    @Test fun tanpaAcuanTidakAdaYangBaru() = assertFalse(EntryInfo.isNewSince(now, 0L))
+
+    @Test fun perubahanSendiriDiabaikan() {
+        val base = now - 3_600_000L
+        val quiet = now - 1_000L
+        assertFalse(EntryInfo.isNewSince(now - 2_000L, base, quiet)) // dibuat sebelum operasi lokal selesai
+        assertTrue(EntryInfo.isNewSince(now, base, quiet)) // datang dari luar setelah operasi lokal
+    }
 }

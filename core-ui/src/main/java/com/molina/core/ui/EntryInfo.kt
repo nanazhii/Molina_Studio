@@ -42,6 +42,20 @@ object EntryInfo {
         }
     }
 
+    /** [molina-28c] Penanda "baru sejak dibuka terakhir" paling jauh mundur selama ini, supaya tidak menandai semuanya. */
+    const val NEW_LOOKBACK_MS: Long = 7L * 24L * 60L * 60L * 1000L
+
+    /** [molina-28c] Titik acuan "baru": waktu buka sebelumnya (maks [NEW_LOOKBACK_MS] ke belakang); 0 = buka pertama, tanpa penanda. */
+    fun baselineFor(lastSeen: Long, now: Long): Long =
+        if (lastSeen <= 0L) 0L else maxOf(lastSeen, now - NEW_LOOKBACK_MS)
+
+    /**
+     * [molina-28c] Baru bila diubah setelah [baseline] dan setelah [quietUntil] (waktu perubahan oleh drawer sendiri,
+     * agar buatan sendiri tidak ikut ditandai). [baseline] <= 0 berarti tidak ada acuan.
+     */
+    fun isNewSince(modified: Long, baseline: Long, quietUntil: Long = 0L): Boolean =
+        baseline > 0L && modified > baseline && modified > quietUntil
+
     /** True bila [modified] jatuh dalam [FRESH_WINDOW_MS] terakhir (dihitung dari jam, bukan dari pergantian hari). */
     fun isFresh(modified: Long, now: Long = System.currentTimeMillis()): Boolean =
         modified > 0L && (now - modified) in -CLOCK_SKEW_MS..FRESH_WINDOW_MS
