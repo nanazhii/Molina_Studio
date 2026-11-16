@@ -31,6 +31,11 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
     private var durationMs = 0L
     private var note = ""
 
+    companion object {
+        /** [molina-27m-fix] Argumen: path media yang diputar begitu surface siap. */
+        const val ARG_PLAY = "molina.play_path"
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val ctx = requireContext()
         val root = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
@@ -78,7 +83,7 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
             return
         }
         playback = pb
-        pendingPath = PlayRequests.take() // molina-27m
+        if (savedInstanceState == null) pendingPath = arguments?.getString(ARG_PLAY) // molina-27m-fix: tidak diputar ulang setelah rotasi
         render()
         viewLifecycleOwner.lifecycleScope.launch {
             pb.session.events.collect { ev ->

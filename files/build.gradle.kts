@@ -17,7 +17,6 @@ dependencies {
     implementation(project(":core-log"))
     implementation(project(":core-storage"))
     implementation(project(":filemanager"))
-    implementation(project(":player-api")) // molina-27m
     implementation(libs.androidx.exifinterface) // 26k5g:e03
     testImplementation(libs.junit)
 }

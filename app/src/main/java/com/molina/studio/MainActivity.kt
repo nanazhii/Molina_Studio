@@ -12,10 +12,10 @@ import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.molina.cinema.CinemaFragment
-import com.molina.cinema.PlayRequests
 import com.molina.core.common.MolinaResult
 import com.molina.core.storage.LocalMolinaStorage
 import com.molina.files.BerkasFragment
+import com.molina.files.MediaPlayerHost
 import com.molina.log.MolinaEvents
 import com.molina.log.MolinaLog
 import com.molina.log.MolinaLogSetup
@@ -30,7 +30,7 @@ import com.molina.terminal.RunPrefsOwner
 import com.molina.terminal.TerminalSessionFactoryOwner
 import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysStateOwner, RunPrefsOwner {
+class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysStateOwner, RunPrefsOwner, MediaPlayerHost {
     override val terminalSessionFactory: TerminalSessionFactory by lazy {
         createTerminalSessionFactory(applicationContext)
     }
@@ -59,6 +59,7 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
 
     private val logTag = MolinaLogger.tag("core")
     private var currentTab: String? = null
+    private var pendingPlay: String? = null // molina-27m-fix: path media dari Berkas untuk CinemaFragment berikutnya
 
     private val storagePermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -86,7 +87,10 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
                 else -> "settings"
             }
             val fragment: Fragment = when (tab) {
-                "cinema" -> CinemaFragment()
+                "cinema" -> CinemaFragment().also { f ->
+                    pendingPlay?.let { f.arguments = Bundle().apply { putString(CinemaFragment.ARG_PLAY, it) } } // molina-27m-fix
+                    pendingPlay = null
+                }
                 "files" -> BerkasFragment() // molina-27b (balik: FilesFragment())
                 "terminal" -> TerminalFragment()
                 else -> SettingsFragment()
@@ -97,7 +101,6 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
             supportFragmentManager.commit { replace(R.id.container, fragment) }
             true
         }
-        PlayRequests.navigator = { nav.selectedItemId = R.id.nav_cinema } // molina-27m: Berkas -> Cinema
         if (savedInstanceState == null) {
             nav.selectedItemId = R.id.nav_cinema
             MolinaSessionService.start(this)
@@ -114,9 +117,11 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
         }
     }
 
-    override fun onDestroy() {
-        PlayRequests.navigator = null // molina-27m
-        super.onDestroy()
+    /** [molina-27m-fix] Dipanggil Berkas: simpan path lalu pindah ke tab Cinema; Cinema memutarnya setelah surface siap. */
+    override fun playMedia(path: String): Boolean {
+        pendingPlay = path
+        findViewById<BottomNavigationView>(R.id.bottom_nav).selectedItemId = R.id.nav_cinema
+        return true
     }
 
     private fun hasStoragePermission(): Boolean =

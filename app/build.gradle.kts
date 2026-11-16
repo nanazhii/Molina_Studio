@@ -53,7 +53,6 @@ dependencies {
     implementation(project(":core-log"))
     implementation(project(":core-storage"))
     implementation(project(":cinema"))
-    implementation(project(":player-api")) // molina-27m
     implementation(project(":files"))
     implementation(project(":terminal"))
     implementation(project(":terminal-core"))
