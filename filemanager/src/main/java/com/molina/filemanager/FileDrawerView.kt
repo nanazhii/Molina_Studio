@@ -196,14 +196,16 @@ class FileDrawerView(
                 showHidden = state.showHidden, // molina-27k
             ),
         )
-        val menu = PopupMenu(context, anchor)
-        entries.forEachIndexed { i, en ->
-            val title: CharSequence =
-                if (en.danger) SpannableString(en.label).also { it.setSpan(ForegroundColorSpan(danger), 0, it.length, 0) } else en.label
-            menu.menu.add(0, i, i, title).isEnabled = en.enabled
-        }
-        menu.setOnMenuItemClickListener { item ->
-            when (entries[item.itemId].action) {
+        // molina-27l: menu berikon (DrawerMenuPopup) menggantikan PopupMenu teks
+        DrawerMenuPopup.show(
+            anchor,
+            entries,
+            ContextCompat.getColor(context, UiR.color.molina_surface),
+            ContextCompat.getColor(context, UiR.color.molina_header_frame),
+            accent,
+            danger,
+        ) { picked ->
+            when (picked.action) {
                 EmbeddedMenu.Action.REFRESH -> refresh()
                 EmbeddedMenu.Action.NEW_DIR -> promptCreateEmbedded(true, dir)
                 EmbeddedMenu.Action.NEW_FILE -> promptCreateEmbedded(false, dir)
@@ -246,10 +248,7 @@ class FileDrawerView(
                 EmbeddedMenu.Action.TEST_ARCHIVE -> runArchive(ArchiveAction.TEST, targets, dir)
                 EmbeddedMenu.Action.EXTRACT_PASTE -> extractClipHere(dir)
             }
-            true
         }
-        menu.gravity = Gravity.END // molina-27h: rata kanan, membuka ke atas dari tombol melayang
-        menu.show()
     }
 
     // ---------- [molina-27h] tombol melayang + geser pilih ----------
