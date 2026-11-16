@@ -2,6 +2,7 @@
 // molina-patch19
 package com.molina.filemanager
 
+import com.molina.core.ui.BlueBackDrawable
 import com.molina.core.ui.ExtLabel
 import com.molina.core.ui.TreeIconView
 import android.app.AlertDialog

@@ -19,6 +19,8 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.text.InputType
 import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.Spanned
 import android.text.TextUtils
 import android.text.format.Formatter
 import android.text.style.ForegroundColorSpan
@@ -45,6 +47,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.molina.core.ui.BlueBackDrawable
+import com.molina.core.ui.ExtLabel
 import com.molina.core.ui.FileKind
 import com.molina.core.ui.R as UiR
 import com.molina.log.MolinaEvents
@@ -161,22 +165,15 @@ internal class FileDrawerView(
         header.orientation = LinearLayout.HORIZONTAL
         header.gravity = Gravity.CENTER_VERTICAL
         header.setPadding(dp(2), dp(2), dp(2), dp(2))
-        val headerFrame = GradientDrawable()
-        headerFrame.setColor(Color.TRANSPARENT)
-        headerFrame.cornerRadius = dp(8).toFloat()
-        headerFrame.setStroke(dp(1), ContextCompat.getColor(context, UiR.color.molina_header_frame))
-        header.background = headerFrame
+        // molina-term-drawer-parity: tanpa bingkai luar, sama dengan header Berkas
 
         back.text = "\u2039"
         back.textSize = 22f
         back.gravity = Gravity.CENTER
         back.setTextColor(white)
         back.contentDescription = context.getString(R.string.drawer_up)
-        val ring = GradientDrawable()
-        ring.shape = GradientDrawable.OVAL
-        ring.setColor(Color.TRANSPARENT)
-        ring.setStroke(dp(1), dim)
-        back.background = ring
+        back.text = ""
+        back.background = BlueBackDrawable() // molina-term-drawer-parity: tombol kembali bulat biru seperti Berkas
         back.setOnClickListener { currentRoot().parentFile?.let { setRoot(it) } }
         header.addView(back, LinearLayout.LayoutParams(dp(30), dp(30)))
 
@@ -187,8 +184,8 @@ internal class FileDrawerView(
         box.setPadding(dp(10), dp(2), dp(10), dp(2))
         val boxBg = GradientDrawable()
         boxBg.setColor(ContextCompat.getColor(context, UiR.color.molina_bg))
-        boxBg.cornerRadius = dp(4).toFloat()
-        boxBg.setStroke(dp(1), ContextCompat.getColor(context, UiR.color.molina_outline))
+        boxBg.cornerRadius = dp(2).toFloat()
+        boxBg.setStroke(dp(1), ColorUtils.setAlphaComponent(ContextCompat.getColor(context, UiR.color.molina_header_frame), 0xAA))
         box.background = boxBg
         title.setTextColor(white)
         title.textSize = 14f
@@ -200,9 +197,16 @@ internal class FileDrawerView(
         pathText.typeface = Typeface.MONOSPACE
         pathText.maxLines = 1
         pathText.ellipsize = TextUtils.TruncateAt.MIDDLE
+        run { // molina-term-drawer-parity: satu baris breadcrumb "Internal › Molina › ...", ujung kanan selalu terlihat
+            title.typeface = Typeface.DEFAULT
+            title.textSize = 13f
+            title.ellipsize = TextUtils.TruncateAt.START
+            pathText.visibility = View.GONE
+            box.setPadding(dp(12), 0, dp(12), 0)
+        }
         box.addView(title)
         box.addView(pathText)
-        val boxLp = LinearLayout.LayoutParams(0, dp(34), 1f)
+        val boxLp = LinearLayout.LayoutParams(0, dp(30), 1f)
         boxLp.marginStart = dp(4)
         boxLp.marginEnd = dp(4)
         header.addView(box, boxLp)
@@ -213,7 +217,7 @@ internal class FileDrawerView(
         header.addView(headerMenu, LinearLayout.LayoutParams(dp(34), dp(34)))
 
         val headerLp = LinearLayout.LayoutParams(MATCH, WRAP)
-        headerLp.setMargins(dp(6), dp(6), dp(6), dp(4))
+        headerLp.setMargins(dp(6), dp(3), dp(6), dp(3))
         panel.addView(header, headerLp)
 
         chips.orientation = LinearLayout.HORIZONTAL
@@ -331,7 +335,7 @@ internal class FileDrawerView(
         val root = currentRoot()
         val rows = DrawerFs.flatten(state, root)
         adapter.submitList(rows)
-        title.text = root.name.ifEmpty { "/" }
+        title.text = crumbText(root)
         pathText.text = DrawerFs.displayPath(root.path)
         host.onRootChanged(root.path)
         val canUp = root.parentFile != null && vols.none { it.path == root.path }
@@ -339,6 +343,20 @@ internal class FileDrawerView(
         back.alpha = if (canUp) 1f else 0.38f
         empty.visibility = if (rows.isEmpty() && state.children[root.path] != null) View.VISIBLE else View.GONE
         renderChips(root)
+    }
+
+    /** [molina-term-drawer-parity] Breadcrumb "Internal › Molina › Film": pemisah redup, segmen putih (sama dengan Berkas). */
+    private fun crumbText(root: File): CharSequence {
+        val sb = SpannableStringBuilder()
+        DrawerFs.crumbs(root.path).forEachIndexed { i, seg ->
+            if (i > 0) {
+                val a = sb.length
+                sb.append(" \u203A ")
+                sb.setSpan(ForegroundColorSpan(dim), a, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            sb.append(seg)
+        }
+        return sb
     }
 
     private fun renderChips(root: File) {
@@ -412,14 +430,14 @@ internal class FileDrawerView(
             row.addView(arrow, LinearLayout.LayoutParams(dp(14), WRAP))
 
             val icon = TreeIconView(ctx)
-            val iconLp = LinearLayout.LayoutParams(dp(20), dp(20))
+            val iconLp = LinearLayout.LayoutParams(dp(ICON_DP), dp(ICON_DP))
             iconLp.marginStart = dp(4)
             iconLp.marginEnd = dp(8)
             row.addView(icon, iconLp)
 
             val name = TextView(ctx)
             name.setTextColor(white)
-            name.textSize = 13f
+            name.textSize = 15f
             name.typeface = Typeface.MONOSPACE
             name.maxLines = 1
             name.ellipsize = TextUtils.TruncateAt.END
@@ -445,6 +463,7 @@ internal class FileDrawerView(
             h.icon.isDir = e.isDir
             val kind = if (e.isDir) FileKind.OTHER else FileKind.of(e.name)
             h.icon.kind = kind
+            h.icon.label = if (e.isDir) "" else ExtLabel.of(e.name) // molina-term-drawer-parity: pita ekstensi
             h.name.setTextColor(kind.nameColor)
             h.name.text = e.name
             h.row.setOnClickListener { onRowTap(item) }
@@ -824,7 +843,8 @@ internal class FileDrawerView(
     private companion object {
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
-        const val ROW_DP = 36
+        const val ROW_DP = 44 // molina-term-drawer-parity: sama dengan ROW_EMBEDDED_DP Berkas
+        const val ICON_DP = 30 // molina-term-drawer-parity: sama dengan ikon Berkas
         const val MIN_WIDTH_DP = 248
         const val MAX_WIDTH_DP = 288
         const val FRACTION = 0.40f
