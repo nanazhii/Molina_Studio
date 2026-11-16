@@ -22,6 +22,23 @@ internal class MenuIconDrawable(private val kind: Kind, private val tint: Int) :
         COMPRESS, EXTRACT, VIEW, TEST, SHARE, SORT, SEARCH, FAVORITE, LINK, INFO, TRASH, DELETE_FOREVER,
     }
 
+    companion object {
+        /** [molina-27v] Warna ikon per kelompok aksi (selaras warna jenis berkas); aksi berbahaya tetap merah dari pemanggil. */
+        fun colorFor(kind: Kind): Int = when (kind) {
+            Kind.REFRESH, Kind.SORT, Kind.SEARCH, Kind.VIEW -> 0xFF64B5F6.toInt() // biru
+            Kind.NEW_DIR, Kind.NEW_FILE -> 0xFF00BFA5.toInt() // mint Molina
+            Kind.RENAME -> 0xFFFFB74D.toInt() // oranye
+            Kind.SELECT, Kind.SELECT_ALL -> 0xFFB388FF.toInt() // ungu
+            Kind.EXIT, Kind.LINK -> 0xFFB0BEC5.toInt() // abu
+            Kind.COPY, Kind.MOVE, Kind.PASTE -> 0xFF4DD0E1.toInt() // sian
+            Kind.COMPRESS, Kind.EXTRACT, Kind.TEST -> 0xFFFFAB40.toInt() // jingga arsip
+            Kind.SHARE -> 0xFF81C784.toInt() // hijau
+            Kind.FAVORITE -> 0xFFF2C94C.toInt() // emas
+            Kind.INFO -> 0xFF4FC3F7.toInt() // biru muda
+            Kind.TRASH, Kind.DELETE_FOREVER -> 0xFFFF5252.toInt()
+        }
+    }
+
     private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND

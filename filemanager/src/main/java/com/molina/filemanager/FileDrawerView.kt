@@ -359,8 +359,8 @@ class FileDrawerView(
                 EmbeddedMenu.Action.OPEN_TRASH -> FlyoutIconDrawable.Kind.TRASH
                 else -> null
             }
-            val tint = if (en.danger) danger else white // molina-27t: ikon garis mengikuti warna teks
             val plain = menuIconKind(en.action)
+            val tint = if (en.danger) danger else plain?.let { MenuIconDrawable.colorFor(it) } ?: white // molina-27v: ikon berwarna per kelompok, teks tetap putih/merah
             if (kind != null || plain != null) {
                 val iv = ImageView(context)
                 iv.setImageDrawable(if (kind != null) FlyoutIconDrawable(kind) else MenuIconDrawable(plain!!, tint))

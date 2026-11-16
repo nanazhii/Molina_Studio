@@ -26,6 +26,13 @@ internal object PropsText {
         else -> multi(items)
     }
 
+    /** [molina-27v] Baris (label, nilai) dari [body], untuk lembar bawah Properti. */
+    fun rows(items: List<FileProps>, zone: TimeZone = TimeZone.getDefault(), view: View? = null): List<Pair<String, String>> =
+        body(items, zone, view).lines().filter { it.isNotBlank() }.map {
+            val i = it.indexOf(": ")
+            if (i < 0) "" to it else it.substring(0, i) to it.substring(i + 2)
+        }
+
     fun location(path: String, rootLabel: String = "Molina"): String { // molina-27u: label root bisa "Internal"
         if (path.isEmpty()) return "Root $rootLabel"
         val parent = path.substringBeforeLast('/', "")
