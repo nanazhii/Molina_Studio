@@ -41,7 +41,13 @@ internal sealed interface TransferState {
  */
 internal object FilesTransfer {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val storage: MolinaStorage = LocalMolinaStorage()
+    private var storage: MolinaStorage = LocalMolinaStorage()
+
+    /** [molina-27j] Ganti root kerja (tab Berkas = Internal). Diabaikan saat operasi berjalan. */
+    fun useRoot(paths: com.molina.core.common.MolinaPaths) {
+        if (isRunning) return
+        storage = LocalMolinaStorage(paths)
+    }
     private val mutableState = MutableStateFlow<TransferState>(TransferState.Idle)
     private var token: CancelToken? = null
     private var seq = 0L

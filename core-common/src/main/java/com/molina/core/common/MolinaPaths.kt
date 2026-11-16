@@ -19,6 +19,7 @@ class MolinaPaths(val root: File = File(DEFAULT_ROOT)) {
 
     companion object {
         const val DEFAULT_ROOT = "/storage/emulated/0/Molina"
+        const val INTERNAL_ROOT = "/storage/emulated/0" // molina-27j: root tab Berkas (1-1 dengan file manager Android)
         const val TRASH_DIR = ".molina-trash"
         const val ARSIP_CACHE_DIR = ".arsip-cache" // 26k5b:e02
     }

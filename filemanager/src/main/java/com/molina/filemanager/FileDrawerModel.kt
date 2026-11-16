@@ -29,7 +29,8 @@ object DrawerFs {
     /** BLOCKING: panggil dari Dispatchers.IO. Folder dulu, lalu berkas, urut nama. */
     fun list(dir: File): List<DrawerEntry>? {
         val kids = dir.listFiles() ?: return null
-        return kids.map { DrawerEntry(it, it.isDirectory) }
+        return kids.filter { it.name != ".molina-trash" && it.name != ".arsip-cache" } // molina-27j: folder internal Molina disembunyikan
+            .map { DrawerEntry(it, it.isDirectory) }
             .sortedWith(compareByDescending<DrawerEntry> { it.isDir }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 
