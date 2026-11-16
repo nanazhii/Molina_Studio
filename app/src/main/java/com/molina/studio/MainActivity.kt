@@ -12,6 +12,7 @@ import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.molina.cinema.CinemaFragment
+import com.molina.cinema.PlayRequests
 import com.molina.core.common.MolinaResult
 import com.molina.core.storage.LocalMolinaStorage
 import com.molina.files.BerkasFragment
@@ -96,6 +97,7 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
             supportFragmentManager.commit { replace(R.id.container, fragment) }
             true
         }
+        PlayRequests.navigator = { nav.selectedItemId = R.id.nav_cinema } // molina-27m: Berkas -> Cinema
         if (savedInstanceState == null) {
             nav.selectedItemId = R.id.nav_cinema
             MolinaSessionService.start(this)
@@ -110,6 +112,11 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
                 storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }
+    }
+
+    override fun onDestroy() {
+        PlayRequests.navigator = null // molina-27m
+        super.onDestroy()
     }
 
     private fun hasStoragePermission(): Boolean =

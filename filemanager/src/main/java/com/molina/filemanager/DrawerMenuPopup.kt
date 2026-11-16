@@ -150,5 +150,6 @@ internal object DrawerMenuPopup {
             Glyph.DOWNLOAD -> R.drawable.ic_mnu_download
             Glyph.PHOTO -> R.drawable.ic_mnu_photo
             Glyph.DOCS -> R.drawable.ic_mnu_docs
+            Glyph.PLAY -> R.drawable.ic_mnu_play // molina-27m
     }
 }

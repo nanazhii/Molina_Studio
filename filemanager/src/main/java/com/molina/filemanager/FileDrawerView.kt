@@ -194,6 +194,7 @@ class FileDrawerView(
                 shareAvailable = managed && (if (picking) targets.any { !it.isDirectory } else !targetIsDir), // molina-27g
                 propsAvailable = if (picking) managed else hasActions, // molina-27g
                 showHidden = state.showHidden, // molina-27k
+                playAvailable = hasActions && tgt != null && !tgtIsDir && targets.size <= 1 && MediaExt.isPlayable(tgt), // molina-27m
             ),
         )
         // molina-27l: menu berikon (DrawerMenuPopup) menggantikan PopupMenu teks
@@ -238,6 +239,10 @@ class FileDrawerView(
                 EmbeddedMenu.Action.TOGGLE_HIDDEN -> toggleHidden()
                 EmbeddedMenu.Action.SORT -> sortDialog()
                 EmbeddedMenu.Action.SEARCH -> searchDialog(base)
+                EmbeddedMenu.Action.PLAY -> tgt?.let { // molina-27m
+                    if (picking) { selection.exit(); selectionChanged() }
+                    playFile(it)
+                }
                 // molina-27f: arsip
                 EmbeddedMenu.Action.COMPRESS -> runArchive(ArchiveAction.COMPRESS, targets, dir)
                 EmbeddedMenu.Action.EXTRACT_HERE -> runArchive(ArchiveAction.EXTRACT_HERE, targets, dir)
@@ -929,7 +934,14 @@ class FileDrawerView(
             close()
         } else if (embedded && selection.active) { // molina-27e: berkas = ganti status pilih; folder tetap buka/tutup
             toggleSelected(f.path)
+        } else if (embedded && MediaExt.isPlayable(f)) { // molina-27m: berkas media terbuka default di mpv
+            playFile(f)
         }
+    }
+
+    /** [molina-27m] Putar [f] di Molina Cinema lewat implementasi aksi; toast bila ditolak. */
+    private fun playFile(f: File) {
+        if (!actions.play(f)) Toast.makeText(context, "Molina Cinema tidak tersedia", Toast.LENGTH_SHORT).show()
     }
 
     private class RowHolder(

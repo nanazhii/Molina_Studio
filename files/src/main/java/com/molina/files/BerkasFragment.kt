@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
+import com.molina.cinema.PlayRequests // molina-27m
 import com.molina.core.common.MolinaPaths
 import com.molina.core.common.MolinaResult
 import com.molina.core.common.getOrNull
@@ -118,6 +119,8 @@ class BerkasFragment : Fragment(), ArchiveSheetHost {
 
         // molina-27f: arsip lewat FilesArchive/ArchiveDialogs/ArchiveSheet yang sudah ada
         override fun isArchive(file: File): Boolean = !file.isDirectory && ArchiveNames.detect(file.name) != null
+
+        override fun play(file: File): Boolean = file.isFile && file.canRead() && PlayRequests.request(file.path) // molina-27m
 
         override fun archive(action: ArchiveAction, files: List<File>, dir: File): Boolean = archiveOps.run(action, files, dir)
 
