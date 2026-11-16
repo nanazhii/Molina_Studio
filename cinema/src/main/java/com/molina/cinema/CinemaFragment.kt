@@ -14,6 +14,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
+import com.molina.core.security.SHIELD_BLOCKED_CODE
 import kotlinx.coroutines.launch
 
 /**
@@ -81,7 +82,7 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
                 when (ev) {
                     is PlayerEvent.StateChanged -> state = ev.state
                     is PlayerEvent.Position -> { positionMs = ev.positionMs; durationMs = ev.durationMs }
-                    is PlayerEvent.Error -> note = "Gagal memuat. Lihat Log Viewer (chip BUG)."
+                    is PlayerEvent.Error -> note = if (ev.code == SHIELD_BLOCKED_CODE) "Diblokir Shield: ${ev.message}" else "Gagal memuat. Lihat Log Viewer (chip BUG)."
                     is PlayerEvent.Loaded -> note = ""
                     PlayerEvent.Ended -> Unit
                 }

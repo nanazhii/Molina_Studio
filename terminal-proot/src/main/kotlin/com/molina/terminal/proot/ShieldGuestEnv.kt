@@ -35,11 +35,12 @@ object ShieldGuestEnv {
         return if (ep != null) Plan(Mode.PROXY, ep.url()) else Plan(Mode.FAIL_CLOSED, DEAD_URL)
     }
 
-    fun scriptText(url: String): String {
+    fun scriptText(url: String, mode: Mode = Mode.PROXY): String {
         require(SAFE_URL.matches(url)) { "URL proxy memuat karakter tak aman" }
         return "# Molina Shield: dibuat ulang tiap sesi terminal. Jangan disunting; token berubah tiap Shield dimulai.\n" +
             "export http_proxy='$url' https_proxy='$url' HTTP_PROXY='$url' HTTPS_PROXY='$url'\n" +
-            "export no_proxy='$NO_PROXY' NO_PROXY='$NO_PROXY'\n"
+            "export no_proxy='$NO_PROXY' NO_PROXY='$NO_PROXY'\n" +
+            "export MOLINA_SHIELD='${if (mode == Mode.FAIL_CLOSED) "fail-closed" else "proxy"}'\n"
     }
 
     /** Tidak pernah melempar. Hanya mode yang dicatat (BEHAV term.shield-env), tidak pernah URL atau token. */
@@ -47,7 +48,7 @@ object ShieldGuestEnv {
         val f = File(rootfs, SCRIPT_PATH)
         return try {
             val p = plan(shield, optIn)
-            if (p.url == null) Files.deleteIfExists(f.toPath()) else write(f, scriptText(p.url))
+            if (p.url == null) Files.deleteIfExists(f.toPath()) else write(f, scriptText(p.url, p.mode))
             MolinaEvents.behavior("term", "shield-env", fields = mapOf("mode" to p.mode.name.lowercase()), id = id)
             p.mode
         } catch (e: Exception) {

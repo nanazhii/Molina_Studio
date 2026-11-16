@@ -228,3 +228,4 @@
 - [x] TerminalPrefs.shieldProxy + sakelar di Setelan > Terminal; TerminalWiring memanggil ShieldGuestEnv.install setelah NanoSupport
 - [ ] Verifikasi CI: kompilasi :terminal-proot, :settings, :app; jvm-tests :terminal-proot:testDebugUnitTest
 - [ ] Uji perangkat: nyalakan sakelar, sesi baru, `env | grep -i proxy`, `curl -I https://example.com`, `apt update`, pelacak ditolak; matikan sakelar dan pastikan variabel hilang
+- [ui-keamanan] Setelan > Keamanan: sakelar Shield/pelacak/LAN/Referer, kebijakan rtmp/rtsp, ringkasan snapshot, daftar blokir terbaru. ShieldPrefs jadi sumber tunggal kunci prefs; ShieldBootstrap memakainya. Tes: ShieldPrefsTest. Menunggu hasil CI.

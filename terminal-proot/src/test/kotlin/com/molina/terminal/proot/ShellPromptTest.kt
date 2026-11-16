@@ -43,6 +43,15 @@ class ShellPromptTest {
     }
 
     @Test
+    fun scriptShowsShieldTagOnlyFromShieldMarker() {
+        val s = ShellPrompt.script()
+        assertTrue(s.contains("MOLINA_SHIELD"))
+        assertTrue(s.contains("[SHIELD] "))
+        assertTrue(s.contains("[SHIELD!] "))
+        assertTrue(!s.contains("https_proxy")) // penanda dari MOLINA_SHIELD, bukan proxy buatan pengguna
+    }
+
+    @Test
     fun installWritesFilesAndIsIdempotent() {
         val d = Files.createTempDirectory("molina").toFile()
         try {

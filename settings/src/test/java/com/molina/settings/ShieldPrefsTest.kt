@@ -33,6 +33,12 @@ class ShieldPrefsTest {
         assertTrue(ShieldSummary.text(ShieldSnapshot(enabled = true, running = false), failClosed = true).contains("ditolak"))
     }
 
+    @Test fun levelWarnBilaMatiAtauFailClosed() {
+        assertEquals(ShieldSummary.Level.WARN, ShieldSummary.level(ShieldSnapshot(enabled = false), failClosed = false))
+        assertEquals(ShieldSummary.Level.WARN, ShieldSummary.level(ShieldSnapshot(enabled = true), failClosed = true))
+        assertEquals(ShieldSummary.Level.ACTIVE, ShieldSummary.level(ShieldSnapshot(running = true, enabled = true), failClosed = false))
+    }
+
     @Test fun summaryActiveShowsCounts() {
         assertEquals(
             "Shield aktif \u00b7 3 diblokir \u00b7 42 diteruskan",

@@ -70,3 +70,10 @@ Batas: ssh dan git+ssh tidak lewat proxy HTTP; program yang mengabaikan variabel
 untuk http biasa (POST http ditolak 405, https lewat CONNECT tidak terbatas); sesi yang sudah berjalan memakai token lama
 dan perlu sesi baru setelah Shield dimulai ulang; bila penulisan berkas gagal, dicatat `BUG proot.shield-env-failed` dan lalu lintas langsung.
 Diuji dengan curl sungguhan (403 untuk pelacak dan IP metadata, gagal tersambung saat fail-closed).
+
+## Petunjuk di layar (Patch 4)
+| Tempat | Petunjuk |
+|---|---|
+| Setelan > Keamanan | Kartu ringkasan berbingkai tipis; teks teal saat Shield aktif, amber saat dimatikan atau fail-closed |
+| Cinema | Sumber ditolak: "Diblokir Shield: host: alasan" (host saja, tanpa URL, userinfo, atau query; kode `SHIELD_BLOCKED_CODE` = -403) |
+| Prompt Debian | `[SHIELD] ` bila Shield menyaring sesi, `[SHIELD!] ` bila fail-closed. Dibaca dari `MOLINA_SHIELD` (ditulis `molina-shield.sh`), bukan dari `https_proxy` buatan pengguna |
