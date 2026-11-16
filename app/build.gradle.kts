@@ -52,6 +52,7 @@ android {
 dependencies {
     implementation(project(":core-ui"))
     implementation(project(":core-log"))
+    implementation(project(":core-security"))
     implementation(project(":core-storage"))
     implementation(project(":cinema"))
     implementation(project(":files"))

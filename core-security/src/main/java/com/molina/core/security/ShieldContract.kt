@@ -25,6 +25,15 @@ interface ThreatScanner<in T> {
     fun scan(input: T): List<Finding>
 }
 
+/** Perlakuan arus langsung (rtmp/rtsp) yang tidak lewat proxy HTTP. */
+enum class DirectStreamPolicy {
+    /** Periksa tujuan (port, pelacak, semua IP hasil DNS) sebelum dimuat. Default: IPTV rtmp tetap jalan. */
+    PREFLIGHT,
+
+    /** Tolak semua rtmp/rtsp, termasuk yang dibuka dari dalam playlist. */
+    BLOCK,
+}
+
 /** Pengaturan Shield. Dibuat tak berubah; ganti seluruhnya lewat [MolinaShield.updateConfig]. */
 data class ShieldConfig(
     val enabled: Boolean = true,
@@ -34,6 +43,7 @@ data class ShieldConfig(
     val stripReferer: Boolean = false,
     /** Pengecualian pengguna atas daftar pelacak; menang atas daftar blokir. */
     val trackerAllowlist: Set<String> = emptySet(),
+    val directStreams: DirectStreamPolicy = DirectStreamPolicy.PREFLIGHT,
 )
 
 /** Alamat proxy lokal untuk mesin pemutar. [toString] menyembunyikan token agar tidak bocor ke log. */
@@ -61,6 +71,7 @@ interface MolinaShield {
     fun start(): Boolean
     fun stop()
     fun updateConfig(config: ShieldConfig)
+    fun config(): ShieldConfig
 
     /** Alamat proxy untuk mesin pemutar, atau null bila Shield dimatikan atau tidak berjalan. */
     fun endpoint(): ProxyEndpoint?

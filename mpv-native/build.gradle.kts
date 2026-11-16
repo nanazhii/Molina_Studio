@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     api(libs.kotlinx.coroutines.android)
     api(project(":core-log"))
+    implementation(project(":core-security"))
     api(project(":player-api"))
     testImplementation(libs.junit)
 }

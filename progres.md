@@ -215,3 +215,10 @@
 - [ ] Verifikasi CI: jalankan Actions > Uji JVM (:core-security:testDebugUnitTest) dan gerbang module/telemetry/secret
 - [ ] Penyambungan: MolinaApplication start Shield, http_proxy + protocol_blacklist di Cinema, failClosed
 - [ ] UI Setelan Keamanan (sakelar, kartu ringkasan, daftar pengecualian) + pengumpul AppFootprint Android
+
+## P5b penyambungan Shield (2026-11-16)
+- [x] core-security: ShieldRegistry, LavfOptions, PlaybackGuard + DirectStreamPreflight, TrackerListLoader, ChildProcessProxy, DirectStreamPolicy, MolinaShield.config(), LocalShieldProxy.replaceBlocklist; 42 uji lulus di sandbox
+- [x] mpv-native: opsi lavf (blacklist + http_proxy / fail-closed) sebelum init, guard di load(), preflight rtmp/rtsp di thread latar; app: ShieldBootstrap di MolinaApplication
+- [ ] Verifikasi CI: kompilasi :mpv-native dan :app (Gradle), jvm-tests
+- [ ] Uji perangkat Android 8: file lokal, https publik, LAN ditolak, rtmp, Shield mati (prefs molina_shield), blok dicatat BUG mpv.shield-blocked
+- [ ] Berikutnya: UI Setelan Keamanan, pengumpul AppFootprint (PackageManager), env proxy opt-in untuk sesi terminal

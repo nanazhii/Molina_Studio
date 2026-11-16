@@ -41,3 +41,16 @@ Aplikasi sistem dilewati. Pengumpul data Android (`PackageManager`) belum dibuat
 3. Bila `failClosed()` true, Cinema menolak sumber jarak jauh.
 4. Setelan: sakelar Shield, pelacak, LAN, daftar pengecualian, kartu ringkasan dari `snapshot` dan `recentBlocks()`.
 5. Pengumpul `AppFootprint` di lapisan Android, pemindaian dijalankan atas permintaan pengguna.
+
+## Cakupan diperluas (Patch 2)
+| Jalur | Perlakuan |
+|---|---|
+| http/https mpv | lewat proxy (`http_proxy` di `stream-lavf-o` dan `demuxer-lavf-o`), dipasang sebelum `MPVLib.init()` |
+| Shield menyala tetapi proxy mati | fail-closed: `protocol_whitelist` hanya `file,crypto,data` dan `PlaybackGuard` menolak sumber jarak jauh |
+| Shield dimulai ulang | sesi lama menolak memuat (`shield.changed`) sampai pemutar dibuka ulang |
+| rtmp/rtmps/rtsp | `DirectStreamPolicy.PREFLIGHT` (bawaan): port, pelacak, dan SEMUA IP hasil DNS diperiksa di thread latar; `BLOCK`: ditolak penuh, termasuk dari dalam playlist |
+| yt-dlp, pip, apt di Debian | `ChildProcessProxy.env(endpoint)` menghasilkan `http_proxy`/`https_proxy`; PRoot berbagi jaringan Android. Belum dipasang ke sesi terminal (opsi opt-in) |
+| Daftar pelacak | bawaan + berkas lokal `/storage/emulated/0/Molina/shield/trackers.txt` (opsional `.sha256`), tanpa server pembaruan |
+
+Batas: preflight rtmp/rtsp tidak menutup DNS rebinding cepat (mpv meresolve ulang); gunakan `BLOCK` bila perlu.
+Uji perangkat wajib: pemutaran lokal, https publik, LAN (harus ditolak), rtmp, dan Shield dimatikan lewat prefs.

@@ -13,6 +13,7 @@ class MolinaApplication : Application() {
         MolinaLogSetup.init(this)
         CrashReporter.install()
         BuildInfo.log(this)
+        ShieldBootstrap.start(this)
         SevenZipBackend.writer = DebianSevenZip(this) // molina-27q: 7z bersandi lewat Debian
     }
 

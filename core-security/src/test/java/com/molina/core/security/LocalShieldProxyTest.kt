@@ -130,4 +130,11 @@ class LocalShieldProxyTest {
         assertTrue(p.failClosed())
         assertNull(p.endpoint())
     }
+
+    @Test fun daftarPelacakBisaDiganti() {
+        val p = start()
+        p.replaceBlocklist(TrackerListLoader.merged(setOf("ads.example.net")))
+        assertEquals("403", status(exchange(p, "CONNECT x.ads.example.net:443 HTTP/1.1\r\n\r\n")))
+        assertEquals("tracker", p.recentBlocks().last().code)
+    }
 }

@@ -54,13 +54,14 @@ internal fun dialDirect(ip: InetAddress, port: Int): Socket {
  */
 class LocalShieldProxy(
     initial: ShieldConfig = ShieldConfig(),
-    private val blocklist: TrackerBlocklist = TrackerBlocklist(),
+    initialBlocklist: TrackerBlocklist = TrackerBlocklist(),
     private val logger: MolinaLogger = MolinaLog.logger,
     private val resolver: (String) -> List<InetAddress> = { InetAddress.getAllByName(it).toList() },
     private val dialer: (InetAddress, Int) -> Socket = ::dialDirect,
 ) : MolinaShield {
 
     @Volatile private var config: ShieldConfig = initial
+    @Volatile private var blocklist: TrackerBlocklist = initialBlocklist
     @Volatile private var allowed: Set<String> = normAllow(initial)
     @Volatile private var server: ServerSocket? = null
     @Volatile private var token: String = ""
@@ -80,6 +81,11 @@ class LocalShieldProxy(
     override fun failClosed(): Boolean = config.enabled && !running()
 
     override fun recentBlocks(): List<ShieldEvent> = events.toList()
+
+    override fun config(): ShieldConfig = config
+
+    /** Ganti daftar pelacak saat berjalan (mis. setelah daftar tambahan pengguna dimuat). */
+    fun replaceBlocklist(b: TrackerBlocklist) { blocklist = b }
 
     override fun updateConfig(config: ShieldConfig) {
         this.config = config
@@ -336,28 +342,6 @@ class LocalShieldProxy(
 
         fun normAllow(c: ShieldConfig): Set<String> = c.trackerAllowlist.mapTo(HashSet()) { TrackerBlocklist.normalize(it) }
 
-        fun splitHostPort(s: String, defaultPort: Int): Pair<String, Int>? {
-            if (s.isEmpty()) return null
-            val host: String
-            val portText: String
-            if (s.startsWith("[")) {
-                val end = s.indexOf(']')
-                if (end < 0) return null
-                host = s.substring(1, end)
-                val rest = s.substring(end + 1)
-                portText = when {
-                    rest.isEmpty() -> ""
-                    rest.startsWith(":") -> rest.substring(1)
-                    else -> return null
-                }
-            } else {
-                val c = s.lastIndexOf(':')
-                if (c >= 0) { host = s.substring(0, c); portText = s.substring(c + 1) } else { host = s; portText = "" }
-            }
-            if (host.isEmpty()) return null
-            val port = if (portText.isEmpty()) defaultPort else (portText.toIntOrNull() ?: return null)
-            if (port !in 1..65535) return null
-            return host to port
-        }
+        fun splitHostPort(s: String, defaultPort: Int): Pair<String, Int>? = parseHostPort(s, defaultPort)
     }
 }
