@@ -15,7 +15,7 @@ android {
 dependencies {
     implementation(project(":core-ui"))
     implementation(project(":core-log"))
-    implementation(project(":mpv-native"))
+    implementation(project(":core-security")) // P11-fix: dulu transitif via :mpv-native
     implementation(project(":player-api"))
     implementation(libs.kotlinx.coroutines.android)
     testImplementation(libs.junit) // molina-patch-c1

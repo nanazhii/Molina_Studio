@@ -52,6 +52,7 @@ class ArchiveEngineTest {
     private fun tarOf(name: String, entries: List<Pair<String, String>>): File {
         val f = File(tmp.root, name)
         TarArchiveOutputStream(FileOutputStream(f)).use { t ->
+            t.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX) // nama > 100 byte (tes NAME_TOO_LONG)
             for ((n, text) in entries) {
                 val e = TarArchiveEntry(n)
                 val b = text.toByteArray()

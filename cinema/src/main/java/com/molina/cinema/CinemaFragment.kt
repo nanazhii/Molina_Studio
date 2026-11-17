@@ -199,7 +199,7 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val pb = MpvPlayerFactory.open(requireContext().applicationContext)
         if (pb == null) {
-            status?.text = "mpv tidak tersedia. Lihat Log Viewer (mpv.native-missing / mpv.init-failed)."
+            status?.text = "mpv belum tersedia: mesin pemutar sedang diganti (vendoring mpv penuh)."
             return
         }
         playback = pb

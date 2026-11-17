@@ -9,7 +9,7 @@ dapat diadaptasi ke repo ini. Dicatat per 2026-11-12.
 | Upstream | Commit referensi | Lisensi | Status adaptasi |
 |---|---|---|---|
 | mpv | bcde6b93cca4 | GPLv2+ (LGPLv2.1+ bila dibangun dengan -Dgpl=false) | Belum ada berkas diadaptasi |
-| mpv-android | ebf1b3f0cbe9 | MIT | MPVLib.kt (mpv-native, hanya package diganti). Build native memakai sumber upstream + patch JNI/FFmpeg lewat scripts/native_mpv.sh |
+| mpv-android | ebf1b3f0cbe9 | MIT | Dulu: MPVLib.kt di mpv-native (dihapus di P11). Rencana: vendoring penuh mpv-android; atribusi MIT tetap wajib. Skrip build native lama (scripts/native_mpv.sh) belum dihapus |
 | NewPipe | 9486b0148af8 | GPLv3 | Belum ada berkas diadaptasi |
 | termux-app | 8629e632fcb9 | GPLv3-only; bagian turunan Android-Terminal-Emulator berlisensi Apache 2.0 (README upstream hanya menunjuk terminal-emulator dan terminal-view, berkas tanpa header lisensi, jadi diperlakukan GPLv3-only) | terminal-emulator (lihat bagian Berkas adaptasi) |
 | proot-distro | f8abdd9957f8 | GPLv3 | Belum ada berkas diadaptasi |
@@ -87,7 +87,9 @@ lama yang diikuti; kode mesin (`ArchiveEngine`, `ArchiveNames`) ditulis ulang un
 
 Hash tarball, biner asli, dan hasil dipin di `scripts/sevenzip/pins.sha256` dan diperiksa `SevenZipBundlePinTest`. Teks lisensi: `app/src/main/assets/licenses/7zip-License.txt`.
 
-## Aset: cacert.pem (Patch A)
+## Aset: cacert.pem (Patch A) - DIHAPUS di P11
+
+Berkas dan ujinya hilang bersama `:mpv-native`; bundel sertifikat harus diadakan lagi saat vendoring (tls-verify=yes tetap wajib). Catatan riwayat:
 
 `mpv-native/src/main/assets/cacert.pem` disalin apa adanya dari mpv-android ebf1b3f0cbe9 (app/src/main/assets/cacert.pem), SHA-256 `796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe` (dipin di `MpvConfigTest`). Isi: bundel sertifikat akar Mozilla hasil ekstraksi curl (data Mozilla berlisensi MPL-2.0; verifikasi sebelum rilis). Dipakai mpv lewat `tls-ca-file` (tls-verify=yes). Memperbarui berkas ini = naikkan pin di skrip dan uji secara sadar.
 
@@ -107,3 +109,9 @@ sebagai modul `code` dengan fitur terminal/vault/proyek dibuang.
 
 URL provenance di dalam metadata grammar TextMate (mis. `github.com/microsoft/...`) tidak diubah; `scripts/telemetry_gate.py`
 melonggarkan aturan URL hanya untuk `code/src/main/assets/textmate/` (`VENDORED_PREFIXES`).
+
+## player-mpv: vendoring mpv-android tahap 1 (P12)
+- Sumber: https://github.com/mpv-android/mpv-android, commit `ebf1b3f0cbe9d6154a43cf6ec1ad6fc32a1b2d47`, lisensi MIT (c) 2016 Ilya Zhuravlev, sfan5. Teks lengkap: `player-mpv/LICENSE`; ringkasan atribusi dan perubahan: `player-mpv/NOTICE-mpv-android`.
+- Di-rename: `is.xyz.mpv` -> `com.molina.player.mpv`, `is.xyz.filepicker` -> `com.molina.player.filepicker`, termasuk fungsi JNI `Java_com_molina_player_mpv_MPVLib_*`.
+- Dibersihkan: URL di luar allowlist (komentar), nama proyek/pengembang lama, docs/, fastlane/, README upstream. Header lisensi per berkas (MPL-2.0 file picker, LGPL-3.0 satu layout) dipertahankan; barisnya ditandai `gate:allow lisensi` agar lolos telemetry_gate.
+- Belum ada: buildscripts native (libmpv, FFmpeg, libass, dll.) dan lisensinya (tahap 2), cacert.pem tetap dari upstream, pengaturan privasi Shield.
