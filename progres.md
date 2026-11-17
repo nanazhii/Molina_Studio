@@ -311,6 +311,9 @@
 - [ ] Bersihkan sisa pipeline lama: scripts/native_mpv.sh, native_wget.sh, fetch_native.sh, native_audit.sh, native/, workflow native-mpv.yml (masih menunjuk mpv-native)
 - [ ] Verifikasi CI: kompilasi :cinema dan :app, gate module/telemetry/secret
 
+## P11-fix (2026-11-17)
+- [x] :cinema menambah dependensi :core-security (SHIELD_BLOCKED_CODE); sebelumnya terbawa transitif lewat api(:mpv-native) yang dihapus di P11
+
 ## P12 vendoring mpv-android tahap 1 -> :player-mpv (2026-11-17)
 - [x] Modul library :player-mpv: app/src/{main,debug} upstream commit ebf1b3f0cbe9d6154a43cf6ec1ad6fc32a1b2d47, package com.molina.player.mpv (JNI ikut), semua bahasa, Activity, pengaturan, file picker
 - [x] Dibersihkan: URL non-allowlist, nama dev/proyek lama; tersisa hanya LICENSE, NOTICE-mpv-android, header lisensi per berkas, docs/provenance.md
