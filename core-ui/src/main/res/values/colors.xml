@@ -10,11 +10,14 @@
     <color name="molina_terminal_accent">#00BFA5</color>
     <color name="molina_on_terminal_accent">#00201B</color>
     <color name="molina_terminal_container">#003D35</color>
-    <color name="molina_cinema_bg">#000000</color>
-    <color name="molina_cinema_accent">#FFB300</color>
-    <color name="molina_on_cinema_accent">#261A00</color>
-    <color name="molina_cinema_container">#3A2A00</color>
+    <color name="molina_cinema_bg">#1E1E1E</color>
+    <color name="molina_cinema_accent">#87CF3E</color>
+    <color name="molina_on_cinema_accent">#162100</color>
+    <color name="molina_cinema_container">#2D4012</color>
     <color name="molina_cinema_secondary">#E53935</color>
+    <!-- molina-patch-c1: panel kontrol ala Linux Mint (charcoal + hijau mint) -->
+    <color name="molina_cinema_panel">#2F2F2F</color>
+    <color name="molina_cinema_panel_line">#3C3C3C</color>
     <color name="molina_key_red">#FF5252</color>
     <color name="molina_key_green">#00E676</color>
     <color name="molina_key_blue">#448AFF</color>

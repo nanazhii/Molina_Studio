@@ -29,6 +29,9 @@
         <item name="colorPrimaryContainer">@color/molina_cinema_container</item>
         <item name="colorOnPrimaryContainer">@color/molina_cinema_accent</item>
         <item name="colorSecondary">@color/molina_cinema_secondary</item>
+        <!-- molina-patch-c1c: seekbar/EditText memakai colorAccent = colorSecondary (merah); paksa mint -->
+        <item name="colorAccent">@color/molina_cinema_accent</item>
+        <item name="colorControlActivated">@color/molina_cinema_accent</item>
     </style>
 
     <style name="Theme.Molina.App" parent="Theme.Molina">
