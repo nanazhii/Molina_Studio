@@ -12,7 +12,7 @@ import re, sys, pathlib
 
 FEATURE = {"cinema", "files", "terminal", "settings", "code"}
 API = {"player-api", "terminal-api"}
-ENGINE = {"terminal-core", "terminal-emulator", "terminal-view", "terminal-pty", "terminal-proot", "filemanager"}
+ENGINE = {"engine-newpipe", "terminal-core", "terminal-emulator", "terminal-view", "terminal-pty", "terminal-proot", "filemanager"}
 OWN_API = {"cinema": {"player-api"}, "terminal": {"terminal-api"},
            "terminal-core": {"terminal-api"}}
 OWN_ENGINE = {"files": {"filemanager"},

@@ -345,3 +345,8 @@
 - [ ] Cinema membuka is.xyz.mpv lewat Intent (butuh gate:allow untuk identitas is.xyz.mpv)
 - [x] Native mpv (arm64) run #8 sukses; pin native-mpv-0dbc70f-run8 (sha256 f9eea14d...19c9) di native/prebuilt.env; JNI com.molina.player terverifikasi di libplayer.so
 - [ ] Verifikasi CI: langkah fetch_native terpasang tanpa peringatan; lanjut tahap 2 (core:common subset + engine:newpipe)
+- [x] CI #165 hijau: tahap 1 selesai (pin native-mpv-0dbc70f-run8, fetch_native terverifikasi)
+- [x] Tahap 2: :core-stream (19 berkas + StreamQuality ringkas AUTO/P720/AUDIO) dan :engine-newpipe (4 berkas + StreamLog) dibawa dari Molina-Studio@c1a0719; Shield/UrlPolicy/log memakai core-security/core-log
+- [x] Tahap 2: JitPack (exclusiveContent TeamNewPipe), module_gate (engine-newpipe), jvm-tests (core-stream, verifyNewPipePins, engine-newpipe)
+- [ ] Verifikasi CI: jvm-tests manual (compile :core-stream, :engine-newpipe:verifyNewPipePins) + gate telemetry/module
+- [ ] Lanjut tahap 3: :player-mpv (MPVLib com.molina.player, MPVView, sesi) lalu 3b/3c/3d
