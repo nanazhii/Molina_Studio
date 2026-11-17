@@ -350,3 +350,8 @@
 - [x] Tahap 2: JitPack (exclusiveContent TeamNewPipe), module_gate (engine-newpipe), jvm-tests (core-stream, verifyNewPipePins, engine-newpipe)
 - [ ] Verifikasi CI: jvm-tests manual (compile :core-stream, :engine-newpipe:verifyNewPipePins) + gate telemetry/module
 - [ ] Lanjut tahap 3: :player-mpv (MPVLib com.molina.player, MPVView, sesi) lalu 3b/3c/3d
+- [x] CI #166 hijau: tahap 2 (:core-stream + :engine-newpipe) selesai
+- [x] Tahap 3: :player-mpv (satu modul, namespace com.molina.player) dibawa dari Molina-Studio@c1a0719; MPVLib JNI cocok dengan libplayer.so; Shield baru (ShieldRegistry/LavfOptions) menggantikan ShieldProxy; Activity tertutup (tanpa VIEW/SEND)
+- [x] StreamQuality penuh dipulihkan di :core-stream (opsi resolusi yang dikecualikan = lencana di Home :app, bukan sheet kualitas pemutar)
+- [ ] Verifikasi CI: jvm-tests manual (:player-mpv:assembleDebug) + gerbang module/telemetry/secret; belum dihubungkan ke :app/:cinema
+- [ ] Tahap 3b: pisah :player-subtitle dan :player-spectrum; 3c: :player-mpv-native dan :player-background; 3d: pecah MPVActivity

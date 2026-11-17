@@ -12,7 +12,7 @@ import re, sys, pathlib
 
 FEATURE = {"cinema", "files", "terminal", "settings", "code"}
 API = {"player-api", "terminal-api"}
-ENGINE = {"engine-newpipe", "terminal-core", "terminal-emulator", "terminal-view", "terminal-pty", "terminal-proot", "filemanager"}
+ENGINE = {"engine-newpipe", "player-mpv", "terminal-core", "terminal-emulator", "terminal-view", "terminal-pty", "terminal-proot", "filemanager"}
 OWN_API = {"cinema": {"player-api"}, "terminal": {"terminal-api"},
            "terminal-core": {"terminal-api"}}
 OWN_ENGINE = {"files": {"filemanager"},
@@ -66,7 +66,7 @@ if _mf.exists():
 
 # [P18-LOADFILE] Pemuatan media ("loadfile") hanya boleh di sesi Shield dan dua berkas debug upstream.
 # Jalur lain melewati PlaybackGuard (blacklist protokol, preflight, proxy Shield).
-_LOADFILE_OK = {"MpvPlayerSession.kt", "MPVActivity.kt", "BaseMPVView.kt"}
+_LOADFILE_OK = {"MpvPlayerSession.kt", "MPVActivity.kt", "BaseMPVView.kt", "MpvLoad.kt"}  # MpvLoad = satu-satunya penyusun loadfile, lewat PlaybackGuard
 for _p in sorted(pathlib.Path(".").glob("*/src/main/**/*")):
     if _p.suffix not in (".kt", ".java") or _p.name in _LOADFILE_OK:
         continue
