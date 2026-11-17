@@ -45,6 +45,25 @@ for f in sorted(pathlib.Path(".").glob("*/build.gradle.kts")):
         if not allowed(src, dst):
             errors.append(f"{src} ({kind(src)}) -> {dst} ({kind(dst)}) dilarang")
 
+# [P17-SHIELD] Gerbang manifest :player-mpv: tidak boleh ada komponen exported=true atau filter VIEW/SEND/BROWSABLE
+# (jalur pemutaran dari luar app akan melewati Shield).
+import xml.etree.ElementTree as ET
+_A = "{http://schemas.android.com/apk/res/android}"
+_mf = pathlib.Path("player-mpv/src/main/AndroidManifest.xml")
+if _mf.exists():
+    for _el in ET.parse(_mf).getroot().iter():
+        if _el.tag not in ("activity", "activity-alias", "service", "receiver", "provider"):
+            continue
+        _n = _el.get(_A + "name")
+        if _el.get(_A + "exported") == "true":
+            errors.append(f"player-mpv manifest: {_n} exported=true dilarang (Shield bypass)")
+        for _f in _el.findall("intent-filter"):
+            _acts = {a.get(_A + "name") for a in _f.findall("action")}
+            _cats = {c.get(_A + "name") for c in _f.findall("category")}
+            if _acts & {"android.intent.action.VIEW", "android.intent.action.SEND", "android.intent.action.SEND_MULTIPLE"} \
+                    or "android.intent.category.BROWSABLE" in _cats:
+                errors.append(f"player-mpv manifest: {_n} punya filter VIEW/SEND/BROWSABLE dilarang (Shield bypass)")
+
 if errors:
     print("MODULE GATE GAGAL:")
     for e in errors:
