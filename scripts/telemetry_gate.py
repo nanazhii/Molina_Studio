@@ -11,7 +11,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SELF = os.path.abspath(__file__)
 
 SCAN_EXT = {".kt", ".kts", ".java", ".xml", ".gradle", ".toml", ".properties",
-            ".json", ".c", ".cc", ".cpp", ".h", ".sh", ".yml", ".yaml"}
+            ".json", ".c", ".cc", ".cpp", ".h", ".sh", ".yml", ".yaml", ".mk", ".pro"}
 SKIP_DIRS = {".git", "build", ".gradle", ".idea", "node_modules"}
 SKIP_PREFIX = ("LICENSE", "NOTICE", "THIRD_PARTY", "COPYING")  # atribusi lisensi dijaga
 
@@ -52,7 +52,10 @@ TRACKER_PATTERNS = [r"com\.google\.firebase", r"firebase-(analytics|crashlytics)
 
 # Identitas dev/proyek lama. Tambahkan nama lain yang ingin dibersihkan.
 OLD_IDENTITY = [r"\btermux\b", r"\bfornwall\b", r"is\.xyz\.mpv",
-                r"mpv-android", r"\bsfan5\b"]
+                r"mpv-android", r"\bsfan5\b",
+                # P15-BERSIH: sisa package/JNI lama (bentuk is/xyz, is_xyz, dan kelas JNI lama di com.molina.cinema)
+                r"(?<![A-Za-z0-9])is[/_]xyz(?![A-Za-z0-9])",
+                r"(?<![A-Za-z0-9])cinema[./_]MPVLib"]
 
 _extra = os.path.join(os.path.dirname(SELF), "old_identity.txt")
 if os.path.exists(_extra):
@@ -116,6 +119,9 @@ def main():
     errors, warns, files = [], [], 0
     for root, dirs, names in os.walk(ROOT):
         dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+        rel_root = os.path.relpath(root, ROOT).replace(os.sep, "/")
+        if re.search(r"(^|/)is/xyz(/|$)", rel_root):
+            errors.append((rel_root, 0, "folder package lama is/xyz"))
         for name in names:
             full = os.path.join(root, name)
             if full == SELF or name.upper().startswith(SKIP_PREFIX):

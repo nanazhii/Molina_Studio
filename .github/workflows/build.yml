@@ -74,7 +74,7 @@ jobs:
           fi
           echo "Keystore valid."
       - name: Pustaka native mpv (terverifikasi SHA-256)
-        if: false # P11: nonaktif sementara; :mpv-native dihapus, aktifkan lagi setelah vendoring mesin mpv
+        if: hashFiles('scripts/fetch_native.sh') != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/fetch_native.sh

@@ -11,6 +11,7 @@ android {
         buildConfigField("String", "VERSION_NAME", "\"2026-09-17-release\"") // versi upstream yang divendor
         buildConfigField("int", "VERSION_CODE", "48")
         consumerProguardFiles("proguard-rules.pro")
+        ndk { abiFilters += "arm64-v8a" }
     }
     buildFeatures {
         viewBinding = true

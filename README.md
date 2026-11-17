@@ -12,7 +12,7 @@ yang terpisah dari APK repo lama.
 
 - Yang berubah hanya `applicationId` (identitas di perangkat). `namespace` Kotlin/R tetap `com.molina.studio`
   dan nama kelas tidak berubah, jadi tidak ada pemindahan berkas.
-- JNI mpv (`com.molina.cinema.MPVLib`) tidak terpengaruh.
+- JNI mpv (`com.molina.player.mpv.MPVLib`) tidak terpengaruh.
 - Data aplikasi lama tidak ikut: ini aplikasi baru di mata Android. Copot `com.molina.studio` bila tidak dipakai lagi.
 - Jangan ubah `applicationId` lagi tanpa alasan kuat: mengubahnya membuat pembaruan atas APK yang sudah terpasang mustahil.
 

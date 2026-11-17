@@ -3,7 +3,7 @@
 # Pakai: bash scripts/native_audit.sh [folder]   (butuh readelf: apt install binutils)
 # GAGAL (exit 1): stack bisa dieksekusi, atau TEXTREL. PERINGATAN: tanpa RELRO, BIND_NOW, atau canary.
 set -u
-DIR="${1:-mpv-native/src/main/jniLibs/arm64-v8a}"
+DIR="${1:-player-mpv/src/main/jniLibs/arm64-v8a}"
 command -v readelf >/dev/null || { echo "readelf tidak ada (apt install binutils)" >&2; exit 2; }
 [ -d "$DIR" ] || { echo "folder tidak ada: $DIR" >&2; exit 2; }
 fail=0; warn=0; n=0

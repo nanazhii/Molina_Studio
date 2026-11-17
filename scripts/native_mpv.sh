@@ -38,16 +38,18 @@ pin_clone() {
 }
 
 mkdir -p "$W" "$OUT"; : > "$OUT/download-sha256.txt"
-UP="$W/mpv-android"
+UP="$W/upstream"
 msg "Sumber upstream (dipin)"
 pin_clone https://github.com/mpv-android/mpv-android.git "$UPSTREAM_SHA" "$UP"
 
-msg "Rename JNI ke com.molina.cinema (idempoten)"
-sed -i 's#is/xyz/mpv/MPVLib#com/molina/cinema/MPVLib#' "$UP/app/src/main/jni/jni_utils.cpp"
-sed -i 's#Java_is_xyz_mpv_MPVLib_#Java_com_molina_cinema_MPVLib_#' "$UP/app/src/main/jni/jni_utils.h"
-grep -q 'com/molina/cinema/MPVLib' "$UP/app/src/main/jni/jni_utils.cpp"
-grep -q 'Java_com_molina_cinema_MPVLib_' "$UP/app/src/main/jni/jni_utils.h"
-if grep -rn 'is/xyz\|is_xyz' "$UP/app/src/main/jni"; then die "sisa nama lama di JNI"; fi
+msg "JNI dari player-mpv (sumber tunggal; nama sudah com.molina.player.mpv)"
+JNI_SRC="$ROOT/player-mpv/src/main/jni"
+[ -f "$JNI_SRC/jni_utils.cpp" ] || die "player-mpv/src/main/jni tidak ada atau tidak lengkap"
+rm -rf "$UP/app/src/main/jni"; mkdir -p "$UP/app/src/main/jni"
+cp -a "$JNI_SRC"/. "$UP/app/src/main/jni"/
+grep -q 'com/molina/player/mpv/MPVLib' "$UP/app/src/main/jni/jni_utils.cpp"
+grep -q 'Java_com_molina_player_mpv_MPVLib_' "$UP/app/src/main/jni/jni_utils.h"
+if grep -rnE 'is/xyz|is_xyz|com[/_]molina[/_]cinema' "$UP/app/src/main/jni"; then die "sisa nama lama di JNI"; fi
 
 msg "Profil FFmpeg Molina (daftar putih demuxer/protokol + pengerasan)"
 FFSH="$UP/buildscripts/scripts/ffmpeg.sh"
@@ -134,6 +136,10 @@ while [ "$changed" -eq 1 ]; do
 done
 for f in libmpv.so libplayer.so libc++_shared.so; do [ -f "$D/$f" ] || die "hilang: $f"; done
 "$BIN/llvm-strip" --strip-unneeded "$D"/*.so
+# [SIMBOL-GUARD] libplayer.so wajib mengekspor JNI com.molina.player.mpv dan bebas sisa nama lama.
+SYMS="$("$BIN/llvm-nm" -D --defined-only "$D/libplayer.so")"
+grep -q 'Java_com_molina_player_mpv_MPVLib_create' <<<"$SYMS" || die "libplayer.so tanpa simbol Java_com_molina_player_mpv_MPVLib_*"
+if grep -Eq 'Java_(is_xyz|com_molina_cinema)_' <<<"$SYMS"; then die "libplayer.so masih memuat simbol package lama"; fi
 msg "Audit pengerasan .so (informasi; belum fatal)"
 bash "$ROOT/scripts/native_audit.sh" "$D" | tee "$OUT/hardening-audit.txt" || echo "PERINGATAN: native_audit melaporkan GAGAL (lihat hardening-audit.txt)"
 SYS=" libc.so libm.so libdl.so liblog.so libandroid.so libz.so libEGL.so libGLESv2.so libGLESv3.so libOpenSLES.so libmediandk.so libnativewindow.so libvulkan.so libjnigraphics.so libaaudio.so libstdc++.so "
