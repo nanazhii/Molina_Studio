@@ -365,3 +365,4 @@
 - [x] Tahap 3b: tes lama (SubEdit, Subtitle, SpectrumMath) jadi JUnit; jvm-tests menjalankan :player-subtitle dan :player-spectrum
 - [ ] SpectrumSeekTests lama usang (API restart/frameAt/frameIndex sudah hilang); tulis ulang untuk SpectrumPlanner/SpectrumFrameBuilder saat ini
 - [ ] Verifikasi CI: build.yml + jvm-tests; lalu tahap 3c (:player-mpv-native dan :player-background)
+- [x] fix(player): CrashContext dipulihkan di :core-common; MPVActivity tidak lagi merujuk com.molina.core.stream.CrashContext (CI run #9 merah)
