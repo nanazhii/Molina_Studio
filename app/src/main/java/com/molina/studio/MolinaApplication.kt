@@ -2,6 +2,7 @@ package com.molina.studio
 
 import android.app.Application
 import android.os.Debug
+import com.molina.core.common.CrashContext
 import com.molina.core.storage.SevenZipBackend
 import com.molina.core.stream.StreamResolvers
 import com.molina.engine.newpipe.NewPipeStreamResolver
@@ -13,7 +14,7 @@ class MolinaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         MolinaLogSetup.init(this)
-        CrashReporter.install()
+        CrashReporter.install(context = { CrashContext.describe() })
         BuildInfo.log(this)
         ShieldBootstrap.start(this)
         // Resolver stream dibuat malas di thread latar saat pertama dipakai (Shield sudah menyala).

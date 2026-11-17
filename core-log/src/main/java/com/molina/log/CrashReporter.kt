@@ -62,6 +62,8 @@ object CrashAttribution {
 class CrashReporter(
     private val logger: () -> MolinaLogger = { MolinaLog.logger },
     private val previous: Thread.UncaughtExceptionHandler? = null,
+    /** Deskripsi layar aktif untuk kolom mode= (mis. CrashContext.describe()); null/kosong = tidak dicatat. */
+    private val context: () -> String? = { null },
 ) : Thread.UncaughtExceptionHandler {
 
     private val handling = AtomicBoolean(false)
@@ -70,7 +72,7 @@ class CrashReporter(
         if (handling.compareAndSet(false, true)) {
             try {
                 val l = logger()
-                MolinaEvents.crash(CrashAttribution.areaOf(t), t, thread.name, logger = l)
+                MolinaEvents.crash(CrashAttribution.areaOf(t), t, thread.name, fields = crashFields(), logger = l)
                 l.flush()
             } catch (_: Throwable) {
                 // logging tidak boleh menutupi crash aslinya
@@ -85,12 +87,21 @@ class CrashReporter(
         }
     }
 
+    /** Gagal membaca konteks tidak boleh menutupi crash aslinya. */
+    private fun crashFields(): Map<String, String> {
+        val mode = try { context() } catch (_: Throwable) { null }
+        return if (mode.isNullOrEmpty()) emptyMap() else mapOf("mode" to mode)
+    }
+
     companion object {
         /** Idempotent: memanggil dua kali tidak menumpuk handler. */
-        fun install(logger: () -> MolinaLogger = { MolinaLog.logger }): CrashReporter {
+        fun install(
+            logger: () -> MolinaLogger = { MolinaLog.logger },
+            context: () -> String? = { null },
+        ): CrashReporter {
             val current = Thread.getDefaultUncaughtExceptionHandler()
             if (current is CrashReporter) return current
-            val reporter = CrashReporter(logger, current)
+            val reporter = CrashReporter(logger, current, context)
             Thread.setDefaultUncaughtExceptionHandler(reporter)
             return reporter
         }

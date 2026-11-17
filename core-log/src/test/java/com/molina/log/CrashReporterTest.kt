@@ -83,6 +83,26 @@ class CrashReporterTest {
     }
 
     @Test
+    fun crashIncludesModeFromContext() {
+        val sink = CaptureSink()
+        val log = MolinaLogger(listOf(sink), clock = { 0L })
+        val reporter = CrashReporter({ log }, null, { "Player (mpv)" })
+        reporter.uncaughtException(Thread.currentThread(), trace("com.molina.player.MPVActivity"))
+        assertTrue(sink.entries.single().message.contains("mode=Player"))
+    }
+
+    @Test
+    fun contextFailureNeverHidesCrash() {
+        val sink = CaptureSink()
+        val log = MolinaLogger(listOf(sink), clock = { 0L })
+        var delegated = 0
+        val reporter = CrashReporter({ log }, Thread.UncaughtExceptionHandler { _, _ -> delegated++ }, { error("konteks rusak") })
+        reporter.uncaughtException(Thread.currentThread(), trace("x.Y"))
+        assertEquals(1, delegated)
+        assertTrue(!sink.entries.single().message.contains("mode="))
+    }
+
+    @Test
     fun installIsIdempotent() {
         val saved = Thread.getDefaultUncaughtExceptionHandler()
         try {

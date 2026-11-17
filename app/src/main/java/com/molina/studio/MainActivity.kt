@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.molina.cinema.CinemaFragment
 import com.molina.code.CodeFragment
+import com.molina.core.common.CrashContext
 import com.molina.core.common.MolinaResult
 import com.molina.core.storage.LocalMolinaStorage
 import com.molina.files.BerkasFragment
@@ -75,6 +76,7 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(com.molina.core.ui.R.style.Theme_Molina_App)
         super.onCreate(savedInstanceState)
+        CrashContext.host = CrashContext.HOST_APP
         setContentView(R.layout.activity_main)
         val nav = findViewById<BottomNavigationView>(R.id.bottom_nav)
         KeyboardNavHider.install(this, findViewById(R.id.nav_container))
@@ -95,6 +97,7 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
             }
             MolinaEvents.behavior("app", "nav", fields = mapOf("tab" to tab, "from" to (currentTab ?: "start")))
             currentTab = tab
+            CrashContext.tab = tab
             supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
             supportFragmentManager.commit { replace(R.id.container, fragment) }
             true
@@ -113,6 +116,12 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
                 storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // MPVActivity mengisi HOST_PLAYER; kembalikan saat layar utama di depan lagi.
+        CrashContext.host = CrashContext.HOST_APP
     }
 
     private fun hasStoragePermission(): Boolean =
