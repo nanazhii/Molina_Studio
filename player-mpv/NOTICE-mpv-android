@@ -1,0 +1,21 @@
+NOTICE - modul player-mpv (Molina_Studio)
+
+Modul ini adalah salinan yang DIUBAH dari mpv-android:
+  sumber   : https://github.com/mpv-android/mpv-android
+  commit   : ebf1b3f0cbe9d6154a43cf6ec1ad6fc32a1b2d47
+  lisensi  : MIT. Hak cipta (c) 2016 Ilya Zhuravlev dan (c) 2016 sfan5. Teks lengkap ada di berkas LICENSE di folder ini.
+
+Bagian pihak ketiga di dalam salinan:
+  - file picker (package com.molina.player.filepicker, layout nnf_*): berasal dari pustaka nononsense-filepicker; header lisensi
+    (MPL-2.0 atau LGPL-3.0 per berkas) dipertahankan utuh di setiap berkas. Beberapa berkas bersumber dari AOSP (Apache-2.0).
+  - src/main/assets/cacert.pem: bundel sertifikat akar Mozilla hasil ekstraksi curl (data Mozilla, MPL-2.0); disalin apa adanya.
+  - libmpv, FFmpeg, libass dan pustaka native lain TIDAK ada di modul ini (dibangun di tahap 2); lisensinya dicatat di docs/provenance.md.
+
+Perubahan oleh Molina_Studio (tahap 1):
+  - package is.xyz.mpv -> com.molina.player.mpv, is.xyz.filepicker -> com.molina.player.filepicker (termasuk nama fungsi JNI)
+  - tautan dan nama pengembang/proyek lama dihapus dari kode, resource, dan komentar (LICENSE dan NOTICE ini dikecualikan)
+  - diadaptasi menjadi modul library: tanpa ikon launcher, atribut <application> dibuang, izin flavor default digabung
+  - BuildConfig.FLAVOR di file picker diganti false (tanpa flavor allstorage)
+  - tanpa buildscripts, ABI split, flavor allstorage, docs/, fastlane/ upstream
+Berkas dalam Molina_Studio berlisensi GPL-3.0 (lihat LICENSE di root); lisensi MIT, MPL-2.0, dan LGPL-3.0 di atas kompatibel
+dengan penggabungan itu dan tetap berlaku untuk bagian masing-masing.

@@ -310,3 +310,14 @@
 - [ ] Vendoring mpv-android penuh: tetapkan package JNI (upstream is.xyz.mpv vs com.molina.cinema), atribusi MIT di provenance.md, lolos telemetry_gate
 - [ ] Bersihkan sisa pipeline lama: scripts/native_mpv.sh, native_wget.sh, fetch_native.sh, native_audit.sh, native/, workflow native-mpv.yml (masih menunjuk mpv-native)
 - [ ] Verifikasi CI: kompilasi :cinema dan :app, gate module/telemetry/secret
+
+## P12 vendoring mpv-android tahap 1 -> :player-mpv (2026-11-17)
+- [x] Modul library :player-mpv: app/src/{main,debug} upstream commit ebf1b3f0cbe9d6154a43cf6ec1ad6fc32a1b2d47, package com.molina.player.mpv (JNI ikut), semua bahasa, Activity, pengaturan, file picker
+- [x] Dibersihkan: URL non-allowlist, nama dev/proyek lama; tersisa hanya LICENSE, NOTICE-mpv-android, header lisensi per berkas, docs/provenance.md
+- [x] Adaptasi library: tanpa launcher, atribut <application> dibuang, izin default digabung, BuildConfig VERSION_*, targetPackage = applicationId :app
+- [x] Fix: BuildConfig.FLAVOR di MPVFilePickerFragment diganti false (modul tanpa flavor allstorage)
+- [x] Gradle: katalog versi (media, preference), settings, module_gate (engine player-mpv, cinema -> player-mpv), jvm-tests (:player-mpv:assembleDebug)
+- [ ] Verifikasi CI: jalankan jvm-tests manual (kompilasi :player-mpv: viewBinding, R non-transitive, material 1.12 vs 1.14 upstream); gate module/telemetry/secret
+- [ ] Tahap 2: buildscripts native (libmpv, FFmpeg, libass, dll.) + profil FFmpeg Molina, workflow, jniLibs arm64; gerbang URL build; lisensi pustaka native
+- [ ] Tahap 3: :app/:cinema memakai :player-mpv (ganti PlayerBackendStub), MolinaPlayerSession di atas MPVLib, bangun ulang privasi Shield (proxy, blacklist protokol, tls-verify, scrub log)
+- [ ] Belum ada Activity yang bisa dijalankan sebelum .so ada (jangan hubungkan ke :app dulu: Activity VIEW upstream akan crash tanpa libmpv)

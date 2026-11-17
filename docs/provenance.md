@@ -109,3 +109,9 @@ sebagai modul `code` dengan fitur terminal/vault/proyek dibuang.
 
 URL provenance di dalam metadata grammar TextMate (mis. `github.com/microsoft/...`) tidak diubah; `scripts/telemetry_gate.py`
 melonggarkan aturan URL hanya untuk `code/src/main/assets/textmate/` (`VENDORED_PREFIXES`).
+
+## player-mpv: vendoring mpv-android tahap 1 (P12)
+- Sumber: https://github.com/mpv-android/mpv-android, commit `ebf1b3f0cbe9d6154a43cf6ec1ad6fc32a1b2d47`, lisensi MIT (c) 2016 Ilya Zhuravlev, sfan5. Teks lengkap: `player-mpv/LICENSE`; ringkasan atribusi dan perubahan: `player-mpv/NOTICE-mpv-android`.
+- Di-rename: `is.xyz.mpv` -> `com.molina.player.mpv`, `is.xyz.filepicker` -> `com.molina.player.filepicker`, termasuk fungsi JNI `Java_com_molina_player_mpv_MPVLib_*`.
+- Dibersihkan: URL di luar allowlist (komentar), nama proyek/pengembang lama, docs/, fastlane/, README upstream. Header lisensi per berkas (MPL-2.0 file picker, LGPL-3.0 satu layout) dipertahankan; barisnya ditandai `gate:allow lisensi` agar lolos telemetry_gate.
+- Belum ada: buildscripts native (libmpv, FFmpeg, libass, dll.) dan lisensinya (tahap 2), cacert.pem tetap dari upstream, pengaturan privasi Shield.

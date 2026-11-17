@@ -8,15 +8,7 @@ memastikan commit-nya sama dengan PIN di bawah (bila beda, berhenti).
 
 Aman dijalankan berulang (idempotent): bila player-mpv/NOTICE-mpv-android sudah ada, bagian vendoring dilewati.
 Semua berkas dihitung di memori lalu divalidasi; bila ada yang gagal, TIDAK ada yang ditulis.
-
-Yang dilakukan:
-  - salin app/src/{main,debug} + proguard-rules.pro + LICENSE upstream ke player-mpv/ (tanpa buildscripts: tahap 2)
-  - rename package is.xyz.mpv -> com.molina.player.mpv, is.xyz.filepicker -> com.molina.player.filepicker
-    (juga nama fungsi JNI Java_is_xyz_mpv_* dan FindClass is/xyz/mpv)
-  - bersihkan URL di luar allowlist (komentar saja; URL di kode = berhenti), nama dev/proyek lama, kecuali LICENSE/NOTICE
-  - adaptasi library: tanpa launcher, atribut <application> dibuang (supaya tidak bentrok dengan :app), izin flavor default
-    digabung, BuildConfig VERSION_*, targetPackage -> applicationId :app
-  - Gradle: player-mpv/build.gradle.kts, settings, katalog versi, module_gate, jvm-tests (assembleDebug), docs, progres.md
+Perbaikan vs versi awal: BuildConfig.FLAVOR di MPVFilePickerFragment.java diganti false (modul tanpa flavor).
 """
 import os
 import re
@@ -93,7 +85,6 @@ def clean_urls(rel, t):
     lines = t.split("\n")
     for i, line in enumerate(lines):
         start_in_block = in_block
-        # perbarui status blok komentar di akhir baris
         pos = 0
         while True:
             if not in_block:
@@ -137,13 +128,15 @@ def transform_text(rel_dest, t):
     t = t.replace("mpv-android", "Molina Player")
     if rel_dest.endswith("res/xml/preferences_root.xml"):
         t = t.replace('android:targetPackage="%s"' % PKG, 'android:targetPackage="%s"' % APP_ID)
+    if rel_dest.endswith("MPVFilePickerFragment.java"):
+        # modul library tanpa product flavor: BuildConfig.FLAVOR tidak dibuat AGP; flavor allstorage tidak dibawa
+        t = t.replace('BuildConfig.FLAVOR.equals("allstorage")', "false")
     return t
 
 
 def dest_of(src_rel):
     """src_rel relatif terhadap app/src -> relatif terhadap root repo."""
     parts = src_rel.split("/")
-    # parts[0] = main|debug|default|allstorage
     if "java" in parts[:2] and len(parts) > 3 and parts[2:4] == ["is", "xyz"]:
         parts = parts[:2] + ["com", "molina", "player"] + parts[4:]
     return MOD + "/src/" + "/".join(parts)
@@ -155,6 +148,9 @@ if not already:
         for base, _dirs, names in os.walk(os.path.join(srcroot, sub)):
             for n in names:
                 full = os.path.join(base, n)
+                if os.path.islink(full):  # mis. jniLibs (symlink ke hasil build native): tahap 2
+                    print("[lewati ] symlink upstream :", os.path.relpath(full, srcroot))
+                    continue
                 rel = os.path.relpath(full, srcroot).replace(os.sep, "/")
                 dest = dest_of(rel)
                 ext = os.path.splitext(n)[1].lower()
@@ -169,7 +165,6 @@ if not already:
     out[MOD + "/proguard-rules.pro"] = transform_text(MOD + "/proguard-rules.pro", open(os.path.join(UP, "app", "proguard-rules.pro"), encoding="utf-8").read())
     out[MOD + "/LICENSE"] = open(os.path.join(UP, "LICENSE"), encoding="utf-8").read()
 
-    # ---- manifest utama: adaptasi library
     mrel = MOD + "/src/main/AndroidManifest.xml"
     man = out[mrel]
     m = re.search(r"<application\b[^>]*>", man)
@@ -190,8 +185,7 @@ if not already:
         man = man.replace(anchor, anchor + "\n" + block)
     out[mrel] = man
 
-    # ---- validasi sisa identitas lama
-    BAD = [r"\bis\.xyz\b", r"`is`", r"mpv-android", r"\bsfan5\b", r"is_xyz", r"is/xyz"]
+    BAD = [r"\bis\.xyz\b", r"`is`", r"mpv-android", r"\bsfan5\b", r"is_xyz", r"is/xyz", r"BuildConfig\.FLAVOR"]
     for rel, content in out.items():
         if not isinstance(content, str) or os.path.basename(rel).upper().startswith(("LICENSE", "NOTICE")):
             continue
@@ -200,7 +194,6 @@ if not already:
                 if re.search(pat, line):
                     problems.append("%s:%d sisa identitas lama (%s)" % (rel, no, pat))
 
-    # ---- NOTICE + build.gradle.kts
     out[NOTICE_REL] = """NOTICE - modul player-mpv (Molina_Studio)
 
 Modul ini adalah salinan yang DIUBAH dari mpv-android:
@@ -218,6 +211,7 @@ Perubahan oleh Molina_Studio (tahap 1):
   - package is.xyz.mpv -> com.molina.player.mpv, is.xyz.filepicker -> com.molina.player.filepicker (termasuk nama fungsi JNI)
   - tautan dan nama pengembang/proyek lama dihapus dari kode, resource, dan komentar (LICENSE dan NOTICE ini dikecualikan)
   - diadaptasi menjadi modul library: tanpa ikon launcher, atribut <application> dibuang, izin flavor default digabung
+  - BuildConfig.FLAVOR di file picker diganti false (tanpa flavor allstorage)
   - tanpa buildscripts, ABI split, flavor allstorage, docs/, fastlane/ upstream
 Berkas dalam Molina_Studio berlisensi GPL-3.0 (lihat LICENSE di root); lisensi MIT, MPL-2.0, dan LGPL-3.0 di atas kompatibel
 dengan penggabungan itu dan tetap berlaku untuk bagian masing-masing.
@@ -273,10 +267,13 @@ def rd(rel):
     return edits[rel]
 
 
-def patch(rel, old, new, gone):
+def patch(rel, old, new, gone, optional=False):
     t = rd(rel)
     if gone in t:
         print("[lewati ] sudah patch :", rel)
+        return
+    if t.count(old) != 1 and optional:
+        print("[PERINGATAN] jangkar docs tidak cocok, edit manual:", rel, "->", old[:60])
         return
     if t.count(old) != 1:
         sys.exit("GAGAL %s: target ditemukan %d kali (harus 1):\n%s" % (rel, t.count(old), old))
@@ -317,12 +314,13 @@ patch(
     ":settings:testDebugUnitTest :player-mpv:assembleDebug --stacktrace",
     ":player-mpv:assembleDebug",
 )
-patch("docs/arsitektur.md", "| engine | `terminal-core`", "| engine | `player-mpv`, `terminal-core`", "`player-mpv`, `terminal-core`")
+patch("docs/arsitektur.md", "| engine | `terminal-core`", "| engine | `player-mpv`, `terminal-core`", "`player-mpv`, `terminal-core`", optional=True)
 patch(
     "docs/arsitektur.md",
     "- `player-mpv`: implementasi `MolinaPlayerSession` di atas `MPVLib`.",
     "- `player-mpv`: SUDAH ADA (P12): mpv-android penuh divendor, package `com.molina.player.mpv`. Implementasi `MolinaPlayerSession` di atasnya menyusul (tahap 2/3).",
     "SUDAH ADA (P12)",
+    optional=True,
 )
 
 PROV = """
@@ -343,6 +341,7 @@ ENTRY = """
 - [x] Modul library :player-mpv: app/src/{main,debug} upstream commit %s, package com.molina.player.mpv (JNI ikut), semua bahasa, Activity, pengaturan, file picker
 - [x] Dibersihkan: URL non-allowlist, nama dev/proyek lama; tersisa hanya LICENSE, NOTICE-mpv-android, header lisensi per berkas, docs/provenance.md
 - [x] Adaptasi library: tanpa launcher, atribut <application> dibuang, izin default digabung, BuildConfig VERSION_*, targetPackage = applicationId :app
+- [x] Fix: BuildConfig.FLAVOR di MPVFilePickerFragment diganti false (modul tanpa flavor allstorage)
 - [x] Gradle: katalog versi (media, preference), settings, module_gate (engine player-mpv, cinema -> player-mpv), jvm-tests (:player-mpv:assembleDebug)
 - [ ] Verifikasi CI: jalankan jvm-tests manual (kompilasi :player-mpv: viewBinding, R non-transitive, material 1.12 vs 1.14 upstream); gate module/telemetry/secret
 - [ ] Tahap 2: buildscripts native (libmpv, FFmpeg, libass, dll.) + profil FFmpeg Molina, workflow, jniLibs arm64; gerbang URL build; lisensi pustaka native
