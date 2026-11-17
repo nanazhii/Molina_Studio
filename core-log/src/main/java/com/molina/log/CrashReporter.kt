@@ -29,6 +29,7 @@ object CrashAttribution {
         "com.molina.log." to "core",
         "com.molina.core." to "core",
         "com.molina.studio." to "app",
+        "com.molina.player." to "mpv",
     )
 
     /** Penyebab terdalam dulu; frame Molina pertama menentukan area. Tanpa frame Molina: core. */

@@ -31,6 +31,13 @@ jobs:
           grep -E '^[A-Z0-9_]+_SHA=' native/pins.env | grep -Ev '^FREETYPE_SHA=$' \
             | grep -Ev '^[A-Z0-9_]+_SHA=[0-9a-f]{40}$' && { echo "::error::SHA git di pins.env tidak valid"; exit 1; } || true
           grep -Ev '^[0-9a-f]{64}  https:[/][/][^ ]+$' native/pins.sha256 && { echo "::error::format pins.sha256 tidak valid"; exit 1; } || true
+      - name: Preflight branch (P15-PREFLIGHT)
+        run: |
+          set -euo pipefail
+          echo "Dibangun dari ${GITHUB_REF_NAME} @ ${GITHUB_SHA::7}" | tee -a "$GITHUB_STEP_SUMMARY"
+          grep -q 'SIMBOL-GUARD' scripts/native_mpv.sh || { echo "::error::native_mpv.sh tanpa SIMBOL-GUARD: workflow dijalankan dari branch/commit yang belum memuat P14. Pilih branch yang benar di Use workflow from."; exit 1; }
+          grep -q 'player-mpv/src/main/jni' scripts/native_mpv.sh || { echo "::error::native_mpv.sh belum memakai JNI dari player-mpv"; exit 1; }
+          [ -f player-mpv/src/main/jni/jni_utils.cpp ] || { echo "::error::player-mpv/src/main/jni tidak ada"; exit 1; }
       - name: Cache hasil build (kunci = hash pin + skrip build)
         id: cache
         if: ${{ !inputs.fresh }}
