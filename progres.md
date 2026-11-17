@@ -314,6 +314,11 @@
 ## P11-fix (2026-11-17)
 - [x] :cinema menambah dependensi :core-security (SHIELD_BLOCKED_CODE); sebelumnya terbawa transitif lewat api(:mpv-native) yang dihapus di P11
 
+## P13 perbaikan tes core-storage (2026-11-17)
+- [x] ArchiveNames.safeTarget: tautan simbolik pada nama terakhir tidak diikuti (OVERWRITE jatuh ke RENAME, bukan UNSAFE_ENTRY); folder tautan keluar-base tetap ditolak
+- [x] ArchiveEngineTest.tarOf: LONGFILE_POSIX agar tes nama entri panjang bisa membuat tar uji
+- [ ] Verifikasi: jvm-tests manual di feat/mpv-vendor (core-storage lalu :player-mpv:assembleDebug)
+
 ## P12 vendoring mpv-android tahap 1 -> :player-mpv (2026-11-17)
 - [x] Modul library :player-mpv: app/src/{main,debug} upstream commit ebf1b3f0cbe9d6154a43cf6ec1ad6fc32a1b2d47, package com.molina.player.mpv (JNI ikut), semua bahasa, Activity, pengaturan, file picker
 - [x] Dibersihkan: URL non-allowlist, nama dev/proyek lama; tersisa hanya LICENSE, NOTICE-mpv-android, header lisensi per berkas, docs/provenance.md

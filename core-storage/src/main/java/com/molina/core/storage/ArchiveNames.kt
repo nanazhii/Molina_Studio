@@ -75,7 +75,12 @@ object ArchiveNames {
     /** Jalur tujuan entri di bawah [base]; null bila jalur kanonik keluar dari [base]. */
     fun safeTarget(base: File, clean: String): File? {
         val root = base.canonicalFile
-        val out = File(root, clean).canonicalFile
+        val joined = File(root, clean)
+        val leaf = joined.name
+        // Tautan simbolik pada nama terakhir tidak diikuti (pemanggil tidak menimpanya, jatuh ke RENAME); semua
+        // komponen di atasnya tetap dikanonikalkan, jadi folder tautan yang keluar dari base tetap ditolak.
+        val out = if (leaf.isEmpty() || leaf == "." || leaf == "..") joined.canonicalFile
+        else File(joined.parentFile?.canonicalFile ?: return null, leaf)
         return if (out.path == root.path || out.path.startsWith(root.path + File.separator)) out else null
     }
 
