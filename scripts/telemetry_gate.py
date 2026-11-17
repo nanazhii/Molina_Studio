@@ -22,9 +22,7 @@ ALLOW_GITHUB_PATH = ("/nanazhii/",)
 
 # Berkas build-time pipeline native (hanya jalan di CI). Boleh menyebut host sumber upstream dan nama
 # proyek upstream; host pelacak/donasi tetap ditolak. Tambah berkas hanya jika benar-benar perlu.
-BUILD_FILES = {"scripts/native_mpv.sh", "scripts/native_wget.sh", "scripts/ensure_ndk.sh",
-               "scripts/fetch_native.sh", "scripts/native_audit.sh",
-               "scripts/ffmpeg_components_audit.sh", "native/molina_ffmpeg_profile.sh"}
+BUILD_FILES = {"scripts/native_wget.sh", "scripts/ensure_ndk.sh"}
 BUILD_HOSTS = {"github.com", "dl.google.com"}
 
 # Berkas DATA daftar blokir pelacak (nama pelacak memang harus tertulis). Hanya pola SDK yang dilonggarkan;

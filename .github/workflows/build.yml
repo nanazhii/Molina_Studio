@@ -73,11 +73,6 @@ jobs:
             echo "::error::kunci privat tidak terbaca (password tidak cocok atau berkas rusak)"; exit 1
           fi
           echo "Keystore valid."
-      - name: Pustaka native mpv (terverifikasi SHA-256)
-        if: hashFiles('scripts/fetch_native.sh') != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: bash scripts/fetch_native.sh
       - name: Pastikan NDK sesuai pin
         if: hashFiles('scripts/ensure_ndk.sh') != ''
         run: bash scripts/ensure_ndk.sh

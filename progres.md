@@ -329,3 +329,10 @@
 - [ ] Tahap 2: buildscripts native (libmpv, FFmpeg, libass, dll.) + profil FFmpeg Molina, workflow, jniLibs arm64; gerbang URL build; lisensi pustaka native
 - [ ] Tahap 3: :app/:cinema memakai :player-mpv (ganti PlayerBackendStub), MolinaPlayerSession di atas MPVLib, bangun ulang privasi Shield (proxy, blacklist protokol, tls-verify, scrub log)
 - [ ] Belum ada Activity yang bisa dijalankan sebelum .so ada (jangan hubungkan ke :app dulu: Activity VIEW upstream akan crash tanpa libmpv)
+
+## P20 hapus semua modul mpv Molina (2026-11-17)
+- [x] Hapus :player-mpv, scripts/native_mpv.sh, fetch_native.sh, native_audit.sh, ffmpeg_components_audit.sh, native/molina_ffmpeg_profile.sh, native/prebuilt.env, workflow native-mpv.yml
+- [x] Bersihkan settings.gradle.kts, module_gate.py, jvm-tests.yml, build.yml, gradle-verification.yml, telemetry_gate.py
+- [x] Dipertahankan (dipakai proot/terminal-pty): ensure_ndk.sh, native_wget.sh, native/pins.env, native/pins.sha256
+- [ ] Integrasi mpv-android 1:1 (tanpa modifikasi): keputusan model integrasi menunggu pengguna
+- [ ] Verifikasi CI: build.yml + jvm-tests hijau tanpa :player-mpv; Cinema tetap memakai PlayerBackendStub
