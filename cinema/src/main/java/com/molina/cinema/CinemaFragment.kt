@@ -12,7 +12,6 @@ import android.view.SurfaceView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
@@ -60,6 +59,8 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
         MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = label
             isAllCaps = false
+            textSize = 13f
+            setPadding(dp(6), paddingTop, dp(6), paddingBottom)
             setOnClickListener { onClick() }
         }
 
@@ -69,6 +70,7 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
         val colBg = ContextCompat.getColor(ctx, com.molina.core.ui.R.color.molina_cinema_bg)
         val colPanel = ContextCompat.getColor(ctx, com.molina.core.ui.R.color.molina_cinema_panel)
         val colAccent = ContextCompat.getColor(ctx, com.molina.core.ui.R.color.molina_cinema_accent)
+        val tint = android.content.res.ColorStateList.valueOf(colAccent) // molina-patch-c1c
         val matchW = ViewGroup.LayoutParams.MATCH_PARENT
         val wrap = ViewGroup.LayoutParams.WRAP_CONTENT
 
@@ -90,6 +92,8 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
         val total = TextView(ctx).apply { text = CinemaFormat.time(0) }
         val bar = MarkedSeekBar(ctx).apply {
             max = 1
+            thumbTintList = tint
+            progressTintList = tint
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(sb: SeekBar?, p: Int, fromUser: Boolean) {
                     if (fromUser) now.text = CinemaFormat.time(p.toLong())
@@ -128,27 +132,32 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
             session?.setAspect(aspect)
             render()
         }
-        val options = LinearLayout(ctx).apply {
-            orientation = LinearLayout.HORIZONTAL
-            addView(spd)
-            addView(button(ctx, "Audio") {
-                CinemaDialogs.tracks(ctx, "Trek audio", audioTracks, false) { id -> id?.let { session?.selectAudio(it) } }
-            })
-            addView(button(ctx, "Subtitle") {
-                CinemaDialogs.tracks(ctx, "Subtitle", subTracks, true) { id -> session?.selectSubtitle(id) }
-            })
-            addView(asp)
-            addView(button(ctx, "Tunda audio") {
-                CinemaDialogs.delay(ctx, "Tunda audio", audioDelayMs) { audioDelayMs = it; session?.setAudioDelay(it) }
-            })
-            addView(button(ctx, "Tunda sub") {
-                CinemaDialogs.delay(ctx, "Tunda subtitle", subDelayMs) { subDelayMs = it; session?.setSubtitleDelay(it) }
-            })
+        val btnAudio = button(ctx, "Audio") {
+            CinemaDialogs.tracks(ctx, "Trek audio", audioTracks, false) { id -> id?.let { session?.selectAudio(it) } }
         }
-        val optionsScroll = HorizontalScrollView(ctx).apply { isHorizontalScrollBarEnabled = false; addView(options) }
+        val btnSub = button(ctx, "Subtitle") {
+            CinemaDialogs.tracks(ctx, "Subtitle", subTracks, true) { id -> session?.selectSubtitle(id) }
+        }
+        val btnDelayA = button(ctx, "Tunda audio") {
+            CinemaDialogs.delay(ctx, "Tunda audio", audioDelayMs) { audioDelayMs = it; session?.setAudioDelay(it) }
+        }
+        val btnDelayS = button(ctx, "Tunda sub") {
+            CinemaDialogs.delay(ctx, "Tunda subtitle", subDelayMs) { subDelayMs = it; session?.setSubtitleDelay(it) }
+        }
+        fun row(vararg items: MaterialButton) = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            for (b in items) addView(b, LinearLayout.LayoutParams(0, wrap, 1f))
+        }
+        val optionsRows = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(row(spd, btnAudio, btnSub))
+            addView(row(asp, btnDelayA, btnDelayS))
+        }
 
         val input = EditText(ctx).apply {
-            hint = "Path atau URL, mis. /storage/emulated/0/Molina/video.mp4"
+            hint = "Path atau tautan langsung ke berkas"
+            textSize = 14f
+            backgroundTintList = tint
             setSingleLine()
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
         }
@@ -170,7 +179,7 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
             setPadding(dp(12), dp(8), dp(12), dp(8))
             addView(seekRow)
             addView(transport)
-            addView(optionsScroll)
+            addView(optionsRows)
             addView(loadRow)
         }
 

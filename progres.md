@@ -268,3 +268,4 @@
 - [ ] Uji perangkat Android 8: ganti trek audio, subtitle on/off, kecepatan 0.5x/2x, rasio, tunda, ketuk ganda +-10 dtk, tampilan hijau mint
 - [ ] Berikutnya: TouchGestures penuh (geser volume/kecerahan/seek), pemilih berkas dari :filemanager (Patch C), PlaylistDialog (golongan B)
 - [x] mpv-native: opsi `ytdl=no` (yt-dlp tidak dibundel; hentikan log BUG ytdl_hook); investigasi 'Failed to recognize file format' menunggu input/log INFO dari perangkat
+- [x] C1c: kontrol Cinema hijau mint (colorAccent/ControlActivated, tint seekbar+input), opsi 2 baris x 3 tombol, hint input ringkas
