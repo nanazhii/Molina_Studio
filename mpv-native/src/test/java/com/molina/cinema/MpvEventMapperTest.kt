@@ -2,6 +2,7 @@
 package com.molina.cinema
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -103,5 +104,55 @@ class MpvEventMapperTest {
         assertTrue(m.onEof(false).isEmpty())
         assertEquals(listOf(PlayerEvent.Ended, PlayerEvent.StateChanged(PlayerState.ENDED)), m.onEof(true))
         assertTrue(m.onEof(true).isEmpty())
+    }
+
+    // molina-patch-b
+    private fun trk(type: TrackType, id: Int, sel: Boolean = false) = TrackInfo(id, type, "en", null, sel)
+
+    @Test
+    fun tracksEmitOnlyWhenListChanges() {
+        val m = MpvEventMapper()
+        val list = listOf(trk(TrackType.AUDIO, 1, true), trk(TrackType.SUBTITLE, 1))
+        assertTrue(m.onTracks(emptyList()).isEmpty())
+        assertEquals(
+            listOf<PlayerEvent>(PlayerEvent.TracksChanged(listOf(list[0]), listOf(list[1]))),
+            m.onTracks(list),
+        )
+        assertTrue(m.onTracks(list.toList()).isEmpty())
+        assertEquals(1, m.onTracks(listOf(trk(TrackType.AUDIO, 1), trk(TrackType.SUBTITLE, 1, true))).size)
+    }
+
+    @Test
+    fun newFileClearsTracksOnce() {
+        val m = MpvEventMapper()
+        m.onTracks(listOf(trk(TrackType.AUDIO, 1)))
+        assertEquals(
+            listOf<PlayerEvent>(PlayerEvent.StateChanged(PlayerState.LOADING), PlayerEvent.TracksChanged(emptyList(), emptyList())),
+            m.onEvent(start),
+        )
+        assertFalse(m.hasTrack(TrackType.AUDIO, 1))
+        assertEquals(listOf<PlayerEvent>(PlayerEvent.StateChanged(PlayerState.LOADING)), m.onEvent(start))
+    }
+
+    @Test
+    fun hasTrackChecksTypeAndId() {
+        val m = MpvEventMapper()
+        m.onTracks(listOf(trk(TrackType.AUDIO, 2), trk(TrackType.SUBTITLE, 1)))
+        assertTrue(m.hasTrack(TrackType.AUDIO, 2))
+        assertFalse(m.hasTrack(TrackType.AUDIO, 1))
+        assertFalse(m.hasTrack(TrackType.SUBTITLE, 2))
+        assertTrue(m.hasTrack(TrackType.SUBTITLE, 1))
+    }
+
+    @Test
+    fun speedEmitsOnChangeAndIgnoresInvalid() {
+        val m = MpvEventMapper()
+        assertEquals(listOf<PlayerEvent>(PlayerEvent.SpeedChanged(1.0)), m.onSpeed(1.0))
+        assertTrue(m.onSpeed(1.0).isEmpty())
+        assertEquals(listOf<PlayerEvent>(PlayerEvent.SpeedChanged(1.5)), m.onSpeed(1.5))
+        assertTrue(m.onSpeed(Double.NaN).isEmpty())
+        assertTrue(m.onSpeed(Double.POSITIVE_INFINITY).isEmpty())
+        assertTrue(m.onSpeed(0.0).isEmpty())
+        assertTrue(m.onSpeed(-2.0).isEmpty())
     }
 }

@@ -30,6 +30,8 @@ class LoggingMolinaPlayerSession(
                 fields = mapOf("code" to ev.code.toString()), id = sessionId, logger = logger,
             )
             PlayerEvent.Ended -> behavior("ended")
+            is PlayerEvent.TracksChanged -> behavior("tracks", mapOf("audio" to ev.audio.size.toString(), "sub" to ev.subtitles.size.toString()))
+            is PlayerEvent.SpeedChanged -> behavior("speed", mapOf("value" to ev.speed.toString()))
         }
     }
 
@@ -37,6 +39,14 @@ class LoggingMolinaPlayerSession(
     override fun play() { behavior("play"); delegate.play() }
     override fun pause() { behavior("pause"); delegate.pause() }
     override fun seekTo(positionMs: Long) { logger.d(tag, "seek ke ${positionMs} ms"); delegate.seekTo(positionMs) }
+    // molina-patch-b: pilihan trek/rasio = BEHAV; kecepatan, seek relatif, tunda = DEBUG (tanpa nama berkas)
+    override fun selectAudio(id: Int) { behavior("audio-select", mapOf("id" to id.toString())); delegate.selectAudio(id) }
+    override fun selectSubtitle(id: Int?) { behavior("sub-select", mapOf("id" to (id?.toString() ?: "off"))); delegate.selectSubtitle(id) }
+    override fun setSpeed(speed: Double) { logger.d(tag, "kecepatan ${speed}x"); delegate.setSpeed(speed) }
+    override fun seekRelative(deltaMs: Long) { logger.d(tag, "seek relatif ${deltaMs} ms"); delegate.seekRelative(deltaMs) }
+    override fun setAspect(mode: AspectMode) { behavior("aspect", mapOf("mode" to mode.name)); delegate.setAspect(mode) }
+    override fun setAudioDelay(ms: Long) { logger.d(tag, "tunda audio ${ms} ms"); delegate.setAudioDelay(ms) }
+    override fun setSubtitleDelay(ms: Long) { logger.d(tag, "tunda subtitle ${ms} ms"); delegate.setSubtitleDelay(ms) }
     override fun release() { behavior("release"); delegate.release() }
 
     private fun behavior(code: String, fields: Map<String, String> = emptyMap()) =

@@ -77,6 +77,11 @@ class MpvPlayerSession internal constructor(
     private var io: ExecutorService? = null
 
     private val mapper = MpvEventMapper()
+    // molina-patch-b: pembaca track-list lewat MPVLib (parser sendiri murni)
+    private val trackSource = object : MpvPropertySource {
+        override fun int(name: String): Int? = MPVLib.getPropertyInt(name)
+        override fun string(name: String): String? = MPVLib.getPropertyString(name)
+    }
     private val channel = Channel<PlayerEvent>(64, BufferOverflow.DROP_OLDEST)
     private val released = AtomicBoolean(false)
     @Volatile private var surfaceAttached = false
@@ -84,7 +89,11 @@ class MpvPlayerSession internal constructor(
     override val events: Flow<PlayerEvent> = channel.receiveAsFlow()
 
     private val observer = object : MPVLib.EventObserver {
-        override fun eventProperty(property: String) = Unit
+        override fun eventProperty(property: String) {
+            when (property) {
+                "track-list", "aid", "sid" -> if (!released.get()) emit(mapper.onTracks(MpvTrackParser.parse(trackSource)))
+            }
+        }
         override fun eventProperty(property: String, value: Long) = Unit
         override fun eventProperty(property: String, value: Boolean) {
             when (property) {
@@ -97,6 +106,7 @@ class MpvPlayerSession internal constructor(
             when (property) {
                 "time-pos" -> emit(mapper.onTimePos(value))
                 "duration" -> mapper.onDuration(value)
+                "speed" -> emit(mapper.onSpeed(value))
             }
         }
         override fun event(eventId: Int) = emit(mapper.onEvent(eventId))
@@ -144,6 +154,8 @@ class MpvPlayerSession internal constructor(
             MPVLib.observeProperty("eof-reached", MPVLib.MpvFormat.MPV_FORMAT_FLAG)
             MPVLib.observeProperty("time-pos", MPVLib.MpvFormat.MPV_FORMAT_DOUBLE)
             MPVLib.observeProperty("duration", MPVLib.MpvFormat.MPV_FORMAT_DOUBLE)
+            MPVLib.observeProperty("speed", MPVLib.MpvFormat.MPV_FORMAT_DOUBLE)
+            for (p in arrayOf("track-list", "aid", "sid")) MPVLib.observeProperty(p, MPVLib.MpvFormat.MPV_FORMAT_NONE)
             behavior("session-start")
             ExitHooks.add("mpv-$sessionId") { release() }
             true
@@ -195,6 +207,48 @@ class MpvPlayerSession internal constructor(
         if (released.get()) return
         val sec = String.format(Locale.ROOT, "%.3f", positionMs.coerceAtLeast(0L) / 1000.0)
         MPVLib.command(arrayOf("seek", sec, "absolute"))
+    }
+
+    // molina-patch-b: trek, kecepatan, seek relatif, rasio layar, tunda
+    override fun selectAudio(id: Int) {
+        if (released.get()) return
+        if (!mapper.hasTrack(TrackType.AUDIO, id)) return invalidTrack("audio", id)
+        MPVLib.setPropertyString("aid", id.toString())
+    }
+
+    override fun selectSubtitle(id: Int?) {
+        if (released.get()) return
+        if (id == null) return MPVLib.setPropertyString("sid", "no")
+        if (!mapper.hasTrack(TrackType.SUBTITLE, id)) return invalidTrack("sub", id)
+        MPVLib.setPropertyString("sid", id.toString())
+    }
+
+    override fun setSpeed(speed: Double) {
+        if (released.get()) return
+        MPVLib.setPropertyDouble("speed", PlayerLimits.clampSpeed(speed))
+    }
+
+    override fun seekRelative(deltaMs: Long) {
+        if (released.get() || deltaMs == 0L) return
+        MPVLib.command(arrayOf("seek", MpvOptions.seekSeconds(deltaMs), "relative"))
+    }
+
+    override fun setAspect(mode: AspectMode) {
+        if (released.get()) return
+        MPVLib.setPropertyString("video-aspect-override", MpvOptions.aspect(mode))
+    }
+
+    override fun setAudioDelay(ms: Long) {
+        if (!released.get()) MPVLib.setPropertyDouble("audio-delay", MpvOptions.delaySeconds(ms))
+    }
+
+    override fun setSubtitleDelay(ms: Long) {
+        if (!released.get()) MPVLib.setPropertyDouble("sub-delay", MpvOptions.delaySeconds(ms))
+    }
+
+    /** Id trek tidak ada di daftar saat ini (belum dimuat / sudah berganti berkas): perintah diabaikan. */
+    private fun invalidTrack(kind: String, trackId: Int) {
+        MolinaEvents.bug("mpv", "track-invalid", "id trek tidak ada di daftar saat ini", level = LogLevel.WARN, fields = mapOf("kind" to kind, "id" to trackId.toString()), id = sessionId, logger = logger)
     }
 
     override fun release() {

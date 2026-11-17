@@ -90,6 +90,11 @@ Baris chip kedua memuat `Semua sesi | Term t1 | Cinema p1 | ...` (teal untuk ses
 | `mpv.release-failed` | BUG | MPVLib.destroy melempar exception | - |
 | `mpv.tls-ca-missing` | BUG (W) | cacert.pem gagal disiapkan di config-dir; HTTPS gagal verifikasi (tls-verify=yes) | - |
 | `mpv.fonts-conf-missing` | BUG (W) | fonts.conf gagal ditulis; font subtitle sistem mungkin tidak ditemukan | - |
+| `mpv.audio-select` / `mpv.sub-select` | BEHAV | pengguna memilih trek audio / subtitle (`id=off` = subtitle dimatikan) | `id` |
+| `mpv.aspect` | BEHAV | rasio layar diganti | `mode` |
+| `mpv.tracks` | BEHAV | daftar trek berubah (setelah berkas dimuat / berganti berkas) | `audio`, `sub` (jumlah) |
+| `mpv.speed` | BEHAV | kecepatan berubah (nilai yang dilaporkan mpv) | `value` |
+| `mpv.track-invalid` | BUG (W) | id trek tidak ada di daftar saat ini; perintah dipilih diabaikan | `kind`, `id` |
 
 Path dan URL media tidak pernah dicatat; hanya nama berkas.
 
