@@ -12,6 +12,7 @@ import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.molina.cinema.CinemaFragment
+import com.molina.code.CodeFragment
 import com.molina.core.common.MolinaResult
 import com.molina.core.storage.LocalMolinaStorage
 import com.molina.files.BerkasFragment
@@ -81,12 +82,14 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
             val tab = when (item.itemId) {
                 R.id.nav_cinema -> "cinema"
                 R.id.nav_files -> "files"
+                R.id.nav_code -> "code"
                 R.id.nav_terminal -> "terminal"
                 else -> "settings"
             }
             val fragment: Fragment = when (tab) {
                 "cinema" -> CinemaFragment()
                 "files" -> BerkasFragment() // molina-27b (balik: FilesFragment())
+                "code" -> CodeFragment()
                 "terminal" -> TerminalFragment()
                 else -> SettingsFragment()
             }

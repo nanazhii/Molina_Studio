@@ -4,8 +4,8 @@ Satu peran per modul. Dilarang menjadi "god module".
 
 | Lapisan | Modul | Peran |
 |---|---|---|
-| app | `app` | Cangkang: MainActivity, nav 4 tab (Cinema, Berkas, Terminal, Setelan), wiring |
-| feature | `cinema`, `files`, `terminal`, `settings` | UI dan ViewModel per tab |
+| app | `app` | Cangkang: MainActivity, nav 5 tab (Cinema, Berkas, Code, Terminal, Setelan), wiring |
+| feature | `cinema`, `files`, `terminal`, `settings`, `code` | UI dan ViewModel per tab |
 | api | `player-api`, `terminal-api` | Kontrak murni (interface, event, state). Tanpa implementasi |
 | engine | `mpv-native`, `terminal-core`, `terminal-emulator`, `terminal-view`, `terminal-pty`, `filemanager` | Implementasi di balik kontrak (JNI mpv, proses terminal) |
 | core | `core-common`, `core-log`, `core-storage`, `core-ui`, `core-security` | Utilitas lintas fitur |
@@ -44,3 +44,15 @@ Satu peran per modul. Dilarang menjadi "god module".
 ## Keamanan
 
 `core-security` (kontrak Shield, kebijakan URL, proxy lokal, pemindai) dijelaskan di `docs/security.md`. Modul ini murni JVM dan hanya bergantung ke `core-log`.
+
+## Editor Code
+
+Modul `code` (feature) adalah port editor dari repo lama: Sora-editor + TextMate, ditulis dengan Jetpack Compose dan
+dihosting `CodeFragment` lewat `ComposeView`. Compose hanya dipakai di modul ini. Sesi editor hidup di
+`CodeSessionHolder` (ViewModel Activity) agar tab terbuka bertahan saat pindah tab.
+- Hanya bergantung ke `core-common`; tidak ada feature -> feature (pratinjau dan antarmuka eksekutor dilebur ke modul ini).
+- `ScriptExecutor`, `StreamExecutor`, `RunStore` adalah titik suntik dari `app`. Selama belum dipasang: Periksa Python/Shell,
+  Python langsung (LSP), dan Jalankan di panel Keluaran redup/tidak aktif.
+- Fitur lama yang sengaja tidak dibawa: palet perintah, folder proyek dan riwayat proyek, aksi file (entri menu), kirim ke
+  Script Execution, simpan ke Vault, sisipkan/jalankan ke Terminal, snippet Terminal, impor inbox nano.
+- Notifikasi perubahan dipertahankan; model datanya kini `guard/ChangeEntry.kt` (dulu `ProjectLog`).

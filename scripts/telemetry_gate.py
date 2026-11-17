@@ -31,6 +31,10 @@ BUILD_HOSTS = {"github.com", "dl.google.com"}
 # URL pelacak/donasi tetap ditolak. Tambah berkas hanya jika isinya data murni.
 BLOCKLIST_FILES = {"core-security/src/main/java/com/molina/core/security/TrackerDomains.kt"}
 
+# Grammar TextMate pihak ketiga (data murni, URL provenance upstream di metadata). Hanya aturan URL yang dilonggarkan;
+# pola pelacak, identitas lama, dan donasi (peringatan) tetap berlaku. Lihat docs/provenance.md.
+VENDORED_PREFIXES = ("code/src/main/assets/textmate/",)
+
 DONATION_HOSTS = {"ko-fi.com", "patreon.com", "buymeacoffee.com", "paypal.me",
                   "paypal.com", "opencollective.com", "liberapay.com",
                   "saweria.co", "trakteer.id", "sociabuzz.com"}
@@ -80,7 +84,8 @@ def emit(kind, rel, no, msg):
 def scan_line(rel, no, line, errors, warns):
     build = rel.replace(os.sep, "/") in BUILD_FILES
     blocklist = rel.replace(os.sep, "/") in BLOCKLIST_FILES
-    for m in URL_RE.finditer(line):
+    vendored = rel.replace(os.sep, "/").startswith(VENDORED_PREFIXES)
+    for m in ([] if vendored else URL_RE.finditer(line)):
         url = m.group(0)
         u = urlparse(url)
         host = (u.hostname or "").lower()

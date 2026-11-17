@@ -90,3 +90,20 @@ Hash tarball, biner asli, dan hasil dipin di `scripts/sevenzip/pins.sha256` dan 
 ## Aset: cacert.pem (Patch A)
 
 `mpv-native/src/main/assets/cacert.pem` disalin apa adanya dari mpv-android ebf1b3f0cbe9 (app/src/main/assets/cacert.pem), SHA-256 `796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe` (dipin di `MpvConfigTest`). Isi: bundel sertifikat akar Mozilla hasil ekstraksi curl (data Mozilla berlisensi MPL-2.0; verifikasi sebelum rilis). Dipakai mpv lewat `tls-ca-file` (tls-verify=yes). Memperbarui berkas ini = naikkan pin di skrip dan uji secara sadar.
+
+## Editor Code (port dari repo lama, 2026-11-17)
+
+Sumber: https://github.com/nanazhii/Molina-Studio (`feature/code`, `feature/preview`, subset `core/exec`), diadaptasi
+sebagai modul `code` dengan fitur terminal/vault/proyek dibuang.
+
+| Komponen | Lisensi | Catatan |
+|---|---|---|
+| sora-editor 0.23.6 (`editor`, `language-textmate`) | LGPL-2.1-or-later | Dependensi Maven Central, tanpa modifikasi. Dipin 0.23.6 (compileSdk 35, Kotlin 2.0) |
+| Grammar TextMate java, kotlin, python, javascript, xml, html, lua, markdown | dari contoh sora-editor 0.23.6 | `code/src/main/assets/textmate/` |
+| Grammar json, shell, css; tema abyss, solarized_dark | MIT (vscode) | Salinan `LICENSE-vscode-MIT.txt` ikut di assets |
+| Tema darcula | tidak dipakai | Asal Eclipse tm4e (EPL), tidak kompatibel dengan GPL |
+| JetBrains Mono, Fira Code 6.2 | SIL OFL 1.1 | `code/src/main/assets/fonts/` bersama berkas lisensi |
+| Jetpack Compose (BOM 2024.12.01), activity-compose 1.9.3 | Apache 2.0 | Dependensi Maven |
+
+URL provenance di dalam metadata grammar TextMate (mis. `github.com/microsoft/...`) tidak diubah; `scripts/telemetry_gate.py`
+melonggarkan aturan URL hanya untuk `code/src/main/assets/textmate/` (`VENDORED_PREFIXES`).
