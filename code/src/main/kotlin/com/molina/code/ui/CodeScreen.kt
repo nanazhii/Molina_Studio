@@ -216,7 +216,8 @@ private fun PathHeader(session: CodeSession, onExit: (() -> Unit)? = null) {
         Modifier
             .fillMaxWidth()
             .height(CodeDimens.HeaderHeight)
-            .codeHeaderFrame(), // [CODE-HEADER-FRAME] hitam pekat + bingkai hijau
+            .codeHeaderFrame() // [CODE-HEADER-FRAME] hitam pekat, tanpa bingkai hijau
+            .padding(horizontal = 6.dp), // [MINT-HEADER] jarak tepi sama dengan header Terminal
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (onExit != null) Box( // keluar ke Berkas (editor dibuka layar penuh dari Penjelajah)
@@ -225,22 +226,22 @@ private fun PathHeader(session: CodeSession, onExit: (() -> Unit)? = null) {
         ) { CodeBackOrb() } // [CODE-BACKORB] sama dengan tombol kembali Pengaturan
         Box(
             Modifier
-                .width(CodeDimens.HeaderHeight)
+                .width(34.dp)
                 .fillMaxHeight()
                 .clickable { session.dir.openPanel() },
             contentAlignment = Alignment.Center
         ) {
-            Canvas(Modifier.size(CodeDimens.DrawerHeaderIcon)) { drawDirIcon(DirIcon.Folder, CodeColors.FolderYellow) }
+            Canvas(Modifier.size(22.dp)) { drawMintFolder() } // [MINT-HEADER] ikon folder Mint-Y yang sama dengan tree
         }
-        Box( // [CODE-PATHBAR] kotak path bergaya bilah alamat Penjelajah: isi #101010, garis 1dp #3A3A3A, sudut siku, tinggi 28dp
+        Box( // [CODE-PATHBAR] [MINT-HEADER] kotak path sama dengan header Terminal: isi hitam, garis #9AA0A8 alfa AA, sudut 2dp, tinggi 30dp
             Modifier
                 .weight(1f)
-                .padding(horizontal = 2.dp)
-                .height(28.dp)
-                .background(CodeColors.PathField)
-                .border(1.dp, CodeColors.PathFieldBorder)
+                .padding(horizontal = 4.dp)
+                .height(30.dp)
+                .background(CodeColors.PathField, RoundedCornerShape(2.dp))
+                .border(1.dp, CodeColors.PathFieldBorder, RoundedCornerShape(2.dp))
                 .clickable { session.dir.openPanel() }
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 12.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             val crumbs = remember(path) { PathCrumbs.tail(path) }
@@ -267,22 +268,30 @@ private fun PathHeader(session: CodeSession, onExit: (() -> Unit)? = null) {
         if (tab != null) StatusChip(tab)
         Box(
             Modifier
-                .width(CodeDimens.HeaderHeight)
+                .width(34.dp)
                 .fillMaxHeight()
                 .clickable { menuOpen = true },
             contentAlignment = Alignment.Center
         ) {
-            Canvas(Modifier.size(CodeDimens.ToolbarIconSize)) {
-                drawToolbarIcon(ToolbarIcon.More, CodeColors.IconDefault, false)
-            }
-            if (session.feedUnread > 0) { // [CODE-FEED2] titik hijau: ada notifikasi perubahan belum dibaca
-                Box(
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 10.dp, end = 10.dp)
-                        .size(8.dp)
-                        .background(CodeColors.Brand, CircleShape)
-                )
+            val unread = session.feedUnread > 0 // [CODE-FEED2] titik hijau: ada notifikasi perubahan belum dibaca
+            Canvas(Modifier.fillMaxSize()) { // [MINT-HEADER] sama dengan HeaderDotsView Terminal: tiga titik putih + titik status
+                val d = density
+                val cx = size.width / 2f
+                val cy = size.height / 2f
+                for (i in -1..1) {
+                    drawCircle(
+                        androidx.compose.ui.graphics.Color.White.copy(alpha = 0.87f),
+                        2.2f * d,
+                        androidx.compose.ui.geometry.Offset(cx, cy + i * 7f * d)
+                    )
+                }
+                if (unread) {
+                    drawCircle(
+                        CodeColors.Brand,
+                        3.5f * d,
+                        androidx.compose.ui.geometry.Offset(cx + 7f * d, cy - 9.5f * d)
+                    )
+                }
             }
             if (menuOpen) OverflowMenu(session) { menuOpen = false }
         }
@@ -393,17 +402,19 @@ private fun TabItem(
             .clickable(onClick = onSelect)
     ) {
         if (active) {
-            Box(
-                Modifier
-                    .align(Alignment.BottomStart) // [CODE-TABS-BLACK] garis hijau di BAWAH tab aktif
-                    .padding(start = 6.dp, end = 6.dp, bottom = 1.dp) // [CODE-TAB-FRAME] di dalam bingkai
-                    .fillMaxWidth()
-                    .height(CodeDimens.TabTopLine)
-                    .background(Win7Code.TabLine)
-            )
+            // [MINT-HEADER] matchParentSize: garis mengikuti lebar tab yang membungkus isi, tidak melebarkannya
+            Box(Modifier.matchParentSize().padding(start = 6.dp, end = 6.dp, bottom = 1.dp)) { // [CODE-TAB-FRAME] di dalam bingkai
+                Box(
+                    Modifier
+                        .align(Alignment.BottomStart) // [CODE-TABS-BLACK] garis hijau di BAWAH tab aktif
+                        .fillMaxWidth()
+                        .height(CodeDimens.TabTopLine)
+                        .background(Win7Code.TabLine)
+                )
+            }
         }
         Row(
-            Modifier.fillMaxWidth().fillMaxHeight().padding(start = 12.dp), // [CODE-TABCLOSE-EDGE]
+            Modifier.fillMaxHeight().padding(start = 10.dp), // [CODE-TABCLOSE-EDGE] [MINT-HEADER] Row membungkus isi
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (!tab.loading) {
@@ -415,7 +426,7 @@ private fun TabItem(
             }
             BasicText(
                 text = tab.title,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f, fill = false), // [MINT-HEADER]
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
