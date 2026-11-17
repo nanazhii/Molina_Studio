@@ -546,15 +546,20 @@ internal fun PickerDialog(
                                 .alpha(if (e.hidden) CodeColors.HiddenFileAlpha else 1f),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            val kind = if (e.isDir) MintKind.OTHER else MintKind.of(e.file.name) // [MINT-TREE]
                             Canvas(Modifier.size(CodeDimens.TreeFolderIcon)) {
-                                if (e.isDir) drawFolderIcon(false, CodeColors.FolderYellow) else drawFileIcon(extColor(e.file.name))
+                                if (e.isDir) drawMintFolder() else drawMintFile(kind)
                             }
                             Spacer(Modifier.width(10.dp))
                             BasicText(
                                 text = e.file.name,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                style = TextStyle(color = CodeColors.TextPrimary, fontSize = 14.sp)
+                                style = TextStyle(
+                                    color = androidx.compose.ui.graphics.Color(kind.nameArgb),
+                                    fontSize = 14.sp,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                )
                             )
                         }
                     }

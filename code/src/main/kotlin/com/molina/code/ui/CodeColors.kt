@@ -13,7 +13,8 @@ object CodeColors {
     val GutterBg = Color(0xFF121212)
     val Surface1 = Color(0xFF14161B)      // header path, tab bar
     val Surface2 = Color(0xFF181B21)      // toolbar, find bar
-    val SurfaceDrawer = Color(0xFF101218) // panel direktori
+    val SurfaceDrawer = Color(0xFF000000) // [MINT-TREE] panel direktori: hitam polos, sama dengan drawer Terminal
+    val DrawerAccent = Color(0xFF00BFA5)  // [MINT-TREE] aksen teal Terminal untuk seleksi baris tree
     val SurfaceMenu = Color(0xFF12151A)   // popup titik tiga
     val SurfaceDialog = Color(0xFF171A20) // dialog
     val SurfaceNav = Color(0xFF0A0A0F)    // bottom nav aktual (= MolinaTheme.Background)
@@ -67,8 +68,8 @@ object CodeColors {
 
     // Turunan beralfa (nilai alfa dari blueprint)
     val Ripple = Brand.copy(alpha = 0.16f)
-    val SelectFill = Brand.copy(alpha = 0.18f)     // seleksi baris tree
-    val SelectBorder = Brand.copy(alpha = 0.45f)
+    val SelectFill = DrawerAccent.copy(alpha = 0.18f)     // seleksi baris tree [MINT-TREE]
+    val SelectBorder = DrawerAccent.copy(alpha = 0.45f)
     val EditorSelection = Color(0x80D97757)   // blok/hasil aktif: terakota Claude 50%
     val SearchMatch = Color(0xA6FF3B3B)       // [FIND-RED] blok hasil cari: merah terang 65% agar jelas di latar hitam
     val RailPeak = Brand.copy(alpha = 0.40f)       // puncak gradient rail aksen toolbar

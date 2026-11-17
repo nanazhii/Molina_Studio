@@ -25,4 +25,5 @@ dependencies {
     implementation(libs.sora.editor)
     implementation(libs.sora.language.textmate)
     implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.junit) // [MINT-TREE]
 }

@@ -35,6 +35,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -186,22 +187,31 @@ private fun TreeRow(row: DirRow, session: CodeSession, selected: Boolean, onTap:
             verticalAlignment = Alignment.CenterVertically
         ) {
             Spacer(Modifier.width(CodeDimens.TreeIndent * row.depth))
-            if (entry.isDir) {
-                Canvas(Modifier.size(CodeDimens.TreeExpanderSize)) { drawExpander(row.expanded) }
-            } else {
-                Spacer(Modifier.size(CodeDimens.TreeExpanderSize))
+            // [MINT-TREE] sama dengan drawer Terminal: panah teks, ikon Mint-Y, nama monospace berwarna jenis
+            Box(Modifier.width(CodeDimens.TreeExpanderSize), contentAlignment = Alignment.Center) {
+                if (entry.isDir) {
+                    BasicText(
+                        text = if (row.expanded) "\u25BE" else "\u25B8",
+                        style = TextStyle(color = Color.White, fontSize = 12.sp, textAlign = TextAlign.Center)
+                    )
+                }
             }
-            Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(4.dp))
+            val kind = if (entry.isDir) MintKind.OTHER else MintKind.of(entry.file.name)
             Canvas(Modifier.size(CodeDimens.TreeFolderIcon)) {
-                if (entry.isDir) drawFolderIcon(row.expanded, CodeColors.FolderYellow) else drawFileIcon(extColor(entry.file.name))
+                if (entry.isDir) drawMintFolder() else drawMintFile(kind)
             }
-            Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(8.dp))
             BasicText(
                 text = entry.file.name,
                 modifier = Modifier.weight(1f, fill = false),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = TextStyle(color = CodeColors.TextPrimary, fontSize = CodeDimens.TreeTextSize)
+                style = TextStyle(
+                    color = Color(kind.nameArgb),
+                    fontSize = CodeDimens.TreeTextSize,
+                    fontFamily = FontFamily.Monospace
+                )
             )
         }
         // Titik tiga: membuka menu aksi untuk folder maupun berkas (tanpa tekan lama)
@@ -212,7 +222,10 @@ private fun TreeRow(row: DirRow, session: CodeSession, selected: Boolean, onTap:
                 .pointerInput(entry.file.path) { detectTapGestures(onTap = { menu() }) },
             contentAlignment = Alignment.Center
         ) {
-            Canvas(Modifier.size(CodeDimens.TreeMenuDots)) { drawMoreDots(CodeColors.IconDim) }
+            BasicText(
+                text = "\u22EE", // [MINT-TREE] sama dengan Terminal: titik tiga putih 20sp
+                style = TextStyle(color = Color.White, fontSize = 20.sp, textAlign = TextAlign.Center)
+            )
             // Dropdown ringkas menempel di titik tiga baris ini (bukan dialog layar penuh)
             val d = session.fileDialog
             if (d is FileDialog.Menu && d.fromTree && d.file.path == entry.file.path) {

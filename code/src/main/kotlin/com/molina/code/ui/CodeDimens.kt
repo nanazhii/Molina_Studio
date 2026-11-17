@@ -35,14 +35,14 @@ object CodeDimens {
     val DrawerMaxWidth = 320.dp
     val DrawerHeaderHeight = 48.dp
     val DrawerHeaderIcon = 20.dp
-    val TreeRowHeight = 32.dp
+    val TreeRowHeight = 36.dp   // [MINT-TREE] = DrawerMetrics.ROW_COMPACT_DP
     val TreeIndent = 14.dp
-    val TreeExpanderSize = 10.dp
-    val TreeFolderIcon = 18.dp
+    val TreeExpanderSize = 14.dp   // [MINT-TREE] lebar kolom panah
+    val TreeFolderIcon = 20.dp   // [MINT-TREE] = DrawerMetrics.ICON_COMPACT_DP
     val TreeTextSize = 13.sp
     val TreeSelectCorner = 3.dp
     val TreeSelectBorder = 1.dp
-    val TreeMenuButtonWidth = 36.dp
+    val TreeMenuButtonWidth = 40.dp   // [MINT-TREE]
     val TreeMenuDots = 16.dp
 
     val DrawerButton = 32.dp
