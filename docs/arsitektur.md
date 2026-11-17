@@ -7,7 +7,7 @@ Satu peran per modul. Dilarang menjadi "god module".
 | app | `app` | Cangkang: MainActivity, nav 5 tab (Cinema, Berkas, Code, Terminal, Setelan), wiring |
 | feature | `cinema`, `files`, `terminal`, `settings`, `code` | UI dan ViewModel per tab |
 | api | `player-api`, `terminal-api` | Kontrak murni (interface, event, state). Tanpa implementasi |
-| engine | `mpv-native`, `terminal-core`, `terminal-emulator`, `terminal-view`, `terminal-pty`, `filemanager` | Implementasi di balik kontrak (JNI mpv, proses terminal) |
+| engine | `terminal-core`, `terminal-emulator`, `terminal-view`, `terminal-pty`, `filemanager` | Implementasi di balik kontrak (JNI mpv, proses terminal) |
 | core | `core-common`, `core-log`, `core-storage`, `core-ui`, `core-security` | Utilitas lintas fitur |
 
 `native/` bukan modul Gradle: hanya pin dan profil untuk build pustaka native.
@@ -21,7 +21,7 @@ Satu peran per modul. Dilarang menjadi "god module".
 
 ## Catatan
 - Kontrak dipindah antarmodul tanpa mengubah package (`com.molina.cinema`, `com.molina.terminal.core`) agar JNI `Java_com_molina_cinema_MPVLib_*` dan impor tetap aman.
-- Jangan ubah nama/package `MPVLib` tanpa menyamakan `scripts/native_mpv.sh`.
+- `:mpv-native` dihapus (P11). Mesin pemutar akan divendor dari mpv-android penuh; package JNI Kotlin dan C/JNI hasil vendoring harus disamakan.
 
 ## Modul yang direncanakan (belum dibuat)
 - `player-mpv`: implementasi `MolinaPlayerSession` di atas `MPVLib`.

@@ -301,3 +301,12 @@
 - [ ] Uji perangkat Android 8: drawer Terminal dan tab Berkas tampil sama seperti sebelumnya (TreeIconView hanya ganti sumber konstanta); drawer Code sama dengan Terminal
 - [ ] Berikutnya (belum dikerjakan): geometri ikon (bentuk folder/kertas/lambang) jadi data bersama agar View dan Compose tidak menulis bentuk dua kali; kerjakan setelah CI hijau dan tampilan Terminal/Berkas dicek di perangkat
 - [ ] Folder Logs (huruf besar) dobel dengan logs: nama resmi aplikasi = logs (MolinaPaths, MolinaLogSetup); gabung lewat molina_merge_logs.sh
+
+## P11 hapus modul :mpv-native untuk vendoring mpv-android penuh (2026-11-17)
+- [x] Hapus mpv-native/ seluruhnya (MPVLib, MpvNative, MpvConfig, MpvLogScrub, MpvLogBridge, MpvEventMapper, MpvTrackParser, MpvPlayerSession, LoggingMolinaPlayerSession + 7 uji, cacert.pem)
+- [x] settings.gradle.kts, cinema/build.gradle.kts, jvm-tests.yml, module_gate.py dibersihkan; build.yml: langkah fetch_native.sh dinonaktifkan sementara
+- [x] cinema: PlayerBackendStub.kt (PlayerSurface, MpvPlayback, MpvPlayerFactory -> null); Cinema menampilkan "mpv belum tersedia"
+- [ ] HILANG sampai dibangun ulang: privasi Shield di mpv (blacklist protokol lavf, http_proxy fail-closed, preflight rtmp/rtsp), tls-verify + cacert, scrub log mpv, bridge log mpv ke MolinaLog, mapper trek/event. Wajib ada lagi SEBELUM rilis
+- [ ] Vendoring mpv-android penuh: tetapkan package JNI (upstream is.xyz.mpv vs com.molina.cinema), atribusi MIT di provenance.md, lolos telemetry_gate
+- [ ] Bersihkan sisa pipeline lama: scripts/native_mpv.sh, native_wget.sh, fetch_native.sh, native_audit.sh, native/, workflow native-mpv.yml (masih menunjuk mpv-native)
+- [ ] Verifikasi CI: kompilasi :cinema dan :app, gate module/telemetry/secret
