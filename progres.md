@@ -343,3 +343,5 @@
 - [x] telemetry_gate: third_party dikecualikan; workflow mpv-android masuk BUILD_FILES
 - [ ] Verifikasi: jalankan Actions > mpv-android (arm64) (fresh=true); cek APK arm64-only dan UI Indonesia
 - [ ] Cinema membuka is.xyz.mpv lewat Intent (butuh gate:allow untuk identitas is.xyz.mpv)
+- [x] Native mpv (arm64) run #8 sukses; pin native-mpv-0dbc70f-run8 (sha256 f9eea14d...19c9) di native/prebuilt.env; JNI com.molina.player terverifikasi di libplayer.so
+- [ ] Verifikasi CI: langkah fetch_native terpasang tanpa peringatan; lanjut tahap 2 (core:common subset + engine:newpipe)
