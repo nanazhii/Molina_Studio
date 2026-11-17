@@ -33,6 +33,11 @@ __molina_ps1() {
   case "$p" in
     /sdcard/Molina|/sdcard/Molina/*) sgr="$ok"; tag="[MOLINA] " ;;
   esac
+  local sh_tag=""
+  case "${MOLINA_SHIELD-}" in
+    proxy) sh_tag="[SHIELD] " ;;
+    fail-closed) sh_tag="[SHIELD!] " ;;
+  esac
   local w="$p"
   if [ -n "$HOME" ] && [ "$HOME" != / ]; then
     case "$PWD" in
@@ -41,7 +46,7 @@ __molina_ps1() {
     esac
   fi
   printf '\033]7;file://%s@localhost:%s\007' "$name" "$w"
-  PS1='\[\e['"$sgr"'m\]'"$tag$name"'@localhost:\w#\[\e[0m\] '
+  PS1='\[\e['"$sgr"'m\]'"$tag$sh_tag$name"'@localhost:\w#\[\e[0m\] '
 }
 case ";${PROMPT_COMMAND-};" in
   *";__molina_ps1;"*) ;;

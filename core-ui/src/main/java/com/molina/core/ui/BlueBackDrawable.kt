@@ -1,4 +1,4 @@
-package com.molina.filemanager
+package com.molina.core.ui
 
 import android.graphics.Canvas
 import android.graphics.Color
@@ -12,7 +12,7 @@ import android.graphics.Shader
 import android.graphics.drawable.Drawable
 
 /** [molina-27j] Tombol kembali bulat biru dengan panah putih tebal (berubah jadi silang saat mode pilih). */
-internal class BlueBackDrawable : Drawable() {
+class BlueBackDrawable : Drawable() {
     var cross: Boolean = false
         set(value) {
             if (field != value) { field = value; invalidateSelf() }

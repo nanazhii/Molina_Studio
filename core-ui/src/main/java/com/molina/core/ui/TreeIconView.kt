@@ -34,6 +34,12 @@ class TreeIconView(context: Context) : View(context) {
             if (field != value) { field = value; invalidate() }
         }
 
+    /** [molina-28c] Titik hijau di pojok kanan atas: item baru sejak drawer terakhir dibuka. */
+    var badge: Boolean = false
+        set(value) {
+            if (field != value) { field = value; invalidate() }
+        }
+
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
     private val line = Paint(Paint.ANTI_ALIAS_FLAG)
     private val glyph = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -66,6 +72,7 @@ class TreeIconView(context: Context) : View(context) {
         val w = width.toFloat()
         val h = height.toFloat()
         if (isDir) drawFolder(canvas, w, h) else drawFile(canvas, w, h)
+        if (badge) drawBadge(canvas, w, h) // molina-28c
     }
 
     private fun drawFolder(canvas: Canvas, w: Float, h: Float) {
@@ -142,6 +149,18 @@ class TreeIconView(context: Context) : View(context) {
     }
 
     /** Pita ekstensi di dasar kertas: latar warna jenis, huruf gelap tebal, diperkecil bila terlalu lebar. */
+    /** [molina-28c] Titik hijau bercincin gelap agar tetap terbaca di atas folder hijau maupun kertas terang. */
+    private fun drawBadge(canvas: Canvas, w: Float, h: Float) {
+        val r = h * 0.17f
+        val cx = w - r - w * 0.02f
+        val cy = r + h * 0.02f
+        fill.shader = null
+        fill.color = 0xFF000000.toInt()
+        canvas.drawCircle(cx, cy, r + 1.2f * resources.displayMetrics.density, fill)
+        fill.color = BADGE_GREEN
+        canvas.drawCircle(cx, cy, r, fill)
+    }
+
     private fun drawBand(canvas: Canvas, w: Float, h: Float) {
         fill.color = if (kind == FileKind.OTHER) 0xFF9AA0A8.toInt() else kind.color
         rect.set(w * 0.14f, h * 0.62f, w * 0.86f, h * 0.94f)
@@ -164,6 +183,7 @@ class TreeIconView(context: Context) : View(context) {
     private companion object {
         val FOLDER_BACK = 0xFF5F9634.toInt()
         val FOLDER_TOP = 0xFFA9D56F.toInt()
+        val BADGE_GREEN = 0xFF00E676.toInt() // molina-28c
         val FOLDER_BOTTOM = 0xFF7DB345.toInt()
         val PAPER = 0xFFF5F7F9.toInt()
         val PAPER_FOLD = 0xFFD3DAE1.toInt()

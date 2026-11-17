@@ -9,6 +9,8 @@ import com.molina.core.security.GuardVerdict
 import com.molina.core.security.LavfOptions
 import com.molina.core.security.MolinaShield
 import com.molina.core.security.PlaybackGuard
+import com.molina.core.security.SHIELD_BLOCKED_CODE
+import com.molina.core.security.ShieldHost
 import com.molina.core.security.ShieldRegistry
 import com.molina.log.LogLevel
 import com.molina.log.MolinaEvents
@@ -147,13 +149,13 @@ class MpvPlayerSession internal constructor(
         val g = guard
         if (g != null) {
             val v = g.checkSync(uri)
-            if (v is GuardVerdict.Block) return deny(v)
+            if (v is GuardVerdict.Block) return deny(v, uri)
             if (g.needsPreflight(uri)) {
                 val cfg = g.config()
                 executor().execute {
                     if (released.get()) return@execute
                     val r = preflight.check(uri, cfg)
-                    if (r is GuardVerdict.Block) deny(r) else if (!released.get()) MPVLib.command(arrayOf("loadfile", uri))
+                    if (r is GuardVerdict.Block) deny(r, uri) else if (!released.get()) MPVLib.command(arrayOf("loadfile", uri))
                 }
                 return
             }
@@ -166,9 +168,9 @@ class MpvPlayerSession internal constructor(
     }
 
     /** Catat alasan (kode saja, tidak pernah URL) dan laporkan sebagai galat pemutar. */
-    private fun deny(v: GuardVerdict.Block) {
+    private fun deny(v: GuardVerdict.Block, uri: String) {
         MolinaEvents.bug("mpv", "shield-blocked", "pemuatan diblokir Shield", fields = mapOf("code" to v.code), id = sessionId, level = LogLevel.WARN, logger = logger)
-        emit(listOf(PlayerEvent.Error(-403, v.message), PlayerEvent.StateChanged(PlayerState.ERROR)))
+        emit(listOf(PlayerEvent.Error(SHIELD_BLOCKED_CODE, ShieldHost.label(uri)?.let { "$it: ${v.message}" } ?: v.message), PlayerEvent.StateChanged(PlayerState.ERROR)))
     }
 
     override fun play() { if (!released.get()) MPVLib.setPropertyBoolean("pause", false) }

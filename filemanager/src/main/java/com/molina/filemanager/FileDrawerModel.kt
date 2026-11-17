@@ -13,7 +13,7 @@ class FileDrawerState {
 }
 
 /** Satu isi folder. [isDir] dihitung di thread IO supaya main thread tidak menyentuh disk. */
-data class DrawerEntry(val file: File, val isDir: Boolean, val size: Long = 0L, val modified: Long = 0L) { // molina-27g2: ukuran + waktu ubah dihitung di IO untuk Urut
+data class DrawerEntry(val file: File, val isDir: Boolean, val size: Long = 0L, val modified: Long = 0L, val childCount: Int = -1) { // molina-27g2: ukuran + waktu ubah dihitung di IO untuk Urut; molina-28a: childCount = jumlah isi folder (-1 = tidak diketahui/berkas)
     val name: String get() = file.name
     val hidden: Boolean get() = file.name.startsWith(".")
 }
@@ -26,11 +26,17 @@ object DrawerFs {
     const val DEFAULT_ROOT = "/storage/emulated/0/Molina"
     private val PROTECTED = setOf("/storage/emulated/0/Molina", "/storage/emulated/0/Molina_Studio")
 
+    /** Folder internal Molina yang tidak ditampilkan di pohon. */
+    fun isInternalName(name: String): Boolean = name == ".molina-trash" || name == ".arsip-cache"
+
+    /** [molina-28a] BLOCKING. Jumlah isi yang tampil di [dir] (tanpa folder internal); -1 bila tidak terbaca. */
+    fun countVisible(dir: File): Int = runCatching { dir.list()?.count { !isInternalName(it) } ?: -1 }.getOrDefault(-1)
+
     /** BLOCKING: panggil dari Dispatchers.IO. Folder dulu, lalu berkas, urut nama. */
     fun list(dir: File): List<DrawerEntry>? {
         val kids = dir.listFiles() ?: return null
-        return kids.filter { it.name != ".molina-trash" && it.name != ".arsip-cache" } // molina-27j: folder internal Molina disembunyikan
-            .map { val d = it.isDirectory; DrawerEntry(it, d, if (d) 0L else it.length(), it.lastModified()) } // molina-27g2
+        return kids.filter { !isInternalName(it.name) } // molina-27j: folder internal Molina disembunyikan
+            .map { val d = it.isDirectory; DrawerEntry(it, d, if (d) 0L else it.length(), it.lastModified(), if (d) countVisible(it) else -1) } // molina-27g2
             .sortedWith(compareByDescending<DrawerEntry> { it.isDir }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 

@@ -39,6 +39,15 @@ class SettingsFragment : Fragment() {
                 }
             }
         }
+        val securityButton = MaterialButton(ctx).apply {
+            text = "Keamanan"
+            setOnClickListener {
+                parentFragmentManager.commit {
+                    replace(containerId, SecurityFragment())
+                    addToBackStack(null)
+                }
+            }
+        }
         return LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad * 3, pad, pad)
@@ -89,6 +98,7 @@ class SettingsFragment : Fragment() {
                 textSize = 12f
             })
             addView(IconPicker.build(ctx))
+            addView(securityButton)
             addView(aboutButton)
             if (BuildConfig.DEBUG) {
                 addView(MaterialButton(ctx).apply {

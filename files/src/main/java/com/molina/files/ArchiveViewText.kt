@@ -51,11 +51,22 @@ internal object ArchiveViewText {
         if (selecting) "Ekstrak terpilih ke\u2026" else "Ekstrak semua ke\u2026"
 
     /** Baris kuota cache: "Cache arsip 120 / 300 MB" (<1 untuk isi di bawah 1 MB). 26k5d:e01 */
-    fun cacheLine(used: Long, max: Long): String {
-        val mb = 1024L * 1024L
-        val u = if (used <= 0L) "0" else if (used < mb) "<1" else (used / mb).toString()
-        return "Cache arsip $u / ${max / mb} MB"
-    }
+    fun cacheLine(used: Long, max: Long): String = "Cache arsip ${usedMb(used)} / ${max / MB} MB"
+
+    private const val MB = 1024L * 1024L
+
+    private fun usedMb(used: Long): String = if (used <= 0L) "0" else if (used < MB) "<1" else (used / MB).toString()
+
+    /** [molina-27y] Satu baris ringkasan di kepala: "ZIP · 24 berkas · 3 folder · 15.6 MB · bersandi". */
+    fun summaryLine(format: String, files: Int, folders: Int, bytes: Long, encrypted: Boolean): String =
+        format.uppercase() + DOT + counts(files, folders, bytes) + if (encrypted) DOT + "bersandi" else ""
+
+    /** [molina-27y] Label tombol bawah. */
+    fun extractAllLabel(bytes: Long): String = "Ekstrak semua" + DOT + FileSizeFormat.format(bytes)
+
+    /** [molina-27y] Item menu: kuota cache pindah dari kepala ke menu. [used] < 0 berarti belum diketahui. */
+    fun clearCacheLabel(used: Long, max: Long): String =
+        if (used < 0L) "Bersihkan cache" else "Bersihkan cache" + DOT + usedMb(used) + " / " + (max / MB) + " MB"
 
     fun tooLargeAsk(): String = "Berkas ini terlalu besar untuk dibuka dari cache.\n\nEkstrak berkas ini ke folder arsip?"
 }

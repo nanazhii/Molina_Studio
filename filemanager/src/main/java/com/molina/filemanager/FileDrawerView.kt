@@ -2,6 +2,10 @@
 // molina-patch19
 package com.molina.filemanager
 
+import com.molina.core.ui.BlueBackDrawable
+import com.molina.core.ui.DrawerMetrics
+import com.molina.core.ui.EntryInfo
+import com.molina.core.ui.EntryTextBlock
 import com.molina.core.ui.ExtLabel
 import com.molina.core.ui.TreeIconView
 import android.app.AlertDialog
@@ -605,6 +609,7 @@ class FileDrawerView(
         if (clearClip) clip.clear()
         refresh()
         val dest = pasteDest // molina-27g0: buka folder tujuan hanya bila Tempel berhasil
+        markLocalChange(dest) // molina-28c
         pasteDest = null
         if (clearClip && dest != null) openDirectory(dest)
     }
@@ -887,6 +892,7 @@ class FileDrawerView(
                     }
                 }) {
                     toast(R.string.drawer_done_delete)
+                    files.mapNotNull { it.parentFile }.distinct().forEach { markLocalChange(it) } // molina-28c
                     selection.exit()
                     selectionChanged()
                     refresh()
@@ -963,14 +969,65 @@ class FileDrawerView(
             }) {
                 if (parent.path != currentRoot().path) state.expanded.add(parent.path)
                 toast(if (folder) R.string.drawer_done_dir else R.string.drawer_done_file)
+                markLocalChange(parent) // molina-28c
                 load(parent)
             }
         }
     }
 
+    // ---------- [molina-28c] Dibuka lagi: daftar + label segar, penanda "baru sejak terakhir dibuka" ----------
+
+    private var newBaseline = 0L
+    private val quietUntil = HashMap<String, Long>()
+    private var hiddenAt = 0L // 0 = sedang terlihat
+
+    /** Sesi buka baru: acuan "baru" = waktu buka sebelumnya (maks 7 hari ke belakang); buka pertama tanpa penanda. */
+    private fun startOpenSession() {
+        val now = System.currentTimeMillis()
+        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val last = runCatching { sp.getLong(KEY_LAST_SEEN, 0L) }.getOrDefault(0L)
+        newBaseline = EntryInfo.baselineFor(last, now)
+        quietUntil.clear()
+        runCatching { sp.edit().putLong(KEY_LAST_SEEN, now).apply() }
+    }
+
+    /** Perubahan oleh drawer sendiri (buat/ganti nama/hapus/tempel) pada [dir] dan leluhurnya tidak ditandai baru. */
+    private fun markLocalChange(dir: File?) {
+        val now = System.currentTimeMillis()
+        val root = currentRoot().path
+        var d = dir
+        while (d != null) {
+            quietUntil[d.path] = now
+            if (d.path == root) break
+            d = d.parentFile
+        }
+    }
+
+    private fun isNewEntry(e: DrawerEntry): Boolean {
+        if (newBaseline <= 0L) return false
+        val parent = e.file.parentFile
+        if ((e.isDir && e.name in NEW_IGNORED_DIRS) || parent?.name in NEW_IGNORED_DIRS) return false
+        val quiet = maxOf(quietUntil[e.file.path] ?: 0L, parent?.let { quietUntil[it.path] } ?: 0L)
+        return EntryInfo.isNewSince(e.modified, newBaseline, quiet)
+    }
+
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        if (!embedded) return
+        if (visibility != View.VISIBLE) {
+            if (hiddenAt == 0L) hiddenAt = System.currentTimeMillis()
+            return
+        }
+        if (hiddenAt == 0L) return // attach pertama sudah ditangani onAttachedToWindow
+        val away = System.currentTimeMillis() - hiddenAt
+        hiddenAt = 0L
+        if (away >= SESSION_GAP_MS) startOpenSession()
+        refreshAll(Runnable { adapter.notifyDataSetChanged() }) // muat ulang dari disk + bind ulang: label dan penanda segar
+    }
+
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (embedded) { rebuild(); refreshAll(); reloadFavs() }
+        if (embedded) { hiddenAt = 0L; startOpenSession(); rebuild(); refreshAll(); reloadFavs() } // molina-28c
     }
 
     fun toggle() { if (isOpen) close() else open() }
@@ -1175,12 +1232,13 @@ class FileDrawerView(
         scope.launch {
             val entries = withContext(Dispatchers.IO) { DrawerFs.list(dir) ?: emptyList() }
             state.children[dir.path] = entries
+            syncCount(dir, entries) // molina-28a
             rebuild()
         }
     }
 
     /** Segarkan folder utama dan folder yang masih terbuka; buang yang sudah tidak ada. */
-    private fun refreshAll() {
+    private fun refreshAll(afterRebuild: Runnable? = null) { // molina-28c
         val paths = listOf(currentRoot().path) + state.expanded.toList()
         scope.launch {
             val fresh = withContext(Dispatchers.IO) {
@@ -1193,13 +1251,23 @@ class FileDrawerView(
             }
             vols = fresh.second
             for ((p, entries) in fresh.first) {
-                if (entries != null) state.children[p] = entries else { state.children.remove(p); state.expanded.remove(p) }
+                if (entries != null) { state.children[p] = entries; syncCount(File(p), entries) } else { state.children.remove(p); state.expanded.remove(p) } // molina-28a
             }
-            rebuild()
+            rebuild(afterRebuild)
         }
     }
 
+    /** [molina-28a] Setelah [dir] dimuat ulang, perbarui jumlah itemnya pada daftar induk supaya keterangan tidak basi. */
+    private fun syncCount(dir: File, entries: List<DrawerEntry>) {
+        val parent = dir.parentFile ?: return
+        val siblings = state.children[parent.path] ?: return
+        val i = siblings.indexOfFirst { it.file.path == dir.path }
+        if (i < 0 || siblings[i].childCount == entries.size) return
+        state.children[parent.path] = siblings.toMutableList().also { it[i] = siblings[i].copy(childCount = entries.size) }
+    }
+
     private fun afterChange(parent: File?, oldPath: String) {
+        markLocalChange(parent) // molina-28c: ganti nama / hapus / sampah
         if (searchOn) scheduleSearch(150L) // molina-27g3
         state.expanded.removeAll { it == oldPath || it.startsWith("$oldPath/") }
         if (focusPath?.let { it == oldPath || it.startsWith("$oldPath/") } == true) focusPath = null // molina-27n
@@ -1315,6 +1383,7 @@ class FileDrawerView(
                         setRoot(f)
                     } else {
                         state.children[f.path] = entries
+                        syncCount(f, entries) // molina-28a
                         state.expanded.add(f.path)
                         rebuild()
                     }
@@ -1337,6 +1406,7 @@ class FileDrawerView(
         val arrow: TextView,
         val icon: TreeIconView,
         val name: TextView,
+        val text: EntryTextBlock, // molina-28b: blok nama + keterangan (bersama)
         val star: TextView,
         val check: CheckBox, // molina-27e
         val more: TextView,
@@ -1365,19 +1435,20 @@ class FileDrawerView(
             row.addView(arrow, LinearLayout.LayoutParams(dp(14), WRAP))
 
             val icon = TreeIconView(ctx)
-            val iconSize = if (embedded) 30 else 20 // molina-27o/27t: ikon Berkas lebih besar
+            val iconSize = if (embedded) DrawerMetrics.ICON_STANDARD_DP else DrawerMetrics.ICON_COMPACT_DP // molina-27o/27t, molina-28b
             val iconLp = LinearLayout.LayoutParams(dp(iconSize), dp(iconSize))
             iconLp.marginStart = dp(4)
             iconLp.marginEnd = dp(8)
             row.addView(icon, iconLp)
 
-            val name = TextView(ctx)
+            val textBlock = EntryTextBlock(ctx, twoLine = embedded) // molina-28b: nama + keterangan, dibagi dengan Terminal
+            val name = textBlock.name
             name.setTextColor(white)
-            name.textSize = if (embedded) 15f else 13f // molina-27t
+            name.textSize = if (embedded) DrawerMetrics.NAME_STANDARD_SP else DrawerMetrics.NAME_COMPACT_SP // molina-27t, molina-28b
             name.typeface = Typeface.MONOSPACE
             name.maxLines = 1
             name.ellipsize = TextUtils.TruncateAt.END
-            row.addView(name, LinearLayout.LayoutParams(0, WRAP, 1f))
+            row.addView(textBlock, LinearLayout.LayoutParams(0, WRAP, 1f))
 
             val star = TextView(ctx) // molina-27d2: penanda folder Favorit, warna aksen Terminal
             star.text = "\u2605"
@@ -1403,7 +1474,7 @@ class FileDrawerView(
             more.contentDescription = ctx.getString(R.string.drawer_more)
             more.background = RippleDrawable(ripple, null, ColorDrawable(Color.WHITE))
             row.addView(more, LinearLayout.LayoutParams(dp(40), MATCH))
-            return RowHolder(row, arrow, icon, name, star, check, more)
+            return RowHolder(row, arrow, icon, name, textBlock, star, check, more)
         }
 
         override fun onBindViewHolder(h: RowHolder, position: Int) {
@@ -1416,8 +1487,10 @@ class FileDrawerView(
             val kind = if (e.isDir) FileKind.OTHER else FileKind.of(e.name)
             h.icon.kind = kind
             h.icon.label = if (embedded && !e.isDir) ExtLabel.of(e.name) else "" // molina-27o
+            h.icon.badge = embedded && isNewEntry(e) // molina-28c: titik hijau baru sejak dibuka terakhir
             h.name.setTextColor(kind.nameColor)
             h.name.text = if (searchEntries != null) searchLabel(e) else e.name // molina-27g3
+            if (embedded) h.text.bindMeta(e.modified, e.isDir, e.childCount, e.size) // molina-28b: tanggal pintar + aksen baru
             h.star.visibility = if (e.isDir && e.file.path in favPaths) View.VISIBLE else View.GONE // molina-27d2
             h.row.setOnClickListener { onRowTap(item) }
             h.more.setOnClickListener { showRowMenu(it, e) }
@@ -1703,6 +1776,7 @@ class FileDrawerView(
             }) {
                 if (parent.path != currentRoot().path) state.expanded.add(parent.path)
                 toast(R.string.drawer_done_dir)
+                markLocalChange(parent) // molina-28c
                 load(parent)
             }
         }
@@ -1721,6 +1795,7 @@ class FileDrawerView(
             }) {
                 if (parent.path != currentRoot().path) state.expanded.add(parent.path)
                 toast(R.string.drawer_done_file)
+                markLocalChange(parent) // molina-28c
                 load(parent)
                 if (openAfter && editInNano(target)) close()
             }
@@ -1813,11 +1888,14 @@ class FileDrawerView(
     private companion object {
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
-        const val ROW_DP = 36
-        const val ROW_EMBEDDED_DP = 44 // molina-27t
+        const val ROW_DP = DrawerMetrics.ROW_COMPACT_DP
+        const val ROW_EMBEDDED_DP = DrawerMetrics.ROW_TWO_LINE_DP // molina-27t, molina-28b
         const val MIN_WIDTH_DP = 248
         const val PREFS = "molina_filemanager" // molina-27g2
         const val KEY_SORT = "sort"
+        const val KEY_LAST_SEEN = "last_seen" // molina-28c: waktu drawer terakhir dibuka (ms)
+        const val SESSION_GAP_MS = 30_000L // molina-28c: lepas dari layar selama ini atau lebih dihitung "dibuka lagi"
+        val NEW_IGNORED_DIRS = setOf("Logs", "logs") // molina-28c: folder yang ditulis Molina sendiri, tidak ditandai baru
         const val FLASH_MS = 1200L
         const val SEARCH_DEBOUNCE_MS = 250L // molina-27g3
         const val MATCH_ALPHA = 0x22 // molina-27g3: sama dengan seleksi, bilah klip, dan kilatan

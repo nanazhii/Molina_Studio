@@ -50,6 +50,15 @@ class ShieldGuestEnvTest {
         assertTrue(script().readText().contains(":9'"))
     }
 
+    @Test fun penandaModeDitulisUntukPrompt() {
+        val sh = shield()
+        ShieldGuestEnv.install(dir, sh, optIn = true)
+        assertTrue(script().readText().contains("export MOLINA_SHIELD='proxy'"))
+        val sh2 = shield(start = false)
+        ShieldGuestEnv.install(dir, sh2, optIn = true)
+        assertTrue(script().readText().contains("export MOLINA_SHIELD='fail-closed'"))
+    }
+
     @Test fun shieldDimatikanPenggunaTidakMemakaiProxy() {
         val sh = shield(ShieldConfig(enabled = false))
         assertEquals(ShieldGuestEnv.Mode.OFF, ShieldGuestEnv.install(dir, sh, optIn = true))
