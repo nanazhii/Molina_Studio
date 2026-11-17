@@ -1,0 +1,11 @@
+// Overlay Molina: batasi resource mpv-android ke bahasa Indonesia tanpa mengedit app/build.gradle upstream. // gate:allow nama proyek upstream
+// Dipakai: ./gradlew -I <path>/locale-id.init.gradle assembleDefaultDebug  (AGP 9.x: androidResources.localeFilters)
+allprojects {
+    plugins.withId('com.android.application') {
+        try {
+            extensions.getByName('android').androidResources.localeFilters.add('id')
+        } catch (Throwable t) {
+            logger.warn("molina overlay: localeFilters gagal diterapkan: ${t.message}")
+        }
+    }
+}

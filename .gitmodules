@@ -1,0 +1,3 @@
+[submodule "third_party/mpv-android"]
+	path = third_party/mpv-android
+	url = https://github.com/mpv-android/mpv-android

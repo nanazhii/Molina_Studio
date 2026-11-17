@@ -1,0 +1,124 @@
+name: mpv-android (arm64)
+
+on:
+  workflow_dispatch:
+    inputs:
+      fresh:
+        description: "Abaikan cache prefix dan bangun semua dependensi dari nol"
+        type: boolean
+        default: false
+      mpv_ref:
+        description: "Ref mpv yang dibangun (master = perilaku bawaan upstream; isi SHA untuk membekukan)"
+        type: string
+        default: master
+
+permissions:
+  contents: read
+
+env:
+  UPSTREAM_PIN: ebf1b3f0cbe9d6154a43cf6ec1ad6fc32a1b2d47
+  WGET: wget --progress=bar:force
+  MPVA: third_party/mpv-android
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          submodules: true
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Pastikan submodule upstream persis di pin dan tidak berubah
+        run: |
+          set -euo pipefail
+          head=$(git -C "$MPVA" rev-parse HEAD)
+          [ "$head" = "$UPSTREAM_PIN" ] || { echo "::error::submodule di $head, bukan $UPSTREAM_PIN"; exit 1; }
+          [ -z "$(git -C "$MPVA" status --porcelain)" ] || { echo "::error::pohon upstream berubah"; git -C "$MPVA" status --short; exit 1; }
+      - name: Identitas cache prefix (bawaan upstream)
+        run: bash "$MPVA/buildscripts/include/ci.sh" export >> "$GITHUB_ENV"
+      - name: Cache prefix arm64
+        id: prefix
+        if: inputs.fresh != true
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.MPVA }}/buildscripts/prefix
+          key: mpva-arm64-${{ env.CACHE_IDENTIFIER }}
+      - name: Paket sistem
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf pkgconf libtool ninja-build python3-pip gperf nasm
+          sudo pip3 install --break-system-packages meson
+      - name: SDK dan NDK (download-sdk.sh bawaan)
+        working-directory: third_party/mpv-android/buildscripts
+        run: |
+          mkdir -p sdk
+          ln -sv "$ANDROID_HOME" sdk/android-sdk-linux
+          IN_CI=1 ./include/download-sdk.sh
+      - name: Sumber mpv
+        working-directory: third_party/mpv-android/buildscripts
+        env:
+          MPV_REF: ${{ inputs.mpv_ref }}
+        run: |
+          mkdir -p deps/mpv
+          $WGET "https://github.com/mpv-player/mpv/archive/${MPV_REF:-master}.tar.gz" -O mpv.tgz
+          tar -xzf mpv.tgz -C deps/mpv --strip-components=1
+          rm mpv.tgz
+      - name: Dependensi native arm64 (dari nol)
+        if: inputs.fresh == true || steps.prefix.outputs.cache-hit != 'true'
+        working-directory: third_party/mpv-android/buildscripts
+        run: |
+          mkdir -p prefix
+          IN_CI=1 ./include/download-deps.sh
+          ./buildall.sh --only-deps mpv --arch arm64
+      - name: Bangun libmpv arm64
+        working-directory: third_party/mpv-android/buildscripts
+        run: |
+          ./buildall.sh -n mpv --arch arm64 || {
+            b=deps/mpv/_build_arm64
+            [ ! -f "$b/config.h" ] && cat "$b/meson-logs/meson-log.txt"
+            exit 1
+          }
+      - name: Catat commit dependensi
+        working-directory: third_party/mpv-android/buildscripts
+        run: |
+          {
+            echo "### Commit dependensi"
+            for d in deps/*/; do
+              n=$(basename "$d")
+              [ -d "$d/.git" ] && echo "- $n: $(git -C "$d" rev-parse --short=12 HEAD)"
+            done
+            echo "- mpv ref: ${{ inputs.mpv_ref }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Pasang overlay Molina (terjemahan Indonesia, filter locale)
+        run: |
+          cp -r mpv-overlay/values-id "$MPVA/app/src/main/res/"
+          mkdir -p "$HOME/.gradle/init.d"
+          cp mpv-overlay/locale-id.init.gradle "$HOME/.gradle/init.d/"
+      - name: Bangun APK (debug)
+        working-directory: third_party/mpv-android/buildscripts
+        env:
+          DONT_BUILD_RELEASE: "1"
+        run: ./buildall.sh -n
+      - name: Pastikan hanya arm64
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          apks=("$MPVA"/app/build/outputs/apk/default/debug/*.apk)
+          [ ${#apks[@]} -gt 0 ] || { echo "::error::APK tidak ditemukan"; exit 1; }
+          for f in "${apks[@]}"; do
+            echo "== $f"
+            unzip -l "$f" | grep -E ' lib/' | awk '{print $4}' | cut -d/ -f2 | sort -u
+            if unzip -l "$f" | grep -qE ' lib/(armeabi-v7a|x86|x86_64)/'; then
+              echo "::error::$f memuat ABI selain arm64-v8a"; exit 1
+            fi
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mpv-android-arm64
+          path: third_party/mpv-android/app/build/outputs/apk/default/debug/*.apk
+          if-no-files-found: error

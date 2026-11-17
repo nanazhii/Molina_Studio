@@ -12,7 +12,7 @@ SELF = os.path.abspath(__file__)
 
 SCAN_EXT = {".kt", ".kts", ".java", ".xml", ".gradle", ".toml", ".properties",
             ".json", ".c", ".cc", ".cpp", ".h", ".sh", ".yml", ".yaml", ".mk", ".pro"}
-SKIP_DIRS = {".git", "build", ".gradle", ".idea", "node_modules"}
+SKIP_DIRS = {".git", "build", ".gradle", ".idea", "node_modules", "third_party"}  # third_party = upstream tanpa modifikasi (submodule)
 SKIP_PREFIX = ("LICENSE", "NOTICE", "THIRD_PARTY", "COPYING")  # atribusi lisensi dijaga
 
 # Satu-satunya host yang boleh muncul. Tambah hanya jika benar-benar perlu.
@@ -22,7 +22,7 @@ ALLOW_GITHUB_PATH = ("/nanazhii/",)
 
 # Berkas build-time pipeline native (hanya jalan di CI). Boleh menyebut host sumber upstream dan nama
 # proyek upstream; host pelacak/donasi tetap ditolak. Tambah berkas hanya jika benar-benar perlu.
-BUILD_FILES = {"scripts/native_wget.sh", "scripts/ensure_ndk.sh"}
+BUILD_FILES = {"scripts/native_wget.sh", "scripts/ensure_ndk.sh", ".github/workflows/mpv-android.yml"}
 BUILD_HOSTS = {"github.com", "dl.google.com"}
 
 # Berkas DATA daftar blokir pelacak (nama pelacak memang harus tertulis). Hanya pola SDK yang dilonggarkan;

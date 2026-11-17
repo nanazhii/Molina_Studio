@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="aspect_ratio_names">
+        <item>Asli</item>
+        <item>Panscan</item>
+        <item>16:9</item>
+        <item>16:10</item>
+        <item>4:3</item>
+        <item>2.35:1</item>
+    </string-array>
+
+    <string-array name="background_play_entries">
+        <item>Tidak pernah</item>
+        <item>Hanya berkas audio</item>
+        <item>Selalu (termasuk video)</item>
+    </string-array>
+    <string-array name="auto_rotation_entries">
+        <item>Otomatis</item>
+        <item>Lanskap bawaan</item>
+        <item>Potret bawaan</item>
+        <item>Perangkat</item>
+    </string-array>
+
+    <string-array name="deband_entries">
+        <item>Nonaktif</item>
+        <item>CPU</item>
+        <item>GPU</item>
+    </string-array>
+
+    <string-array name="stats_entries">
+        <item>Tidak ada</item>
+        <item>Penghitung FPS</item>
+        <item>stats.lua: Umum</item>
+        <item>stats.lua: Waktu</item>
+        <item>stats.lua: Cache</item>
+    </string-array>
+
+    <string-array name="gestures_entries">
+        <item>Tidak ada</item>
+        <item>Lompat</item>
+        <item>Volume</item>
+        <item>Kecerahan</item>
+    </string-array>
+
+    <string-array name="tap_gestures_entries">
+        <item>Tidak ada</item>
+        <item>Lompat</item>
+        <item>Putar/Jeda</item>
+        <item>Kustom</item>
+    </string-array>
+</resources>

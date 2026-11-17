@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Terjemahan Bahasa Indonesia untuk mpv-android (overlay Molina, tidak mengubah upstream). gate:allow atribusi -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <!-- Simple strings. -->
+    <string name="mpv_activity">mpv</string>
+    <string name="label_share_intent">Putar di mpv</string>
+    <string name="title_activity_settings">Pengaturan</string>
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Batal</string>
+    <string name="dialog_save">Simpan</string>
+    <string name="dialog_yes">Ya</string>
+    <string name="dialog_no">Tidak</string>
+    <string name="dialog_prev">Sebelumnya</string>
+    <string name="dialog_next">Berikutnya</string>
+    <string name="dialog_reset">Atur ulang</string>
+    <string name="track_audio">Audio</string>
+    <string name="track_subs">Sub</string>
+    <string name="track_off">Mati</string>
+    <string name="track_primary">Utama</string>
+    <string name="track_secondary">Kedua</string>
+    <string name="btn_play">Putar</string>
+    <string name="btn_pause">Jeda</string>
+    <string name="ui_volume">Volume: %d%%</string>
+    <string name="ui_brightness">Kecerahan: %d%%</string>
+    <string name="ui_seek_distance">%1$s\n[%2$s]</string>
+    <string name="ui_fps">%.3f FPS</string>
+    <string name="ui_speed">%.2fx</string>
+    <string name="ui_chapter_fallback">Bab %1$d (%2$s)</string>
+    <string name="ui_chapter">%1$s (%2$s)</string>
+    <string name="ui_track">#%d</string>
+    <string name="ui_track_text">#%1$d: %2$s</string>
+    <string name="ui_track_title_lang">#%1$d: %2$s (%3$s)</string>
+    <string name="format_seconds">%.1f dtk</string>
+
+    <!-- Less simple strings -->
+    <string name="title_speed_dialog">Kecepatan pemutaran</string>
+    <string name="error_no_file">Tidak ada berkas yang diberikan, keluar</string>
+    <string name="unsaved_changes">Perubahan belum disimpan</string>
+    <string name="notice_file_appended">Berkas ditambahkan ke daftar putar</string>
+    <string name="notice_file_play">Memulai pemutaran berkas</string>
+    <string name="exit_warning_playlist">Masih ada %d item di daftar putar.\nYakin ingin keluar?</string>
+    <string name="contrast">Kontras</string>
+    <string name="video_brightness">Kecerahan video</string>
+    <string name="gamma">Gamma</string>
+    <string name="saturation">Saturasi</string>
+    <string name="aspect_ratio">Rasio aspek</string>
+    <string name="audio_delay">Tunda audio</string>
+    <string name="sub_delay">Tunda subtitle</string>
+    <string name="notice_show_all_files">Menampilkan semua berkas</string>
+    <string name="notice_show_media_files">Hanya menampilkan berkas media</string>
+    <string name="option_remember_choice">Ingat pilihan pada pembukaan berikutnya</string>
+    <string name="uri_invalid_protocol">Protokol tidak valid</string>
+
+    <!-- Action buttons -->
+    <string name="switch_orientation">Ganti orientasi</string>
+    <string name="open_external_audio">Buka audio eksternal…</string>
+    <string name="open_external_sub">Buka subtitle eksternal…</string>
+    <string name="advanced_menu">Lanjutan…</string>
+    <string name="resume_bg_playback">Putar di latar belakang</string>
+    <string name="toggle_stats">Tampilkan/sembunyikan statistik</string>
+    <string name="chapter_button">Bab</string>
+    <string name="sub_seek_button">Lompat per subtitle</string>
+    <string name="file_picker_old">Pemilih berkas\n(lama)</string>
+    <string name="action_settings">Pengaturan</string>
+    <string name="action_playlist">Daftar putar</string>
+    <string name="action_open_url">Buka URL</string>
+    <string name="action_open_doc">Buka dokumen</string>
+    <string name="action_open_doc_tree">Buka pohon dokumen</string>
+    <string name="action_pick_file">Pilih berkas</string>
+    <string name="action_pick_file_old">Pilih berkas (lama)</string>
+    <string name="action_external_storage">Penyimpanan eksternal</string>
+    <string name="action_toggle_filter">Alihkan filter</string>
+
+    <!-- Strings related to Settings -->
+    <string name="pref_header_general">Umum</string>
+    <string name="pref_header_general_summary"></string>
+
+    <string name="pref_header_video">Video</string>
+    <string name="pref_header_video_summary"></string>
+
+    <string name="pref_header_ui">Antarmuka pengguna</string>
+    <string name="pref_header_ui_summary"></string>
+
+    <string name="pref_header_gestures">Gestur sentuh</string>
+    <string name="pref_header_gestures_summary"></string>
+
+    <string name="pref_header_developer">Pengembang</string>
+    <string name="pref_header_developer_summary"></string>
+
+    <string name="pref_header_advanced">Lanjutan</string>
+    <string name="pref_header_advanced_summary"></string>
+
+    <string name="pref_header_about_mpv">Tentang mpv</string>
+    <string name="pref_header_about_mpv_summary"></string>
+
+    <string name="pref_default_file_manager_path_title">Jalur bawaan pengelola berkas</string>
+
+    <string name="pref_material_you_theming_title">Material You</string>
+    <string name="pref_material_you_theming_summary">Gunakan warna dinamis</string>
+
+    <string name="pref_default_audio_language_title">Bahasa audio bawaan</string>
+    <string name="pref_default_audio_language_message">Bahasa audio yang dipilih secara bawaan saat memutar video dengan beberapa aliran audio.\nKode bahasa dua atau tiga huruf dapat dipakai. Beberapa nilai dipisahkan dengan koma.</string>
+
+    <string name="pref_default_subtitle_language_title">Bahasa subtitle bawaan</string>
+    <string name="pref_default_subtitle_language_message">Bahasa subtitle yang dipilih secara bawaan saat memutar video dengan beberapa subtitle.\nKode bahasa dua atau tiga huruf dapat dipakai. Beberapa nilai dipisahkan dengan koma.</string>
+
+    <string name="pref_hardware_decoding_title">Dekode perangkat keras</string>
+    <string name="pref_hardware_decoding_summary">Coba dekode perangkat keras sebelum beralih ke perangkat lunak. Umumnya lebih efisien.</string>
+
+    <string name="pref_background_play_title">Pemutaran latar belakang</string>
+    <string name="pref_background_play_summary">Tentukan kapan pemutaran dilanjutkan otomatis di latar belakang.</string>
+
+    <string name="pref_save_position_title">Simpan posisi saat keluar</string>
+    <string name="pref_save_position_summary">Ingat posisi pemutaran saat keluar. Saat berkas yang sama diputar lagi, mpv akan melompat ke posisi sebelumnya.</string>
+
+    <string name="pref_remember_brightness_title">Ingat kecerahan layar</string>
+    <string name="pref_remember_brightness_summary">Pulihkan kecerahan layar yang diatur sebelumnya saat pemutar dibuka.</string>
+
+    <string name="pref_new_intent_replace_title">Putar berkas baru segera</string>
+    <string name="pref_new_intent_replace_summary">Saat membuka berkas baru ketika mpv berada di latar belakang, ganti daftar putar saat ini alih-alih menambahkan di akhir.</string>
+
+    <string name="pref_auto_rotation_title">Orientasi layar</string>
+    <string name="pref_auto_rotation_summary">Tentukan orientasi yang dipakai mpv untuk memutar video lanskap atau potret.</string>
+
+    <string name="pref_display_media_title_title">Tampilkan judul media (video)</string>
+    <string name="pref_display_media_title_summary">Tampilkan judul atau nama berkas video di atas kontrol. Berkas audio selalu menampilkan metadatanya.</string>
+
+    <string name="pref_bottom_controls_title">Tampilkan kontrol di bagian bawah layar</string>
+
+    <string name="pref_no_ui_pause_title">Lanjutkan pemutaran saat popup UI</string>
+    <string name="pref_no_ui_pause_summary">Lanjutkan pemutaran saat popup terbuka. (mis. saat dialog daftar putar)</string>
+
+    <string name="pref_playlist_exit_warning_title">Konfirmasi keluar daftar putar</string>
+    <string name="pref_playlist_exit_warning_summary">Tampilkan dialog konfirmasi sebelum keluar saat daftar putar dimuat.</string>
+
+    <string name="pref_seek_gesture_smooth_title">Lompat lebih halus</string>
+
+    <string name="pref_gesture_horiz_title">Geser horizontal</string>
+
+    <string name="pref_gesture_vert_left_title">Geser vertikal (sisi kiri)</string>
+
+    <string name="pref_gesture_vert_right_title">Geser vertikal (sisi kanan)</string>
+
+    <string name="pref_gesture_tap_left_title">Ketuk dua kali (kiri)</string>
+
+    <string name="pref_gesture_tap_center_title">Ketuk dua kali (tengah)</string>
+
+    <string name="pref_gesture_tap_right_title">Ketuk dua kali (kanan)</string>
+
+    <string name="pref_gesture_custom_helptext">Saat gestur ketuk diatur ke \"Kustom\", gestur itu dapat dikaitkan ke perintah apa pun dengan mengedit input.conf. Kode tombolnya adalah <b>0x10001</b> (kiri), <b>0x10002</b> (tengah), <b>0x10003</b> (kanan).\nMisalnya, Anda dapat mengaitkannya untuk melompat 6 detik:\n\t\t0x10003 no-osd seek 6</string>
+
+    <string name="pref_video_upscale_title">Filter pembesaran</string>
+
+    <string name="pref_video_downscale_title">Filter pengecilan</string>
+
+    <string name="pref_video_debanding_title">Debanding</string>
+    <string name="pref_video_debanding_summary">Pilih mode debanding video.</string>
+
+    <string name="pref_video_interpolation_title">Interpolasi</string>
+    <string name="pref_video_interpolation_message">Kurangi judder akibat FPS video dan laju penyegaran layar yang tidak cocok.</string>
+
+    <string name="pref_video_tscale_title">Filter interpolasi temporal</string>
+    <string name="pref_video_tscale_summary">Pilih filter untuk interpolasi sumbu waktu (frame).</string>
+    <string name="pref_video_tscale_message">Pengaturan ini hanya berlaku jika interpolasi di atas diaktifkan.</string>
+
+    <string name="pref_video_fastdecode_title">Dekode video kualitas rendah</string>
+    <string name="pref_video_fastdecode_summary">Mengorbankan kualitas demi performa agar pemutaran lancar.\n<b>MENURUNKAN KUALITAS SECARA DRASTIS</b></string>
+
+    <string name="pref_ignore_audio_focus_title">Abaikan fokus audio</string>
+    <string name="pref_ignore_audio_focus_summary">Jangan jeda pemutaran atau kecilkan volume saat aplikasi lain memutar audio bersamaan.</string>
+
+    <string name="pref_stats_mode_title">Tampilkan statistik</string>
+    <string name="pref_stats_mode_summary">Pilih statistik yang ditampilkan</string>
+
+    <string name="pref_gpu_debug_title">Aktifkan debug OpenGL</string>
+
+    <string name="pref_gpu_next_title">Gunakan gpu-next</string>
+    <string name="pref_gpu_next_summary">Gunakan backend render video baru berbasis libplacebo.</string>
+
+    <string name="pref_version_info">Informasi versi</string>
+
+    <string name="pref_edit_mpv_conf">Edit mpv.conf</string>
+    <string name="pref_edit_mpv_conf_message">Anda dapat langsung mengedit konfigurasi mpv di sini.</string>
+
+    <string name="pref_edit_input_conf">Edit input.conf</string>
+    <string name="pref_edit_input_conf_message">Anda dapat mengedit input.conf di sini; ini terutama berguna untuk remote TV dan keyboard.\n\nPenting: mpv-android memiliki beberapa tombol bawaan yang tidak dapat didefinisikan ulang di sini, mis. \'j\' untuk mengganti subtitle.</string> <!-- gate:allow nama proyek upstream -->
+
+    <!-- Strings used in Settings dialog preferences -->
+    <string name="scaler_filter">Fungsi filter</string>
+    <string name="scaler_param1">Parameter 1</string>
+    <string name="scaler_param2">Parameter 2</string>
+    <string name="interpolation_switch">Aktifkan interpolasi</string>
+    <string name="interpolation_video_sync">Sinkronisasi video</string>
+
+    <!-- File picker -->
+    <string name="nnf_name">Nama</string>
+    <string name="nnf_permission_external_write_denied">Izin mengakses sistem berkas ditolak</string>
+</resources>

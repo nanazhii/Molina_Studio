@@ -336,3 +336,10 @@
 - [x] Dipertahankan (dipakai proot/terminal-pty): ensure_ndk.sh, native_wget.sh, native/pins.env, native/pins.sha256
 - [ ] Integrasi mpv-android 1:1 (tanpa modifikasi): keputusan model integrasi menunggu pengguna
 - [ ] Verifikasi CI: build.yml + jvm-tests hijau tanpa :player-mpv; Cinema tetap memakai PlayerBackendStub
+
+## mpv-android 1:1 dibangun dari nol (2026-11-17)
+- [x] Submodule third_party/mpv-android dipin ebf1b3f0cbe9 (tanpa edit), didaftarkan sebagai gitlink tanpa clone karena /sdcard tanpa symlink
+- [x] Overlay values-id + locale-id.init.gradle; workflow mpv-android.yml (arm64, dependensi native dari nol)
+- [x] telemetry_gate: third_party dikecualikan; workflow mpv-android masuk BUILD_FILES
+- [ ] Verifikasi: jalankan Actions > mpv-android (arm64) (fresh=true); cek APK arm64-only dan UI Indonesia
+- [ ] Cinema membuka is.xyz.mpv lewat Intent (butuh gate:allow untuk identitas is.xyz.mpv)
