@@ -38,7 +38,7 @@ pin_clone() {
 }
 
 mkdir -p "$W" "$OUT"; : > "$OUT/download-sha256.txt"
-UP="$W/mpv-android"
+UP="$W/upstream"
 msg "Sumber upstream (dipin)"
 pin_clone https://github.com/mpv-android/mpv-android.git "$UPSTREAM_SHA" "$UP"
 
