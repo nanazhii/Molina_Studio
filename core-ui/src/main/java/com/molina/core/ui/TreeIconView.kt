@@ -60,7 +60,7 @@ class TreeIconView(context: Context) : View(context) {
         glyph.strokeCap = Paint.Cap.ROUND
         text.typeface = Typeface.DEFAULT_BOLD
         text.textAlign = Paint.Align.CENTER
-        text.color = 0xFF10141A.toInt()
+        text.color = TreeIconPalette.BAND_TEXT // molina-29
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -99,19 +99,19 @@ class TreeIconView(context: Context) : View(context) {
         path.lineTo(rect.left + rect.width() * 0.25f, rect.bottom)
         path.lineTo(rect.left, rect.bottom)
         path.close()
-        fill.color = 0x1FFFFFFF
+        fill.color = TreeIconPalette.SHEEN // molina-29
         canvas.drawPath(path, fill)
         canvas.restore()
         // kilau tipis di tepi atas panel depan
         val sw = 1f * resources.displayMetrics.density
         line.strokeWidth = sw
-        line.color = 0xAAFFFFFF.toInt()
+        line.color = TreeIconPalette.HIGHLIGHT // molina-29
         canvas.drawLine(rect.left + r, rect.top + sw, rect.right - r, rect.top + sw, line)
         line.strokeWidth = 1.2f * resources.displayMetrics.density
     }
 
     private fun drawFile(canvas: Canvas, w: Float, h: Float) {
-        val tint = if (kind == FileKind.OTHER) PAPER_EDGE else darken(kind.color, 0.78f)
+        val tint = TreeIconPalette.glyphTint(kind) // molina-29
         // kertas
         path.reset()
         path.moveTo(w * 0.14f, h * 0.06f)
@@ -162,7 +162,7 @@ class TreeIconView(context: Context) : View(context) {
     }
 
     private fun drawBand(canvas: Canvas, w: Float, h: Float) {
-        fill.color = if (kind == FileKind.OTHER) 0xFF9AA0A8.toInt() else kind.color
+        fill.color = if (kind == FileKind.OTHER) TreeIconPalette.BAND_OTHER else kind.color // molina-29
         rect.set(w * 0.14f, h * 0.62f, w * 0.86f, h * 0.94f)
         canvas.drawRect(rect, fill)
         text.textSize = h * 0.27f
@@ -173,21 +173,15 @@ class TreeIconView(context: Context) : View(context) {
         canvas.drawText(label, w * 0.5f, rect.centerY() - (fm.ascent + fm.descent) / 2f, text)
     }
 
-    private fun darken(c: Int, f: Float): Int {
-        val r = ((c shr 16) and 0xFF) * f
-        val g = ((c shr 8) and 0xFF) * f
-        val b = (c and 0xFF) * f
-        return (0xFF shl 24) or (r.toInt() shl 16) or (g.toInt() shl 8) or b.toInt()
-    }
-
     private companion object {
-        val FOLDER_BACK = 0xFF5F9634.toInt()
-        val FOLDER_TOP = 0xFFA9D56F.toInt()
-        val BADGE_GREEN = 0xFF00E676.toInt() // molina-28c
-        val FOLDER_BOTTOM = 0xFF7DB345.toInt()
-        val PAPER = 0xFFF5F7F9.toInt()
-        val PAPER_FOLD = 0xFFD3DAE1.toInt()
-        val PAPER_EDGE = 0xFF9AA5B1.toInt()
+        // molina-29: nilai ada di TreeIconPalette (dibagi dengan MintTreeIcons di :code)
+        val FOLDER_BACK = TreeIconPalette.FOLDER_BACK
+        val FOLDER_TOP = TreeIconPalette.FOLDER_TOP
+        val BADGE_GREEN = TreeIconPalette.BADGE_GREEN // molina-28c
+        val FOLDER_BOTTOM = TreeIconPalette.FOLDER_BOTTOM
+        val PAPER = TreeIconPalette.PAPER
+        val PAPER_FOLD = TreeIconPalette.PAPER_FOLD
+        val PAPER_EDGE = TreeIconPalette.PAPER_EDGE
     }
 
     /** Lambang kecil di badan berkas (di bawah lipatan sudut). */

@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.molina.core.ui.FileKind
 
 /**
  * Panel direktori (F4, blueprint bagian 5): laci dari kiri selebar 72% layar (maks 320dp) dengan
@@ -197,7 +198,7 @@ private fun TreeRow(row: DirRow, session: CodeSession, selected: Boolean, onTap:
                 }
             }
             Spacer(Modifier.width(4.dp))
-            val kind = if (entry.isDir) MintKind.OTHER else MintKind.of(entry.file.name)
+            val kind = if (entry.isDir) FileKind.OTHER else FileKind.of(entry.file.name)
             Canvas(Modifier.size(CodeDimens.TreeFolderIcon)) {
                 if (entry.isDir) drawMintFolder() else drawMintFile(kind)
             }
@@ -208,7 +209,7 @@ private fun TreeRow(row: DirRow, session: CodeSession, selected: Boolean, onTap:
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
-                    color = Color(kind.nameArgb),
+                    color = Color(kind.nameColor),
                     fontSize = CodeDimens.TreeTextSize,
                     fontFamily = FontFamily.Monospace
                 )
