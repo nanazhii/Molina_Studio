@@ -277,3 +277,11 @@
 - [ ] Verifikasi CI: kompilasi :code dan :app (Compose + Sora, belum bisa dicoba di sandbox), module/telemetry/secret gate
 - [ ] Uji perangkat Android 8: buka tab Code, buka/simpan berkas di /storage/emulated/0/Molina, pindah tab lalu kembali (tab tetap), putar layar, Notifikasi perubahan, Riwayat versi
 - [ ] Berikutnya: adapter ScriptExecutor/StreamExecutor ke ProotExec (Periksa Python/Shell, Python langsung, Jalankan di Keluaran), buka berkas dari tab Berkas ke Code, uji JVM logika murni editor
+
+## P7 seragamkan panel direktori Code dengan file manager Terminal (2026-11-17)
+- [x] code: MintKind (jenis berkas + warna nama, salinan murni Kotlin dari FileKind :core-ui) dan MintTreeIcons (port Compose TreeIconView: folder hijau Mint-Y bergradien, berkas kertas bersudut lipat + lambang jenis)
+- [x] code: DirectoryPanel dan pemilih berkas/folder memakai ikon Mint, panah teks, nama monospace berwarna jenis, titik tiga putih 20sp; baris 36dp, ikon 20dp; latar drawer hitam polos, seleksi teal #00BFA5
+- [x] code: uji JVM MintKindTest; code/build.gradle.kts + jvm-tests.yml (:code:testDebugUnitTest)
+- [ ] Verifikasi CI: kompilasi :code dan :app, :code:testDebugUnitTest, gate module/telemetry/secret
+- [ ] Uji perangkat Android 8: buka tab Code > drawer; bandingkan ikon, font, dan tinggi baris dengan drawer Terminal; folder tersembunyi tetap redup; menu titik tiga dan pemilih berkas
+- [ ] Berikutnya: hapus drawFolderIcon/drawFileIcon/extColor/drawExpander/drawMoreDots dan token Ext* yang tak terpakai; pertimbangkan memindahkan FileKind + ikon ke satu modul bersama
