@@ -3,6 +3,8 @@ package com.molina.studio
 import android.app.Application
 import android.os.Debug
 import com.molina.core.storage.SevenZipBackend
+import com.molina.core.stream.StreamResolvers
+import com.molina.engine.newpipe.NewPipeStreamResolver
 import com.molina.log.CrashReporter
 import com.molina.log.MolinaEvents
 import com.molina.log.MolinaLogSetup
@@ -14,6 +16,8 @@ class MolinaApplication : Application() {
         CrashReporter.install()
         BuildInfo.log(this)
         ShieldBootstrap.start(this)
+        // Resolver stream dibuat malas di thread latar saat pertama dipakai (Shield sudah menyala).
+        StreamResolvers.install { NewPipeStreamResolver() }
         SevenZipBackend.writer = DebianSevenZip(this) // molina-27q: 7z bersandi lewat Debian
     }
 

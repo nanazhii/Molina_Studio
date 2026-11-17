@@ -355,3 +355,8 @@
 - [x] StreamQuality penuh dipulihkan di :core-stream (opsi resolusi yang dikecualikan = lencana di Home :app, bukan sheet kualitas pemutar)
 - [ ] Verifikasi CI: jvm-tests manual (:player-mpv:assembleDebug) + gerbang module/telemetry/secret; belum dihubungkan ke :app/:cinema
 - [ ] Tahap 3b: pisah :player-subtitle dan :player-spectrum; 3c: :player-mpv-native dan :player-background; 3d: pecah MPVActivity
+- [x] CI hijau setelah tahap 3 (:player-mpv)
+- [x] Tahap 4: :app bergantung ke :player-mpv/:engine-newpipe/:core-stream (+ core library desugaring API 26); StreamResolvers.install(NewPipeStreamResolver) di MolinaApplication
+- [x] Tahap 4: PlayerLauncher (Intent eksplisit ke MPVActivity) + CinemaFragment jadi beranda peluncur dengan lencana Otomatis/Hanya audio (EXTRA_AUDIO_ONLY -> MpvPrefs.audio_only_video); PlayerBackendStub dihapus
+- [x] Tahap 4: MolinaDownloader lewat proxy Shield (fail-closed); tes SeenMarks/OriginalTitles/SearchLang jadi JUnit di :core-stream; PlayerLauncherTest di :cinema
+- [ ] Verifikasi CI: build.yml (APK memuat 10 .so + pemutar) dan jvm-tests; uji perangkat Android 8.0: buka berkas lokal dan URL YouTube

@@ -547,6 +547,10 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
 
         // set up initial UI state
         readSettings()
+        // [CINEMA-AUDIO] :cinema mengirim mode Otomatis/Hanya audio; disimpan ke setelan sebelum mesin dibuat (init membaca setelan).
+        intent?.takeIf { it.hasExtra(EXTRA_AUDIO_ONLY) }?.let {
+            MpvPrefs.setAudioOnly(applicationContext, it.getBooleanExtra(EXTRA_AUDIO_ONLY, false))
+        }
         forcedAudioOnly = MpvPrefs.current(applicationContext).audioOnlyVideo // [AUDIO-ONLY] status awal
         BackgroundPlaybackState.applyQuality = applyQualityHook // [QUALITY-NOW]
         // [PREF-AUDIO] vid=no sudah dipasang mpv dari pengaturan ini. Tanpa penyelarasan, kunci 480/720 memilih video-only
@@ -4263,6 +4267,8 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     private var intentHeaders: Map<String, String> = emptyMap()
 
     companion object {
+        /** Extra Boolean dari PlayerLauncher (:cinema). Nilai harus sama dengan PlayerLauncher.EXTRA_AUDIO_ONLY. */
+        const val EXTRA_AUDIO_ONLY = "com.molina.player.extra.AUDIO_ONLY"
         private const val TAG = "mpv"
         private const val MAX_MEMORY_PLAYLIST_ENTRIES = 1000
         // Hanya skema yang juga diizinkan UrlPolicy.

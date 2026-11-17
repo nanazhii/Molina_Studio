@@ -4,11 +4,17 @@ import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
+import com.molina.core.security.ProxyEndpoint
+import com.molina.core.security.ShieldRegistry
 import com.molina.core.security.UrlPolicy
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.net.Authenticator
 import java.net.HttpURLConnection
+import java.net.InetSocketAddress
+import java.net.PasswordAuthentication
+import java.net.Proxy
 import java.net.URL
 import java.util.zip.GZIPInputStream
 
@@ -30,7 +36,7 @@ internal class MolinaDownloader : Downloader() {
         if (!url.protocol.equals("https", ignoreCase = true)) {
             throw IOException("Hanya HTTPS yang diizinkan")
         }
-        val conn = url.openConnection() as HttpURLConnection
+        val conn = openConnection(url)
         try {
             conn.connectTimeout = CONNECT_TIMEOUT_MS
             conn.readTimeout = READ_TIMEOUT_MS
@@ -68,6 +74,38 @@ internal class MolinaDownloader : Downloader() {
             return Response(code, conn.responseMessage.orEmpty(), headers, text, conn.url.toString())
         } finally {
             conn.disconnect()
+        }
+    }
+
+    /**
+     * Semua lalu lintas ekstraktor lewat proxy Molina Shield (blocklist pelacak + kebijakan URL).
+     * Shield menyala tetapi proxy mati -> ditolak (fail-closed). Shield belum terpasang atau sengaja
+     * dimatikan di Pengaturan -> koneksi langsung seperti sebelumnya.
+     */
+    private fun openConnection(url: URL): HttpURLConnection {
+        val shield = ShieldRegistry.current()
+        if (shield == null || !shield.config().enabled) return url.openConnection() as HttpURLConnection
+        val ep = shield.endpoint()
+        if (ep == null || shield.failClosed()) throw IOException("Molina Shield tidak berjalan; permintaan ditolak (fail-closed)")
+        ProxyAuth.use(ep)
+        return url.openConnection(Proxy(Proxy.Type.HTTP, InetSocketAddress(ep.host, ep.port))) as HttpURLConnection
+    }
+
+    /** Kredensial proxy lokal untuk tunnel CONNECT (hanya dijawab untuk host:port proxy Shield sendiri). */
+    private object ProxyAuth : Authenticator() {
+        @Volatile private var ep: ProxyEndpoint? = null
+        @Volatile private var installed = false
+
+        @Synchronized fun use(e: ProxyEndpoint) {
+            ep = e
+            if (!installed) { Authenticator.setDefault(this); installed = true }
+        }
+
+        override fun getPasswordAuthentication(): PasswordAuthentication? {
+            val e = ep ?: return null
+            if (requestorType != RequestorType.PROXY) return null
+            if (requestingHost != e.host || requestingPort != e.port) return null
+            return PasswordAuthentication(e.user, e.token.toCharArray())
         }
     }
 

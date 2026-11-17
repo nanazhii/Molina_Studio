@@ -82,6 +82,11 @@ object MpvPrefs {
         return s
     }
 
+    /** Dipakai MPVActivity saat dibuka dengan EXTRA_AUDIO_ONLY; kunci sama dengan layar setelan. */
+    fun setAudioOnly(ctx: Context, value: Boolean) {
+        ensure(ctx).edit().putBoolean("audio_only_video", value).commit()
+    }
+
     /**
      * Simpan status antarmuka yang diubah pemutar sendiri. Memakai commit() (berkas kecil)
      * agar tidak hilang bila proses dihentikan tepat setelah Activity berhenti.

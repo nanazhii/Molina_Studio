@@ -39,6 +39,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions { jvmTarget = "17" }
     // molina-patch26k: commons-compress dan turunannya membawa berkas META-INF yang sama
@@ -55,10 +56,15 @@ dependencies {
     implementation(project(":core-security"))
     implementation(project(":core-storage"))
     implementation(project(":cinema"))
+    implementation(project(":core-stream"))
+    implementation(project(":engine-newpipe"))
+    implementation(project(":player-mpv"))
     implementation(project(":files"))
     implementation(project(":terminal"))
     implementation(project(":terminal-core"))
     implementation(project(":terminal-proot"))
     implementation(project(":settings"))
     implementation(project(":code"))
+    // NewPipeExtractor memakai API Java 11+ (mis. List.of); API 26 memerlukan desugaring.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
 }
