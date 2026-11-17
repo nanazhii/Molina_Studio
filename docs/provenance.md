@@ -86,3 +86,7 @@ lama yang diikuti; kode mesin (`ArchiveEngine`, `ArchiveNames`) ditulis ulang un
 | `lib7zz.so` | 7-Zip 26.05 | `7zzs` statis dari rilis resmi 7z2605-linux-arm64.tar.xz (ip7z/7zip), DIMODIFIKASI: tiga `svc #0` set_robust_list menjadi `nop` (seccomp Android 8), skrip `scripts/sevenzip/build_lib7zz.py` | GNU LGPL, sebagian BSD 2/3-clause, dekoder RAR dengan batasan unRAR (tidak dipakai membuat RAR) |
 
 Hash tarball, biner asli, dan hasil dipin di `scripts/sevenzip/pins.sha256` dan diperiksa `SevenZipBundlePinTest`. Teks lisensi: `app/src/main/assets/licenses/7zip-License.txt`.
+
+## Aset: cacert.pem (Patch A)
+
+`mpv-native/src/main/assets/cacert.pem` disalin apa adanya dari mpv-android ebf1b3f0cbe9 (app/src/main/assets/cacert.pem), SHA-256 `796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe` (dipin di `MpvConfigTest`). Isi: bundel sertifikat akar Mozilla hasil ekstraksi curl (data Mozilla berlisensi MPL-2.0; verifikasi sebelum rilis). Dipakai mpv lewat `tls-ca-file` (tls-verify=yes). Memperbarui berkas ini = naikkan pin di skrip dan uji secara sadar.

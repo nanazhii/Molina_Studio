@@ -85,12 +85,7 @@ class MpvPlayerSession internal constructor(
 
     private val observer = object : MPVLib.EventObserver {
         override fun eventProperty(property: String) = Unit
-        override fun eventProperty(property: String, value: Long) {
-            when (property) {
-                "time-pos" -> emit(mapper.onTimePos(value))
-                "duration" -> mapper.onDuration(value)
-            }
-        }
+        override fun eventProperty(property: String, value: Long) = Unit
         override fun eventProperty(property: String, value: Boolean) {
             when (property) {
                 "pause" -> emit(mapper.onPause(value))
@@ -98,7 +93,12 @@ class MpvPlayerSession internal constructor(
             }
         }
         override fun eventProperty(property: String, value: String) = Unit
-        override fun eventProperty(property: String, value: Double) = Unit
+        override fun eventProperty(property: String, value: Double) {
+            when (property) {
+                "time-pos" -> emit(mapper.onTimePos(value))
+                "duration" -> mapper.onDuration(value)
+            }
+        }
         override fun event(eventId: Int) = emit(mapper.onEvent(eventId))
     }
 
@@ -111,6 +111,20 @@ class MpvPlayerSession internal constructor(
         return try {
             MPVLib.create(appContext)
             MpvNativeLog.attach(sessionId, logger)
+            // molina-patch-a: config-dir (cacert.pem + fonts.conf), TLS ketat (gagal tertutup), cache shader
+            val cfg = MpvConfig.prepare(appContext)
+            MPVLib.setOptionString("config", "yes")
+            MPVLib.setOptionString("config-dir", cfg.dir.path)
+            for (opt in arrayOf("gpu-shader-cache-dir", "icc-cache-dir"))
+                MPVLib.setOptionString(opt, appContext.cacheDir.path)
+            MPVLib.setOptionString("tls-verify", "yes")
+            MPVLib.setOptionString("tls-ca-file", cfg.caFile.path)
+            if (!cfg.certOk) {
+                MolinaEvents.bug("mpv", "tls-ca-missing", "cacert.pem tidak tersedia; HTTPS akan gagal verifikasi", level = LogLevel.WARN, id = sessionId, logger = logger)
+            }
+            if (!cfg.fontsOk) {
+                MolinaEvents.bug("mpv", "fonts-conf-missing", "fonts.conf tidak tertulis; font subtitle sistem mungkin tidak ditemukan", level = LogLevel.WARN, id = sessionId, logger = logger)
+            }
             MPVLib.setOptionString("vo", "gpu")
             MPVLib.setOptionString("gpu-context", "android")
             MPVLib.setOptionString("opengl-es", "yes")
@@ -128,8 +142,8 @@ class MpvPlayerSession internal constructor(
             MPVLib.addObserver(observer)
             MPVLib.observeProperty("pause", MPVLib.MpvFormat.MPV_FORMAT_FLAG)
             MPVLib.observeProperty("eof-reached", MPVLib.MpvFormat.MPV_FORMAT_FLAG)
-            MPVLib.observeProperty("time-pos", MPVLib.MpvFormat.MPV_FORMAT_INT64)
-            MPVLib.observeProperty("duration", MPVLib.MpvFormat.MPV_FORMAT_INT64)
+            MPVLib.observeProperty("time-pos", MPVLib.MpvFormat.MPV_FORMAT_DOUBLE)
+            MPVLib.observeProperty("duration", MPVLib.MpvFormat.MPV_FORMAT_DOUBLE)
             behavior("session-start")
             ExitHooks.add("mpv-$sessionId") { release() }
             true
