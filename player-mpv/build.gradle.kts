@@ -30,4 +30,9 @@ dependencies {
     implementation(libs.androidx.media)
     implementation(libs.androidx.preference.ktx)
     implementation(libs.material)
+    api(libs.kotlinx.coroutines.android)
+    api(project(":core-log"))
+    api(project(":core-security"))
+    api(project(":player-api"))
+    testImplementation(libs.junit)
 }
