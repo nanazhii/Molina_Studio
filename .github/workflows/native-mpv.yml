@@ -37,7 +37,7 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: _native_out
-          key: native-mpv-arm64-v1-${{ runner.os }}-${{ hashFiles('native/pins.env', 'native/pins.sha256', 'native/molina_ffmpeg_profile.sh', 'scripts/native_mpv.sh', 'scripts/native_wget.sh', 'scripts/ensure_ndk.sh', 'scripts/ffmpeg_components_audit.sh', 'scripts/native_audit.sh') }}
+          key: native-mpv-arm64-v1-${{ runner.os }}-${{ hashFiles('player-mpv/src/main/jni/**', 'native/pins.env', 'native/pins.sha256', 'native/molina_ffmpeg_profile.sh', 'scripts/native_mpv.sh', 'scripts/native_wget.sh', 'scripts/ensure_ndk.sh', 'scripts/ffmpeg_components_audit.sh', 'scripts/native_audit.sh') }}
       - name: Verifikasi hasil cache
         id: verify
         env:

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Unduh pustaka native mpv dari GitHub Release repo ini, verifikasi SHA-256, lalu ekstrak ke mpv-native.
+# Unduh pustaka native mpv dari GitHub Release repo ini, verifikasi SHA-256, lalu ekstrak ke player-mpv.
 # Pin ada di native/prebuilt.env. Kosong = APK dibangun tanpa .so (peringatan, bukan galat).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck disable=SC1091
 . native/prebuilt.env
-DEST=mpv-native/src/main
+DEST=player-mpv/src/main
 if [ -z "${NATIVE_TAG:-}" ] && [ -z "${NATIVE_SHA256:-}" ]; then
   echo "::warning::native/prebuilt.env belum dipin: APK dibangun TANPA libmpv/libplayer"
   exit 0
