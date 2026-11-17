@@ -129,6 +129,8 @@ class MpvPlayerSession internal constructor(
                 MPVLib.setOptionString(opt, appContext.cacheDir.path)
             MPVLib.setOptionString("tls-verify", "yes")
             MPVLib.setOptionString("tls-ca-file", cfg.caFile.path)
+            // molina-patch-c1b: yt-dlp tidak dibundel; matikan ytdl_hook agar tidak memanggil subproses dan log BUG palsu
+            MPVLib.setOptionString("ytdl", "no")
             if (!cfg.certOk) {
                 MolinaEvents.bug("mpv", "tls-ca-missing", "cacert.pem tidak tersedia; HTTPS akan gagal verifikasi", level = LogLevel.WARN, id = sessionId, logger = logger)
             }
