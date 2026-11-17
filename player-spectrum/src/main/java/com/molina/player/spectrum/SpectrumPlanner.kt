@@ -1,5 +1,4 @@
-package com.molina.player
-
+package com.molina.player.spectrum
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -8,7 +7,7 @@ import kotlin.math.max
  * menggeser seek ke posisi yang belum teranalisis, dekoder harus melompat ke playhead (bukan menunggu sampai
  * menyusul), lalu kembali mengisi celah di belakangnya. Kotlin murni agar bisa diuji di scripts/mpv-tests.
  */
-internal sealed class SpectrumStep {
+sealed class SpectrumStep {
     object Continue : SpectrumStep()
     object Done : SpectrumStep()
 
@@ -16,7 +15,7 @@ internal sealed class SpectrumStep {
     class Jump(val frame: Int, val forPlayhead: Boolean) : SpectrumStep()
 }
 
-internal object SpectrumPlanner {
+object SpectrumPlanner {
     /** Playhead harus lebih jauh dari frontier sebanyak ini (2 detik) baru dianggap perlu melompat. */
     const val JUMP_AHEAD_FRAMES = 2 * SpectrumMath.FPS
     /** Tidak melompat lagi untuk playhead yang berdekatan (1,5 detik) dengan lompatan sebelumnya. */

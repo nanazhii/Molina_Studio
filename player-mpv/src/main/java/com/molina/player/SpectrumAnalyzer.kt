@@ -1,5 +1,8 @@
 package com.molina.player
 
+import com.molina.player.spectrum.SpectrumJump
+import com.molina.player.spectrum.SpectrumMath
+import com.molina.player.spectrum.SpectrumTrack
 import android.os.Process
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

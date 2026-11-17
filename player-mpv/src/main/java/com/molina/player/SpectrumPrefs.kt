@@ -1,5 +1,6 @@
 package com.molina.player
 
+import com.molina.player.spectrum.SpectrumColorMode
 import android.content.Context
 import androidx.preference.PreferenceManager
 

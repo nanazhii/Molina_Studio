@@ -1,5 +1,4 @@
-package com.molina.player
-
+package com.molina.player.subtitle
 import java.io.File
 
 /*
@@ -9,7 +8,7 @@ import java.io.File
  */
 
 /** Ringkasan trek subtitle aktif dari properti track-list mpv. */
-internal data class SubTrackInfo(
+data class SubTrackInfo(
     val id: Int,
     val external: Boolean,
     val externalFilename: String?,
@@ -19,7 +18,7 @@ internal data class SubTrackInfo(
     val lang: String?,
 )
 
-internal sealed class ConvertPlan {
+sealed class ConvertPlan {
     /** Subtitle eksternal berupa berkas lokal: baca langsung. */
     data class FromFile(val path: String) : ConvertPlan()
     /** Tertanam di video, berbentuk teks, dan toggle ekstraksi hidup: perlu ekstraktor. */
@@ -31,7 +30,7 @@ internal sealed class ConvertPlan {
     object Unsupported : ConvertPlan()
 }
 
-internal object SubConvertPlanner {
+object SubConvertPlanner {
     private val BITMAP = setOf("hdmv_pgs_subtitle", "pgssub", "dvd_subtitle", "dvdsub", "dvb_subtitle", "dvbsub", "xsub", "dvb_teletext")
     private val TEXT = setOf(
         "subrip", "srt", "ass", "ssa", "mov_text", "webvtt", "text", "subviewer", "subviewer1",

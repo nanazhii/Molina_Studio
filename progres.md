@@ -360,3 +360,8 @@
 - [x] Tahap 4: PlayerLauncher (Intent eksplisit ke MPVActivity) + CinemaFragment jadi beranda peluncur dengan lencana Otomatis/Hanya audio (EXTRA_AUDIO_ONLY -> MpvPrefs.audio_only_video); PlayerBackendStub dihapus
 - [x] Tahap 4: MolinaDownloader lewat proxy Shield (fail-closed); tes SeenMarks/OriginalTitles/SearchLang jadi JUnit di :core-stream; PlayerLauncherTest di :cinema
 - [ ] Verifikasi CI: build.yml (APK memuat 10 .so + pemutar) dan jvm-tests; uji perangkat Android 8.0: buka berkas lokal dan URL YouTube
+- [x] CI hijau setelah tahap 4 (wiring :app, PlayerLauncher, resolver NewPipe)
+- [x] Tahap 3b: :player-subtitle (SubtitleCodec, SubStyle, AssCodec, SubEdit, SubTextFiles, SubConvertPlan, SubtitleExtractor/Command) dan :player-spectrum (SpectrumMath, SpectrumPlanner) dipisah dari :player-mpv; UI/Decoder/Analyzer tetap di :player-mpv (butuh Android)
+- [x] Tahap 3b: tes lama (SubEdit, Subtitle, SpectrumMath) jadi JUnit; jvm-tests menjalankan :player-subtitle dan :player-spectrum
+- [ ] SpectrumSeekTests lama usang (API restart/frameAt/frameIndex sudah hilang); tulis ulang untuk SpectrumPlanner/SpectrumFrameBuilder saat ini
+- [ ] Verifikasi CI: build.yml + jvm-tests; lalu tahap 3c (:player-mpv-native dan :player-background)

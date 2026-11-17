@@ -1,5 +1,4 @@
-package com.molina.player
-
+package com.molina.player.subtitle
 /*
  * [SUBTITLE-STYLE] Data murni (tanpa Android) untuk Style Editor dan koreksi kecepatan subtitle.
  * Semua properti ini milik mpv/libass yang sudah dibangun di libmpv Molina; tidak ada native baru.
@@ -9,9 +8,9 @@ package com.molina.player
  * Preset gaya. Semua preset HARUS memuat kumpulan kunci yang sama supaya berpindah preset
  * selalu menimpa total gaya sebelumnya (diperiksa di scripts/mpv-tests).
  */
-internal data class SubStylePreset(val id: String, val props: List<Pair<String, String>>)
+data class SubStylePreset(val id: String, val props: List<Pair<String, String>>)
 
-internal object SubStyles {
+object SubStyles {
     const val PREF_PRESET = "sub_style_preset"
     const val PREF_SCALE = "sub_style_scale"
     const val PREF_POS = "sub_style_pos"
@@ -44,11 +43,11 @@ internal object SubStyles {
  * (contoh resmi manual mpv: --sub-speed=25/23.976 untuk subtitle yang dimuat dengan asumsi 23.976 fps
  * dan diputar pada 25 fps). INI KEBALIKAN dari mengalikan timestamp berkas (lihat SrtCodec.scale).
  */
-internal data class SubSpeedPreset(val subFps: Double, val videoFps: Double) {
+data class SubSpeedPreset(val subFps: Double, val videoFps: Double) {
     val speed: Double get() = videoFps / subFps
 }
 
-internal object SubSpeeds {
+object SubSpeeds {
     private const val NTSC_FILM = 24000.0 / 1001.0 // 23,976
     const val PROPERTY = "sub-speed"
 

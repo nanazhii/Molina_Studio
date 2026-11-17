@@ -31,5 +31,7 @@ dependencies {
     implementation(project(":core-log"))
     implementation(project(":core-security"))
     implementation(project(":core-stream"))
+    implementation(project(":player-spectrum"))
+    implementation(project(":player-subtitle"))
     testImplementation(libs.junit)
 }

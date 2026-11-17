@@ -1,5 +1,4 @@
-package com.molina.player
-
+package com.molina.player.subtitle
 import kotlin.math.roundToLong
 
 /*
@@ -10,7 +9,7 @@ import kotlin.math.roundToLong
  */
 
 /** Gaya ASS tunggal. Warna "#RRGGBB" dikonversi ke format ASS &HAABBGGRR. */
-internal data class AssStyle(
+data class AssStyle(
     val fontName: String = "Arial",
     val fontSize: Int = 48,
     val primaryHex: String = "#FFFFFF",
@@ -36,26 +35,26 @@ internal data class AssStyle(
 
 enum class SubFormat { SRT, ASS, UNKNOWN }
 
-internal object AssCodec {
+object AssCodec {
     private const val MAX_CUES = 50_000
     private val OVERRIDE = Regex("""\{[^}]*}""")
     private val DEFAULT_FORMAT = listOf("Layer", "Start", "End", "Style", "Name", "MarginL", "MarginR", "MarginV", "Effect", "Text")
 
     /** "H:MM:SS.cc" -> ms. Pecahan 1-3 digit diterima. null bila bukan waktu. */
-    internal fun parseTime(s: String): Long? {
+    fun parseTime(s: String): Long? {
         val m = Regex("""^\s*(\d+):(\d{1,2}):(\d{1,2})[.,](\d{1,3})\s*$""").matchEntire(s) ?: return null
         val (h, mi, se, fr) = m.destructured
         val ms = when (fr.length) { 1 -> fr.toLong() * 100; 2 -> fr.toLong() * 10; else -> fr.toLong() }
         return h.toLong() * 3_600_000 + mi.toLong() * 60_000 + se.toLong() * 1_000 + ms
     }
 
-    internal fun formatTime(ms: Long): String {
+    fun formatTime(ms: Long): String {
         val cs = (ms.coerceAtLeast(0) / 10.0).roundToLong() // ASS hanya sentisekon
         return "%d:%02d:%02d.%02d".format(cs / 360_000, cs / 6_000 % 60, cs / 100 % 60, cs % 100)
     }
 
     /** Teks dialog ASS -> teks polos: buang {tag}, \N/\n jadi baris baru, \h jadi spasi. */
-    internal fun plain(text: String): String =
+    fun plain(text: String): String =
         text.replace(OVERRIDE, "").replace("\\N", "\n").replace("\\n", "\n").replace("\\h", " ").trim()
 
     fun parse(input: String): List<SubCue> {
@@ -114,7 +113,7 @@ internal object AssCodec {
     }
 }
 
-internal object SubtitleConvert {
+object SubtitleConvert {
     /** Deteksi dari isi (bukan ekstensi): ASS punya [Script Info]/[Events]; SRT punya "-->". */
     fun detect(raw: String): SubFormat {
         val head = raw.removePrefix("\uFEFF").take(4_000)

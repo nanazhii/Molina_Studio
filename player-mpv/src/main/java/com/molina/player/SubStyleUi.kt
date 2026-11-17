@@ -1,5 +1,8 @@
 package com.molina.player
 
+import com.molina.player.subtitle.SubSpeeds
+import com.molina.player.subtitle.SubStylePreset
+import com.molina.player.subtitle.SubStyles
 import android.app.Activity
 import android.content.Context
 import android.view.LayoutInflater

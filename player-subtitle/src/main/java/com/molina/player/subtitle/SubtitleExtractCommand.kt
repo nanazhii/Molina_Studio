@@ -1,5 +1,4 @@
-package com.molina.player
-
+package com.molina.player.subtitle
 /**
  * [SUBTITLE-EXTRACT] Penyusun argv FFmpeg untuk mengekstrak satu stream subtitle. Murni (tanpa Android) supaya
  * bisa diuji di scripts/mpv-tests. Argv dijalankan TANPA shell (ProotScriptExecutor mode guestArgv), jadi spasi,

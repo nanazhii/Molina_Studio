@@ -1,12 +1,11 @@
-package com.molina.player
-
+package com.molina.player.subtitle
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.charset.CharacterCodingException
 import java.nio.charset.CodingErrorAction
 
 /** Pembaca teks berkas subtitle lokal (dipakai SubConvertUi). Kotlin murni (java.io), panggil dari thread IO. */
-internal object SubTextFiles {
+object SubTextFiles {
     const val MAX_BYTES = 2_000_000L
 
     /** Baca sebagai UTF-8 ketat; bila bukan UTF-8 sah, pakai windows-1252 (lazim pada subtitle lama). */

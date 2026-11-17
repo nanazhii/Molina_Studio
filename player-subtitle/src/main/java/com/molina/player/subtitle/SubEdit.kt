@@ -1,5 +1,4 @@
-package com.molina.player
-
+package com.molina.player.subtitle
 /*
  * [SUBTITLE-EDIT] Logika murni (tanpa Android) untuk Editor Subtitle: validasi, ubah/sisip/hapus cue,
  * parse/format timecode, deteksi tumpang tindih, dan sesi dengan undo/redo. Dipakai SubEditorDialog;
@@ -8,13 +7,13 @@ package com.molina.player
 
 enum class EditError { BAD_TIME, END_BEFORE_START, EMPTY_TEXT, TOO_LONG, TOO_MANY, NO_SUCH_CUE }
 
-internal sealed class EditResult {
+sealed class EditResult {
     /** [index] = posisi cue yang baru saja diubah/disisipkan di dalam [cues] (-1 bila dihapus). */
     class Ok(val cues: List<SubCue>, val index: Int) : EditResult()
     class Error(val error: EditError) : EditResult()
 }
 
-internal object TimeCode {
+object TimeCode {
     private val HMS = Regex("""^(?:(\d{1,3}):)?(\d{1,2}):(\d{1,2})(?:[.,](\d{1,3}))?$""")
     private val SECONDS = Regex("""^(\d{1,6})(?:[.,](\d{1,3}))?$""")
     const val MAX_MS = 359_999_999L // 99:59:59.999
@@ -44,7 +43,7 @@ internal object TimeCode {
     }
 }
 
-internal object SubEdit {
+object SubEdit {
     const val MAX_CUES = 50_000
     const val MAX_TEXT = 2_000
     const val DEFAULT_DURATION_MS = 2_000L
@@ -136,7 +135,7 @@ internal object SubEdit {
 }
 
 /** Sesi penyuntingan: riwayat undo/redo (daftar immutable berbagi struktur, jadi murah) dan status "belum disimpan". */
-internal class SubEditSession(initial: List<SubCue>, private val maxHistory: Int = 200) {
+class SubEditSession(initial: List<SubCue>, private val maxHistory: Int = 200) {
     private var baseline: List<SubCue> = initial.toList()
     private val undoStack = ArrayDeque<List<SubCue>>()
     private val redoStack = ArrayDeque<List<SubCue>>()

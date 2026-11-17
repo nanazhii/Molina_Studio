@@ -1,5 +1,4 @@
-package com.molina.player
-
+package com.molina.player.subtitle
 /**
  * [SUBTITLE-CONVERT] Titik sambung untuk mengekstrak subtitle TERTANAM dari video. :feature:mpv tidak bisa
  * memanggil PRoot (arah dependensi :app -> :feature:mpv), jadi :app mendaftarkan implementasinya ke

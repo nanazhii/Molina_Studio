@@ -1,5 +1,10 @@
 package com.molina.player
 
+import com.molina.player.spectrum.SpectrumColorMode
+import com.molina.player.spectrum.SpectrumColors
+import com.molina.player.spectrum.SpectrumMath
+import com.molina.player.spectrum.SpectrumSmoother
+import com.molina.player.spectrum.SpectrumTrack
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color

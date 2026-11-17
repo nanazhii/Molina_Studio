@@ -1,5 +1,4 @@
-package com.molina.player
-
+package com.molina.player.spectrum
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.exp
@@ -17,7 +16,7 @@ import kotlin.math.sqrt
  * SpectrumDecoder (MediaCodec), bukan dari audio mpv, sehingga tidak menyentuh JNI/native mpv dan selalu
  * sinkron dengan posisi putar (termasuk setelah seek). Diuji di scripts/mpv-tests.
  */
-internal object SpectrumMath {
+object SpectrumMath {
     const val BANDS = 32
     const val FFT_SIZE = 4096 // resolusi ~10,8 Hz @44,1 kHz: pita bass selaras dengan nada
     /** FFT beresolusi tinggi (~5,4 Hz/bin @44,1 kHz) khusus pita bass (pusat < LOW_CUTOFF_HZ). */
@@ -141,7 +140,7 @@ internal object SpectrumMath {
  * lompat setelah seek) dan dibaca renderer (thread UI). Tiap frame punya penanda terisi; [ready] = jumlah frame terisi.
  * Semua akses ke penyimpanan memakai satu kunci (kritis pendek), jadi aman dari banyak thread. [SPECTRUM-JUMP]
  */
-internal class SpectrumTrack(
+class SpectrumTrack(
     val sampleRate: Int,
     val hopSamples: Int,
     val windowSamples: Int = SpectrumMath.FFT_SIZE,
@@ -254,7 +253,7 @@ internal class SpectrumTrack(
  * [SPECTRUM-JUMP] Kebijakan dekoder lompat (logika murni, diuji di scripts/mpv-tests). Setelah seek, bila posisi putar
  * jauh di depan kepala analisis dan belum ada datanya, mulai dekoder kedua dari posisi itu.
  */
-internal object SpectrumJump {
+object SpectrumJump {
     const val NEAR = 90  // ~3 dtk: kepala berurutan (4x waktu nyata) akan tiba sendiri
     const val LEAD = 45  // ~1,5 dtk data harus ada di depan posisi agar dianggap aman
     const val BACK = 4   // mulai sedikit sebelum posisi
@@ -272,7 +271,7 @@ internal object SpectrumJump {
 }
 
 /** Penghalus gerak batang: naik cepat, turun lambat, plus penanda puncak yang tertahan lalu jatuh. */
-internal class SpectrumSmoother(val bands: Int, private val attackMs: Float = 35f, private val releaseMs: Float = 200f,
+class SpectrumSmoother(val bands: Int, private val attackMs: Float = 35f, private val releaseMs: Float = 200f,
                                 private val peakHoldMs: Float = 220f, private val peakFallPerSec: Float = 0.7f) {
     val level = FloatArray(bands)
     val peak = FloatArray(bands)
@@ -306,7 +305,7 @@ internal class SpectrumSmoother(val bands: Int, private val attackMs: Float = 35
  * (termasuk bass) sepenuhnya berada di dalam sampel yang diterima, jadi hasilnya identik dengan analisis berurutan.
  * Frame yang sudah terisi dilewati tanpa ditimpa; [metFilled] menyala bila bertemu frame terisi setelah menulis.
  */
-internal class SpectrumFrameBuilder(val sampleRate: Int, val track: SpectrumTrack, baseSample: Long = 0L) {
+class SpectrumFrameBuilder(val sampleRate: Int, val track: SpectrumTrack, baseSample: Long = 0L) {
     private val n = SpectrumMath.FFT_SIZE
     private val nl = SpectrumMath.FFT_LOW_SIZE
     private val lookahead = ((nl - n) / 2).toLong()
@@ -365,7 +364,7 @@ internal class SpectrumFrameBuilder(val sampleRate: Int, val track: SpectrumTrac
 }
 
 /** Mode warna visualizer spektrum (dipilih pengguna, disimpan di SpectrumPrefs). */
-internal enum class SpectrumColorMode {
+enum class SpectrumColorMode {
     ACCENT, FREQUENCY, CINEMA;
 
     /** Putaran mode: ACCENT -> FREQUENCY -> CINEMA -> ACCENT. */
@@ -388,7 +387,7 @@ internal enum class SpectrumColorMode {
 }
 
 /** Palet warna batang spektrum (ARGB Int murni, tanpa Android agar bisa diuji di JVM). */
-internal object SpectrumColors {
+object SpectrumColors {
     val WARM = 0xFFFF8A3D.toInt()   // bass (mode FREQUENCY)
     val COOL = 0xFF3FA9F5.toInt()   // treble (mode FREQUENCY)
     val MAROON = 0xFF9B1B30.toInt() // dasar batang (mode CINEMA)

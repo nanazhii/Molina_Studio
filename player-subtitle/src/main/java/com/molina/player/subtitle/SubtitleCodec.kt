@@ -1,14 +1,13 @@
-package com.molina.player
-
+package com.molina.player.subtitle
 import kotlin.math.roundToLong
 
 /*
  * [SUBTITLE] Codec SRT murni (tanpa Android) untuk Konverter, ekspor hasil OCR, dan simpan hasil sinkronisasi.
  * Pemutaran tidak butuh ini: sinkronisasi langsung memakai properti mpv sub-delay / sub-speed.
  */
-internal data class SubCue(val startMs: Long, val endMs: Long, val text: String)
+data class SubCue(val startMs: Long, val endMs: Long, val text: String)
 
-internal object SrtCodec {
+object SrtCodec {
     private const val MAX_CUES = 50_000
     private val TIMING = Regex(
         """(\d{1,3}):(\d{2}):(\d{2})[,.](\d{1,3})\s*-->\s*(\d{1,3}):(\d{2}):(\d{2})[,.](\d{1,3})"""

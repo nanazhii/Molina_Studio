@@ -1,5 +1,6 @@
 package com.molina.player
 
+import com.molina.player.spectrum.SpectrumColorMode
 import com.molina.core.stream.PlaylistExtras
 import com.molina.core.stream.PlaylistPlan
 import com.molina.core.stream.RollingQueue

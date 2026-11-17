@@ -1,5 +1,8 @@
 package com.molina.player
 
+import com.molina.player.spectrum.SpectrumFrameBuilder
+import com.molina.player.spectrum.SpectrumMath
+import com.molina.player.spectrum.SpectrumTrack
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat

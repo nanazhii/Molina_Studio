@@ -1,5 +1,11 @@
 package com.molina.player
 
+import com.molina.player.subtitle.EditError
+import com.molina.player.subtitle.SubCue
+import com.molina.player.subtitle.SubEdit
+import com.molina.player.subtitle.SubEditSession
+import com.molina.player.subtitle.SubFormat
+import com.molina.player.subtitle.TimeCode
 import android.app.Activity
 import android.graphics.Color
 import android.graphics.Typeface
