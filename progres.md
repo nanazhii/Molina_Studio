@@ -269,3 +269,11 @@
 - [ ] Berikutnya: TouchGestures penuh (geser volume/kecerahan/seek), pemilih berkas dari :filemanager (Patch C), PlaylistDialog (golongan B)
 - [x] mpv-native: opsi `ytdl=no` (yt-dlp tidak dibundel; hentikan log BUG ytdl_hook); investigasi 'Failed to recognize file format' menunggu input/log INFO dari perangkat
 - [x] C1c: kontrol Cinema hijau mint (colorAccent/ControlActivated, tint seekbar+input), opsi 2 baris x 3 tombol, hint input ringkas
+
+## P6 port editor Code dari repo lama (2026-11-17)
+- [x] Modul `code` (feature, Compose) disalin dari repo lama; pratinjau dan antarmuka eksekutor dilebur; tab ke-5 Code di BottomNav via CodeFragment + CodeSessionHolder
+- [x] Dikecualikan: palet perintah, folder proyek, riwayat proyek, aksi file (menu), bagikan (menu), kirim ke Script Execution, simpan ke Vault, sisipkan/jalankan ke Terminal, snippet, impor nano; Notifikasi perubahan dipertahankan (ProjectLog -> ChangeEntry)
+- [x] Gerbang: module_gate (FEATURE += code), telemetry_gate (VENDORED_PREFIXES untuk grammar textmate); provenance.md + arsitektur.md diperbarui
+- [ ] Verifikasi CI: kompilasi :code dan :app (Compose + Sora, belum bisa dicoba di sandbox), module/telemetry/secret gate
+- [ ] Uji perangkat Android 8: buka tab Code, buka/simpan berkas di /storage/emulated/0/Molina, pindah tab lalu kembali (tab tetap), putar layar, Notifikasi perubahan, Riwayat versi
+- [ ] Berikutnya: adapter ScriptExecutor/StreamExecutor ke ProotExec (Periksa Python/Shell, Python langsung, Jalankan di Keluaran), buka berkas dari tab Berkas ke Code, uji JVM logika murni editor

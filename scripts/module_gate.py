@@ -10,7 +10,7 @@ Lapisan: app > feature > (api, engine) > core. Aturan:
 """
 import re, sys, pathlib
 
-FEATURE = {"cinema", "files", "terminal", "settings"}
+FEATURE = {"cinema", "files", "terminal", "settings", "code"}
 API = {"player-api", "terminal-api"}
 ENGINE = {"mpv-native", "terminal-core", "terminal-emulator", "terminal-view", "terminal-pty", "terminal-proot", "filemanager"}
 OWN_API = {"cinema": {"player-api"}, "terminal": {"terminal-api"},
