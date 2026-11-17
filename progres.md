@@ -228,16 +228,6 @@
 - [x] TerminalPrefs.shieldProxy + sakelar di Setelan > Terminal; TerminalWiring memanggil ShieldGuestEnv.install setelah NanoSupport
 - [ ] Verifikasi CI: kompilasi :terminal-proot, :settings, :app; jvm-tests :terminal-proot:testDebugUnitTest
 - [ ] Uji perangkat: nyalakan sakelar, sesi baru, `env | grep -i proxy`, `curl -I https://example.com`, `apt update`, pelacak ditolak; matikan sakelar dan pastikan variabel hilang
-<<<<<<< HEAD
-
-## Patch A mpv (2026-11-17)
-- [x] mpv-native: MpvConfig (config-dir filesDir/mpv: cacert.pem + fonts.conf), tls-verify=yes + tls-ca-file, cache shader/ICC
-- [x] time-pos/duration diobservasi DOUBLE; Position ms resolusi halus, throttle 200 ms (seek tetap lolos); uji mapper + MpvConfigTest
-- [x] log-contract: mpv.tls-ca-missing, mpv.fonts-conf-missing; provenance: aset cacert.pem
-- [ ] Verifikasi CI: :mpv-native:testDebugUnitTest + kompilasi :mpv-native, :app; gate secret/telemetry/module
-- [ ] Uji perangkat Android 8: https publik (sertifikat), subtitle .srt/.ass tampil dengan font sistem, seekbar halus
-- [ ] Berikutnya: Patch B (kontrak player-api: trek audio/subtitle, kecepatan, seek relatif) dan pemilih berkas
-=======
 - [ui-keamanan] Setelan > Keamanan: sakelar Shield/pelacak/LAN/Referer, kebijakan rtmp/rtsp, ringkasan snapshot, daftar blokir terbaru. ShieldPrefs jadi sumber tunggal kunci prefs; ShieldBootstrap memakainya. Tes: ShieldPrefsTest. Menunggu hasil CI.
 
 ## Tanggal pintar, aksen baru, sumber bersama (2026-11-16)
@@ -249,4 +239,21 @@
 - [ ] Verifikasi CI: :core-ui, :filemanager, :terminal, :app
 - [ ] Uji perangkat Android 8.0: warna hijau item baru, label Kemarin, tampilan Terminal tidak berubah
 - [ ] Opsional: aktifkan baris dua tingkat di Terminal (lihat langkah di catatan)
->>>>>>> origin/main
+
+## Patch A mpv (2026-11-17)
+- [x] mpv-native: MpvConfig (config-dir filesDir/mpv: cacert.pem + fonts.conf), tls-verify=yes + tls-ca-file, cache shader/ICC
+- [x] time-pos/duration diobservasi DOUBLE; Position ms resolusi halus, throttle 200 ms (seek tetap lolos); uji mapper + MpvConfigTest
+- [x] log-contract: mpv.tls-ca-missing, mpv.fonts-conf-missing; provenance: aset cacert.pem
+- [x] Verifikasi CI Patch A: hijau (run #132 pada main setelah merge PR #14)
+- [ ] Uji perangkat Android 8: https publik (sertifikat), subtitle .srt/.ass tampil dengan font sistem, seekbar halus
+- [ ] Berikutnya: Patch B (kontrak player-api: trek audio/subtitle, kecepatan, seek relatif) dan pemilih berkas
+
+## Patch B mpv (2026-11-17)
+- [x] player-api: TrackInfo/TrackType, AspectMode, PlayerLimits; event TracksChanged + SpeedChanged; aksi selectAudio, selectSubtitle(null=mati), setSpeed, seekRelative, setAspect, setAudioDelay, setSubtitleDelay
+- [x] mpv-native: MpvTrackParser (track-list per trek), MpvOptions, mapper (dedupe trek, reset saat berkas baru, speed); sesi memvalidasi id trek (BUG mpv.track-invalid); observasi track-list/aid/sid/speed
+- [x] LoggingMolinaPlayerSession: BEHAV mpv.audio-select/sub-select/aspect/tracks/speed; seek relatif, kecepatan, tunda = DEBUG
+- [x] cinema: when PlayerEvent dilengkapi (tanpa UI baru); docs/log-contract.md diperbarui; penanda konflik progres.md diselesaikan
+- [ ] Verifikasi CI: :mpv-native:testDebugUnitTest + kompilasi :player-api, :mpv-native, :cinema, :app; gate telemetry/secret/module
+- [ ] Uji perangkat Android 8 (setelah UI pemilih ada): trek audio ganda, subtitle on/off, kecepatan 0.5x/2x, seek +-10 dtk
+- [ ] Uji perangkat Patch A (https publik, subtitle .srt/.ass, seekbar halus) masih menunggu
+- [ ] Berikutnya: Patch C (pemilih berkas dari :filemanager + panel trek di CinemaFragment)

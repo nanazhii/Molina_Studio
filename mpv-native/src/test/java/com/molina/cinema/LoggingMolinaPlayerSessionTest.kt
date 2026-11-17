@@ -32,6 +32,13 @@ class LoggingMolinaPlayerSessionTest {
         override fun play() {}
         override fun pause() {}
         override fun seekTo(positionMs: Long) {}
+        override fun selectAudio(id: Int) {}
+        override fun selectSubtitle(id: Int?) {}
+        override fun setSpeed(speed: Double) {}
+        override fun seekRelative(deltaMs: Long) {}
+        override fun setAspect(mode: AspectMode) {}
+        override fun setAudioDelay(ms: Long) {}
+        override fun setSubtitleDelay(ms: Long) {}
         override fun release() {}
     }
 
@@ -68,5 +75,24 @@ class LoggingMolinaPlayerSessionTest {
         assertEquals(LogLevel.DEBUG, sink.entries[3].level)
         assertTrue(msgs[4].startsWith("[BEHAV:mpv.release]"))
         assertTrue(msgs.none { "rahasia" in it })
+    }
+
+    // molina-patch-b
+    @Test
+    fun trackAndAspectCommandsAreBehaviorOthersDebug() {
+        val sink = CaptureSink()
+        val session = LoggingMolinaPlayerSession(FakePlayer(), "p1", MolinaLogger(listOf(sink)))
+        session.selectAudio(2)
+        session.selectSubtitle(null)
+        session.setAspect(AspectMode.RATIO_16_9)
+        session.setSpeed(1.5)
+        session.seekRelative(-10_000)
+        val msgs = sink.entries.map { it.message }
+        assertEquals(5, msgs.size)
+        assertTrue(msgs[0].startsWith("[BEHAV:mpv.audio-select]") && "id=2" in msgs[0])
+        assertTrue(msgs[1].startsWith("[BEHAV:mpv.sub-select]") && "id=off" in msgs[1])
+        assertTrue(msgs[2].startsWith("[BEHAV:mpv.aspect]") && "mode=RATIO_16_9" in msgs[2])
+        assertEquals(LogLevel.DEBUG, sink.entries[3].level)
+        assertEquals(LogLevel.DEBUG, sink.entries[4].level)
     }
 }

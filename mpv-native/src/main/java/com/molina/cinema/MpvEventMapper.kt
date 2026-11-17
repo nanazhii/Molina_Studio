@@ -22,6 +22,9 @@ class MpvEventMapper {
     @Volatile private var loaded = false
     @Volatile private var starting = false
     @Volatile private var lastPosMs = NO_POSITION
+    // molina-patch-b
+    @Volatile private var tracks: List<TrackInfo> = emptyList()
+    @Volatile private var speed = Double.NaN
 
     fun onLoadRequested(uri: String) { this.uri = uri }
 
@@ -50,12 +53,35 @@ class MpvEventMapper {
         return listOf(PlayerEvent.Ended, PlayerEvent.StateChanged(PlayerState.ENDED))
     }
 
+    // molina-patch-b: TracksChanged hanya bila daftar berubah (dedupe)
+    fun onTracks(list: List<TrackInfo>): List<PlayerEvent> {
+        if (list == tracks) return emptyList()
+        tracks = list
+        return listOf(PlayerEvent.TracksChanged(list.filter { it.type == TrackType.AUDIO }, list.filter { it.type == TrackType.SUBTITLE }))
+    }
+
+    fun hasTrack(type: TrackType, id: Int): Boolean = tracks.any { it.type == type && it.id == id }
+
+    fun onSpeed(value: Double): List<PlayerEvent> {
+        if (value.isNaN() || value.isInfinite() || value <= 0.0) return emptyList()
+        val last = speed
+        if (!last.isNaN() && abs(value - last) < 1e-9) return emptyList()
+        speed = value
+        return listOf(PlayerEvent.SpeedChanged(value))
+    }
+
     fun onEvent(id: Int): List<PlayerEvent> = when (id) {
         MPVLib.MpvEvent.MPV_EVENT_START_FILE -> {
             loaded = false
             starting = true
             lastPosMs = NO_POSITION
-            listOf(PlayerEvent.StateChanged(PlayerState.LOADING))
+            val loading = PlayerEvent.StateChanged(PlayerState.LOADING)
+            if (tracks.isEmpty()) {
+                listOf(loading)
+            } else {
+                tracks = emptyList()
+                listOf(loading, PlayerEvent.TracksChanged(emptyList(), emptyList()))
+            }
         }
         MPVLib.MpvEvent.MPV_EVENT_FILE_LOADED -> {
             loaded = true

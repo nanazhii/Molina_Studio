@@ -85,6 +85,7 @@ class CinemaFragment : Fragment(), SurfaceHolder.Callback {
                     is PlayerEvent.Error -> note = if (ev.code == SHIELD_BLOCKED_CODE) "Diblokir Shield: ${ev.message}" else "Gagal memuat. Lihat Log Viewer (chip BUG)."
                     is PlayerEvent.Loaded -> note = ""
                     PlayerEvent.Ended -> Unit
+                    is PlayerEvent.TracksChanged, is PlayerEvent.SpeedChanged -> Unit // molina-patch-b: UI pemilih trek menyusul (Patch C/E)
                 }
                 render()
             }
