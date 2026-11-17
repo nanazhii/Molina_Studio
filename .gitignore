@@ -9,3 +9,7 @@ local.properties
 !**/src/main/jniLibs/**/*.so
 
 patch_*.py
+
+# keluaran build native lokal (pipeline mpv)
+_native/
+_native_out/
