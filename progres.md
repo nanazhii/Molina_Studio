@@ -257,3 +257,13 @@
 - [ ] Uji perangkat Android 8 (setelah UI pemilih ada): trek audio ganda, subtitle on/off, kecepatan 0.5x/2x, seek +-10 dtk
 - [ ] Uji perangkat Patch A (https publik, subtitle .srt/.ass, seekbar halus) masih menunggu
 - [ ] Berikutnya: Patch C (pemilih berkas dari :filemanager + panel trek di CinemaFragment)
+
+## Patch C1 mpv (2026-11-17)
+- [x] CI main hijau setelah Patch B (konfirmasi pengguna); triase feature/mpv repo lama selesai, MPVActivity/MPVView/BaseMPVView tidak disalin
+- [x] cinema: CinemaFragment berisi seekbar, +-10 dtk (tombol dan ketuk ganda kiri/kanan), kecepatan, trek audio/subtitle, rasio, tunda; hanya lewat MolinaPlayerSession
+- [x] cinema: MarkedSeekBar (port), SpeedScale (port skala), CinemaDialogs (pengganti SpeedPicker/SubTrack/SubDelay tanpa viewBinding), CinemaFormat; uji CinemaControlsTest
+- [x] core-ui: tema Cinema ala Linux Mint (charcoal + hijau mint), token molina_cinema_panel/_line; docs/tema.md diperbarui
+- [x] jvm-tests.yml: tambah :cinema:testDebugUnitTest; cinema/build.gradle.kts: testImplementation junit
+- [ ] Verifikasi CI: kompilasi :cinema, :core-ui, :app; :cinema:testDebugUnitTest; gate telemetry/secret/module
+- [ ] Uji perangkat Android 8: ganti trek audio, subtitle on/off, kecepatan 0.5x/2x, rasio, tunda, ketuk ganda +-10 dtk, tampilan hijau mint
+- [ ] Berikutnya: TouchGestures penuh (geser volume/kecerahan/seek), pemilih berkas dari :filemanager (Patch C), PlaylistDialog (golongan B)

@@ -2,7 +2,8 @@
 
 - Dasar: `molina_bg #0E1114`, `molina_surface #171B20`, teks `molina_on_surface #E6EAEE`.
 - Terminal: teal `#00BFA5`, tipografi monospace (`TextAppearance.Molina.Mono`).
-- Cinema (Home Theater): amber `#FFB300` di atas hitam pekat `#07090B`, sekunder merah `#E53935`.
+- Cinema (Home Theater, ala Linux Mint, patch C1): latar charcoal `#1E1E1E`, panel kontrol `#2F2F2F` (garis `#3C3C3C`), aksen hijau mint `#87CF3E`, wadah `#2D4012`, sekunder merah `#E53935`.
+  Catatan: `Theme.Molina.App` memakai token `molina_cinema_*` sebagai warna sekunder, jadi aksen navigasi tab Cinema ikut berubah dari amber ke hijau mint.
 - Bentuk: sudut 12dp. Spasi: `molina_space_xs..xl` (4/8/16/24/32dp).
 - Tema per tab: `Theme.Molina.Cinema`, `Theme.Molina.Terminal`; cangkang: `Theme.Molina.App`.
 - Pakai di Fragment: `inflater.cloneInContext(requireContext().molinaThemed(R.style.Theme_Molina_Cinema))`.

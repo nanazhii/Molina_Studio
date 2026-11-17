@@ -18,4 +18,5 @@ dependencies {
     implementation(project(":mpv-native"))
     implementation(project(":player-api"))
     implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.junit) // molina-patch-c1
 }
