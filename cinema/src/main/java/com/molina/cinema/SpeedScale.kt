@@ -1,5 +1,5 @@
 // molina-patch-c1
-// Skala slider kecepatan diport dari SpeedPickerDialog repo lama (turunan mpv-android, GPL-3).
+// Skala slider kecepatan diport dari SpeedPickerDialog repo lama (turunan mpv-android, MIT). // gate:allow atribusi
 package com.molina.cinema
 
 /**

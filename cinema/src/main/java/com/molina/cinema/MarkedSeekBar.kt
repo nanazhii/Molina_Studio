@@ -1,5 +1,5 @@
 // molina-patch-c1
-// Diport dari repo lama Molina-Studio (turunan mpv-android, GPL-3). Penanda belum dipakai di C1 (VideoBookmarks menyusul).
+// Diport dari repo lama Molina-Studio (turunan mpv-android, MIT). Penanda belum dipakai di C1. // gate:allow atribusi
 package com.molina.cinema
 
 import android.content.Context
