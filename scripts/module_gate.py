@@ -64,6 +64,15 @@ if _mf.exists():
                     or "android.intent.category.BROWSABLE" in _cats:
                 errors.append(f"player-mpv manifest: {_n} punya filter VIEW/SEND/BROWSABLE dilarang (Shield bypass)")
 
+# [P18-LOADFILE] Pemuatan media ("loadfile") hanya boleh di sesi Shield dan dua berkas debug upstream.
+# Jalur lain melewati PlaybackGuard (blacklist protokol, preflight, proxy Shield).
+_LOADFILE_OK = {"MpvPlayerSession.kt", "MPVActivity.kt", "BaseMPVView.kt"}
+for _p in sorted(pathlib.Path(".").glob("*/src/main/**/*")):
+    if _p.suffix not in (".kt", ".java") or _p.name in _LOADFILE_OK:
+        continue
+    if "loadfile" in _p.read_text(encoding="utf-8", errors="ignore"):
+        errors.append(f"{_p}: memuat 'loadfile' di luar sesi Shield (bypass PlaybackGuard)")
+
 if errors:
     print("MODULE GATE GAGAL:")
     for e in errors:
