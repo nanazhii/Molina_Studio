@@ -89,7 +89,10 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
 
     private var titleView: TextView? = null
     private var infoView: TextView? = null
-    private var cacheView: TextView? = null // 26k5d:e13
+    private var cacheBytes = -1L // molina-27y: kuota cache pindah ke menu (tidak lagi baris di kepala)
+    private var searchOpen = false // molina-27y: kotak cari dilipat di balik tombol Cari
+    private var searchToggle: TextView? = null
+    private var allButton: TextView? = null
     private var previewDialog: android.app.Dialog? = null // 26k5e:e04
     private var pager: ImagePager? = null // 26k5h:e02
     private var crumbBox: LinearLayout? = null
@@ -177,40 +180,32 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             },
         )
         root.addView(head)
-        // 26k5d:e15 kuota cache
-        val cacheRow = LinearLayout(ctx).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, dp(4), 0, 0)
-        }
-        val cacheText = TextView(ctx).apply {
-            text = ArchiveViewText.cacheLine(0L, com.molina.core.storage.ArchiveEngineLimits.CACHE_MAX_BYTES)
-            textSize = 12f
-            setTextColor(dim)
-        }
-        cacheView = cacheText
-        cacheRow.addView(cacheText, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        cacheRow.addView(
-            TextView(ctx).apply {
-                text = "Bersihkan"
-                textSize = 12f
-                setTextColor(green)
-                setPadding(dp(12), dp(6), 0, dp(6))
-                setOnClickListener { confirmClearCache() }
-            },
-        )
-        root.addView(cacheRow)
-
         crumbBox = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
         crumbScroll = HorizontalScrollView(ctx).apply {
             isHorizontalScrollBarEnabled = false
             addView(crumbBox)
             setPadding(0, dp(6), 0, dp(2))
         }
-        root.addView(crumbScroll)
+        // molina-27y: tombol Cari di ujung kanan baris breadcrumb
+        searchToggle = TextView(ctx).apply {
+            text = "Cari"
+            textSize = 13f
+            setTextColor(green)
+            gravity = Gravity.CENTER
+            setPadding(dp(12), dp(6), dp(4), dp(6))
+            setOnClickListener { toggleSearch() }
+        }
+        val crumbRow = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        crumbRow.addView(crumbScroll, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        crumbRow.addView(searchToggle)
+        root.addView(crumbRow)
 
         searchBox = EditText(ctx).apply {
             hint = "Cari nama di arsip"
+            visibility = View.GONE // molina-27y: dilipat
             textSize = 14f
             setTextColor(white)
             setHintTextColor(dim)
@@ -311,6 +306,25 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         )
         actionBar = bar
         root.addView(bar)
+        // molina-27y: tombol bawah, tampil saat tidak sedang memilih
+        allButton = TextView(ctx).apply {
+            text = "Ekstrak semua"
+            textSize = 15f
+            gravity = Gravity.CENTER
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(ContextCompat.getColor(ctx, UiR.color.molina_on_terminal_accent))
+            setPadding(dp(16), dp(12), dp(16), dp(12))
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(green)
+                cornerRadius = dp(8).toFloat()
+            }
+            visibility = View.GONE
+            setOnClickListener { extract(all = true) }
+        }
+        root.addView(
+            allButton,
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) },
+        )
         return root
     }
 
@@ -353,7 +367,8 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         infoView = null
         previewDialog?.dismiss() // 26k5e:e07
         previewDialog = null
-        cacheView = null // 26k5d:e14
+        searchToggle = null // molina-27y
+        allButton = null
         crumbBox = null
         crumbScroll = null
         searchBox = null
@@ -396,7 +411,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         listing = l
         FilesEvents.archiveView(formatLabel(l), l.fileCount, l.folderCount, l.encrypted, l.truncated, built.skipped)
         if (!built.isFolder(browse.folder)) browse = browse.copy(folder = "")
-        infoView?.text = ArchiveViewText.counts(l.fileCount, l.folderCount, l.totalBytes)
+        infoView?.text = ArchiveViewText.summaryLine(formatLabel(l), l.fileCount, l.folderCount, l.totalBytes, l.encrypted) // molina-27y
         refreshCache() // 26k5d:e16
         render()
     }
@@ -468,6 +483,14 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
             }
         }
         renderCrumbs(ctx)
+        // molina-27y: kotak cari terbuka bila ada kata kunci; tombol bawah hanya saat tidak memilih
+        if (browse.query.isNotEmpty()) searchOpen = true
+        searchBox?.visibility = if (searchOpen) View.VISIBLE else View.GONE
+        searchToggle?.text = if (searchOpen) "Tutup" else "Cari"
+        allButton?.let {
+            it.visibility = if (browse.selecting) View.GONE else View.VISIBLE
+            it.text = ArchiveViewText.extractAllLabel(listing?.totalBytes ?: 0L)
+        }
         actionBar?.visibility = if (browse.selecting) View.VISIBLE else View.GONE
         actionCount?.text = ArchiveViewText.selectionLine(browse.selected.size)
     }
@@ -488,42 +511,68 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         }
     }
 
+    // molina-27y: breadcrumb berupa chip (bingkai tipis; folder aktif berlatar teal tipis)
     private fun renderCrumbs(ctx: android.content.Context) {
         val box = crumbBox ?: return
         val d = ctx.resources.displayMetrics.density
-        val green = ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent) // molina-27x
+        val teal = ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent)
         val dim = ContextCompat.getColor(ctx, UiR.color.molina_on_surface_variant)
+        val frame = ContextCompat.getColor(ctx, UiR.color.molina_header_frame)
+        fun chip(label: String, active: Boolean, onClick: (() -> Unit)?) = TextView(ctx).apply {
+            text = label
+            textSize = 13f
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            maxWidth = (180 * d).toInt()
+            minHeight = (32 * d).toInt()
+            gravity = Gravity.CENTER
+            setTextColor(if (active) teal else dim)
+            setPadding((12 * d).toInt(), 0, (12 * d).toInt(), 0)
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 16 * d
+                setColor(if (active) androidx.core.graphics.ColorUtils.setAlphaComponent(teal, 0x26) else android.graphics.Color.TRANSPARENT)
+                setStroke(d.toInt().coerceAtLeast(1), if (active) teal else androidx.core.graphics.ColorUtils.setAlphaComponent(frame, 0xAA))
+            }
+            if (onClick != null) setOnClickListener { onClick() }
+        }
         box.removeAllViews()
         if (browse.searching) {
-            box.addView(TextView(ctx).apply {
-                text = "Hasil pencarian"
-                textSize = 13f
-                setTextColor(dim)
-            })
+            box.addView(chip("Hasil pencarian", true, null))
             return
         }
         val list = tree?.breadcrumbs(browse.folder).orEmpty()
         for ((i, c) in list.withIndex()) {
-            if (i > 0) {
-                box.addView(TextView(ctx).apply {
-                    text = " \u203A "
-                    textSize = 13f
-                    setTextColor(dim)
-                })
-            }
             val last = i == list.lastIndex
-            box.addView(TextView(ctx).apply {
-                text = if (c.path.isEmpty()) "Isi arsip" else c.name
-                textSize = 13f
-                setTextColor(if (last) green else dim)
-                setPadding(0, (4 * d).toInt(), 0, (4 * d).toInt())
-                if (!last) setOnClickListener {
+            val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                .apply { marginEnd = (6 * d).toInt() }
+            val go: (() -> Unit)? = if (last) null else {
+                {
                     browse = browse.goTo(c.path)
                     render()
                 }
-            })
+            }
+            box.addView(chip(if (c.path.isEmpty()) "Isi arsip" else c.name, last, go), lp)
         }
         crumbScroll?.post { crumbScroll?.fullScroll(View.FOCUS_RIGHT) }
+    }
+
+    /** [molina-27y] Buka/tutup kotak cari. Menutup mengosongkan kata kunci dan membatalkan pencarian tertunda. */
+    private fun toggleSearch() {
+        val box = searchBox ?: return
+        val imm = context?.getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+        if (searchOpen) {
+            pendingSearch?.let { searchHandler.removeCallbacks(it) }
+            pendingSearch = null
+            searchOpen = false
+            imm?.hideSoftInputFromWindow(box.windowToken, 0)
+            if (browse.query.isNotEmpty()) browse = browse.withQuery("")
+            render()
+        } else {
+            searchOpen = true
+            render()
+            box.requestFocus()
+            imm?.showSoftInput(box, 0)
+        }
     }
 
     private fun scheduleSearch(text: String) {
@@ -823,7 +872,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             val r = h.archiveStorage.archiveCacheBytes()
             if (r is MolinaResult.Success) {
-                cacheView?.text = ArchiveViewText.cacheLine(r.value, com.molina.core.storage.ArchiveEngineLimits.CACHE_MAX_BYTES)
+                cacheBytes = r.value // molina-27y
             }
         }
     }
@@ -840,12 +889,12 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
 
     private fun showMenu(anchor: View) {
         val popup = PopupMenu(requireContext(), anchor)
-        popup.menu.add(Menu.NONE, M_EXTRACT_ALL, 0, "Ekstrak semua\u2026")
+        if (browse.selecting) popup.menu.add(Menu.NONE, M_EXTRACT_ALL, 0, "Ekstrak semua\u2026") // molina-27y: saat tidak memilih sudah ada tombol bawah
         popup.menu.add(Menu.NONE, M_EXTRACT_TO, 0, ArchiveViewText.extractToLabel(browse.selecting)) // 26k5f:e01
         popup.menu.add(Menu.NONE, M_SELECT_ALL, 1, "Pilih semua di sini")
         popup.menu.add(Menu.NONE, M_SORT_NAME, 2, "Urut nama")
         popup.menu.add(Menu.NONE, M_SORT_SIZE, 2, "Urut ukuran")
-        popup.menu.add(Menu.NONE, M_CLEAR_CACHE, 3, "Bersihkan cache")
+        popup.menu.add(Menu.NONE, M_CLEAR_CACHE, 3, ArchiveViewText.clearCacheLabel(cacheBytes, com.molina.core.storage.ArchiveEngineLimits.CACHE_MAX_BYTES)) // molina-27y
         popup.setOnMenuItemClickListener {
             when (it.itemId) {
                 M_EXTRACT_ALL -> extract(all = true)

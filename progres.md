@@ -228,6 +228,7 @@
 - [x] TerminalPrefs.shieldProxy + sakelar di Setelan > Terminal; TerminalWiring memanggil ShieldGuestEnv.install setelah NanoSupport
 - [ ] Verifikasi CI: kompilasi :terminal-proot, :settings, :app; jvm-tests :terminal-proot:testDebugUnitTest
 - [ ] Uji perangkat: nyalakan sakelar, sesi baru, `env | grep -i proxy`, `curl -I https://example.com`, `apt update`, pelacak ditolak; matikan sakelar dan pastikan variabel hilang
+<<<<<<< HEAD
 
 ## Patch A mpv (2026-11-17)
 - [x] mpv-native: MpvConfig (config-dir filesDir/mpv: cacert.pem + fonts.conf), tls-verify=yes + tls-ca-file, cache shader/ICC
@@ -236,3 +237,16 @@
 - [ ] Verifikasi CI: :mpv-native:testDebugUnitTest + kompilasi :mpv-native, :app; gate secret/telemetry/module
 - [ ] Uji perangkat Android 8: https publik (sertifikat), subtitle .srt/.ass tampil dengan font sistem, seekbar halus
 - [ ] Berikutnya: Patch B (kontrak player-api: trek audio/subtitle, kecepatan, seek relatif) dan pemilih berkas
+=======
+- [ui-keamanan] Setelan > Keamanan: sakelar Shield/pelacak/LAN/Referer, kebijakan rtmp/rtsp, ringkasan snapshot, daftar blokir terbaru. ShieldPrefs jadi sumber tunggal kunci prefs; ShieldBootstrap memakainya. Tes: ShieldPrefsTest. Menunggu hasil CI.
+
+## Tanggal pintar, aksen baru, sumber bersama (2026-11-16)
+- [x] CI: keterangan baris Berkas (28a) lolos
+- [x] core-ui: EntryInfo (tanggal pintar: jam / Kemarin / tanggal penuh; isFresh 24 jam), DrawerMetrics, EntryTextBlock
+- [x] filemanager: baris memakai EntryTextBlock, tanggal baru berwarna hijau lembut; EntryInfo lama dihapus
+- [x] terminal: konstanta ukuran merujuk DrawerMetrics (tampilan tetap)
+- [x] Uji: EntryInfoTest (13 kasus, termasuk zona Bali dan lintas tengah malam)
+- [ ] Verifikasi CI: :core-ui, :filemanager, :terminal, :app
+- [ ] Uji perangkat Android 8.0: warna hijau item baru, label Kemarin, tampilan Terminal tidak berubah
+- [ ] Opsional: aktifkan baris dua tingkat di Terminal (lihat langkah di catatan)
+>>>>>>> origin/main
