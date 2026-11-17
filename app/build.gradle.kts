@@ -66,5 +66,7 @@ dependencies {
     implementation(project(":settings"))
     implementation(project(":code"))
     // NewPipeExtractor memakai API Java 11+ (mis. List.of); API 26 memerlukan desugaring.
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
+    // Dipin 2.0.4: nio 2.1.x + AGP 8.7.x membuat D8 gagal ("android.jar is located outside the root directory",
+    // Google issue 362339872). Naikkan lagi setelah AGP diperbarui dan CI release terbukti hijau.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.0.4")
 }
