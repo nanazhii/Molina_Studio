@@ -13,7 +13,8 @@ object CodeColors {
     val GutterBg = Color(0xFF121212)
     val Surface1 = Color(0xFF14161B)      // header path, tab bar
     val Surface2 = Color(0xFF181B21)      // toolbar, find bar
-    val SurfaceDrawer = Color(0xFF101218) // panel direktori
+    val SurfaceDrawer = Color(0xFF000000) // [MINT-TREE] panel direktori: hitam polos, sama dengan drawer Terminal
+    val DrawerAccent = Color(0xFF00BFA5)  // [MINT-TREE] aksen teal Terminal untuk seleksi baris tree
     val SurfaceMenu = Color(0xFF12151A)   // popup titik tiga
     val SurfaceDialog = Color(0xFF171A20) // dialog
     val SurfaceNav = Color(0xFF0A0A0F)    // bottom nav aktual (= MolinaTheme.Background)
@@ -21,8 +22,8 @@ object CodeColors {
     val TabFrame = Color(0xFFD0D4DB)      // [CODE-TAB-FRAME] bingkai tab nama berkas aktif: putih keabuan
     val TabFrameIdle = TabFrame.copy(alpha = 0.45f) // [CODE-TAB-FRAME] tab tidak aktif: redup
     val TitleFrame = Color(0xFFD0D4DB)    // [CODE-TITLE-FRAME] bingkai judul/path berkas di header: putih keabuan
-    val PathField = Color(0xFF101010)        // [CODE-PATHBAR] isi kotak path header, sama dengan bilah alamat Penjelajah
-    val PathFieldBorder = Color(0xFF3A3A3A)  // [CODE-PATHBAR] garis kotak path header, sama dengan bilah alamat Penjelajah
+    val PathField = Color(0xFF000000)        // [CODE-PATHBAR] isi kotak path header, sama dengan bilah alamat Penjelajah
+    val PathFieldBorder = Color(0xAA9AA0A8)  // [CODE-PATHBAR] garis kotak path header, sama dengan bilah alamat Penjelajah
 
     // Ikon
     val IconDefault = Color(0xFFC4CBD3)   // netral dingin
@@ -36,7 +37,6 @@ object CodeColors {
     val Brand = Color(0xFF2ECC71)
     val BrandSoft = Color(0xFF7BDCA0)
     val Warning = Color(0xFFFFD54F)       // = MolinaTheme.Warn; peringatan tetap amber, bukan aksen merek
-    val FolderYellow = Color(0xFFE9B949)
     val Danger = Color(0xFFE5484D)
     val Clean = Color(0xFF3FB950)               // indikator berkas sama dengan isi awal (hijau)
     val Modified = Color(0xFF4FA3FF)            // [CODE-DIRTY-BLUE] indikator ada perubahan belum disimpan (biru)
@@ -56,19 +56,10 @@ object CodeColors {
     val TextSecondary = Color(0xFF9AA0A6)
     val ButtonBrown = Color(0xFF1F8A4C)   // tombol panel direktori (dulu cokelat), kini hijau tua
 
-    // Garis penanda ikon berkas per ekstensi di panel direktori (blueprint bagian 5.3)
-    val ExtKotlin = Color(0xFFB07CFF)
-    val ExtPython = Color(0xFF4FA3E0)
-    val ExtMarkdown = Color(0xFF7BC8A4)
-    val ExtJson = FolderYellow
-    val ExtXml = Color(0xFFE08A4F)
-    val ExtShell = Color(0xFF8BD35C)
-    val ExtDefault = IconDim
-
     // Turunan beralfa (nilai alfa dari blueprint)
     val Ripple = Brand.copy(alpha = 0.16f)
-    val SelectFill = Brand.copy(alpha = 0.18f)     // seleksi baris tree
-    val SelectBorder = Brand.copy(alpha = 0.45f)
+    val SelectFill = DrawerAccent.copy(alpha = 0.18f)     // seleksi baris tree [MINT-TREE]
+    val SelectBorder = DrawerAccent.copy(alpha = 0.45f)
     val EditorSelection = Color(0x80D97757)   // blok/hasil aktif: terakota Claude 50%
     val SearchMatch = Color(0xA6FF3B3B)       // [FIND-RED] blok hasil cari: merah terang 65% agar jelas di latar hitam
     val RailPeak = Brand.copy(alpha = 0.40f)       // puncak gradient rail aksen toolbar

@@ -8,3 +8,4 @@
 - Tema per tab: `Theme.Molina.Cinema`, `Theme.Molina.Terminal`; cangkang: `Theme.Molina.App`.
 - Pakai di Fragment: `inflater.cloneInContext(requireContext().molinaThemed(R.style.Theme_Molina_Cinema))`.
 - Tombol ekstra terminal: panel `molina_terminal_container`; kode warna RGB `molina_key_red #FF5252` (ESC, CLEAR), `molina_key_green #00E676` (PASTE, COPY), `molina_key_blue #448AFF` (HOME, panah); aksen teal untuk TAB, menu, ENTER; CTRL/ALT menyala teal saat aktif. Tinggi tombol: `KEY_HEIGHT_DP` di `ExtraKeysView`.
+- Ikon pohon (gaya Mint-Y): palet ada di `TreeIconPalette` dan jenis berkas di `FileKind` (:core-ui). Dipakai `TreeIconView` (View: Terminal dan Berkas) serta `MintTreeIcons` (Compose: :code). Mengubah warna cukup di satu tempat; bentuk gambar masih ditulis per renderer.

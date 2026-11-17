@@ -277,3 +277,27 @@
 - [ ] Verifikasi CI: kompilasi :code dan :app (Compose + Sora, belum bisa dicoba di sandbox), module/telemetry/secret gate
 - [ ] Uji perangkat Android 8: buka tab Code, buka/simpan berkas di /storage/emulated/0/Molina, pindah tab lalu kembali (tab tetap), putar layar, Notifikasi perubahan, Riwayat versi
 - [ ] Berikutnya: adapter ScriptExecutor/StreamExecutor ke ProotExec (Periksa Python/Shell, Python langsung, Jalankan di Keluaran), buka berkas dari tab Berkas ke Code, uji JVM logika murni editor
+
+## P7 seragamkan panel direktori Code dengan file manager Terminal (2026-11-17)
+- [x] code: MintKind (jenis berkas + warna nama, salinan murni Kotlin dari FileKind :core-ui) dan MintTreeIcons (port Compose TreeIconView: folder hijau Mint-Y bergradien, berkas kertas bersudut lipat + lambang jenis)
+- [x] code: DirectoryPanel dan pemilih berkas/folder memakai ikon Mint, panah teks, nama monospace berwarna jenis, titik tiga putih 20sp; baris 36dp, ikon 20dp; latar drawer hitam polos, seleksi teal #00BFA5
+- [x] code: uji JVM MintKindTest; code/build.gradle.kts + jvm-tests.yml (:code:testDebugUnitTest)
+- [ ] Verifikasi CI: kompilasi :code dan :app, :code:testDebugUnitTest, gate module/telemetry/secret
+- [ ] Uji perangkat Android 8: buka tab Code > drawer; bandingkan ikon, font, dan tinggi baris dengan drawer Terminal; folder tersembunyi tetap redup; menu titik tiga dan pemilih berkas
+- [ ] Berikutnya: hapus drawFolderIcon/drawFileIcon/extColor/drawExpander/drawMoreDots dan token Ext* yang tak terpakai; pertimbangkan memindahkan FileKind + ikon ke satu modul bersama
+
+## P8 header Code seragam dengan Terminal + tab pendek + pembersihan ikon lama (2026-11-17)
+- [x] code: header tanpa bingkai hijau (garis pemisah tetap), kotak path 30dp sudut 2dp isi hitam garis #9AA0A8, teks 13sp, ikon folder Mint-Y, tiga titik putih + titik status (setara HeaderDotsView Terminal)
+- [x] code: tab editor membungkus isi (min 72dp, maks 128dp, tombol tutup 28dp); garis hijau tab aktif memakai matchParentSize agar tidak melebarkan tab
+- [x] code: hapus extColor, drawFolderIcon, drawFileIcon, drawExpander, drawMoreDots, DirIcon.Folder, token Ext*/FolderYellow, TreeMenuDots
+- [ ] Verifikasi CI: kompilasi :code dan :app, :code:testDebugUnitTest, gate module/telemetry/secret
+- [ ] Uji perangkat Android 8: header (tanpa bingkai hijau, kotak path, titik status saat ada notifikasi), tab "Baru" pendek, banyak tab bisa digulir, garis hijau tab aktif, tombol keluar (CodeBackOrb) bila editor dibuka dari Berkas
+- [ ] Berikutnya (belum dikerjakan): pindahkan FileKind + TreeIconView/MintTreeIcons ke satu modul bersama (menunggu CI hijau)
+
+## P9 satu sumber FileKind + palet ikon pohon (2026-11-17)
+- [x] core-ui: TreeIconPalette (palet folder/kertas/lambang + aturan warna lambang); TreeIconView memakainya; uji FileKindTest + TreeIconPaletteTest; :core-ui:testDebugUnitTest di jvm-tests.yml
+- [x] code: bergantung ke :core-ui (module_gate: feature -> core diizinkan); MintKind.kt dan MintKindTest.kt dihapus; MintTreeIcons/DirectoryPanel/DirectoryDialogs memakai FileKind + TreeIconPalette
+- [ ] Verifikasi CI: kompilasi :core-ui, :code, :app, :terminal, :files; :core-ui:testDebugUnitTest; gate module/telemetry/secret
+- [ ] Uji perangkat Android 8: drawer Terminal dan tab Berkas tampil sama seperti sebelumnya (TreeIconView hanya ganti sumber konstanta); drawer Code sama dengan Terminal
+- [ ] Berikutnya (belum dikerjakan): geometri ikon (bentuk folder/kertas/lambang) jadi data bersama agar View dan Compose tidak menulis bentuk dua kali; kerjakan setelah CI hijau dan tampilan Terminal/Berkas dicek di perangkat
+- [ ] Folder Logs (huruf besar) dobel dengan logs: nama resmi aplikasi = logs (MolinaPaths, MolinaLogSetup); gabung lewat molina_merge_logs.sh

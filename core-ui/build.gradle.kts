@@ -19,4 +19,5 @@ dependencies {
     api(libs.androidx.fragment.ktx)
     api(libs.androidx.lifecycle.runtime.ktx)
     api(libs.androidx.recyclerview)
+    testImplementation(libs.junit) // molina-29
 }

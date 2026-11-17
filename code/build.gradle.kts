@@ -17,6 +17,7 @@ android {
 }
 dependencies {
     implementation(project(":core-common"))
+    implementation(project(":core-ui")) // molina-29: FileKind + TreeIconPalette bersama (module_gate: feature -> core)
     implementation(libs.androidx.fragment.ktx)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -25,4 +26,5 @@ dependencies {
     implementation(libs.sora.editor)
     implementation(libs.sora.language.textmate)
     implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.junit) // [MINT-TREE]
 }
