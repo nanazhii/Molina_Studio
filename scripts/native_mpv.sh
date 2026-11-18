@@ -23,6 +23,9 @@ for f in "$B/buildall.sh" "$B/include/depinfo.sh" "$B/include/download-deps.sh" 
   [ -s "$f" ] || fail "berkas wajib tidak ada: $f"
 done
 
+# /sdcard dan git tidak menjaga bit eksekusi: pulihkan untuk skrip upstream (isi tidak diubah).
+chmod +x "$B/buildall.sh" "$B/download.sh" "$B"/include/*.sh "$B"/scripts/*.sh
+
 # NDK yang diminta skrip upstream harus sama dengan pin Molina.
 ( # shellcheck source=/dev/null
   . "$B/include/depinfo.sh"
