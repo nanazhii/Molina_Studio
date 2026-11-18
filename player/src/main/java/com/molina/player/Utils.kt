@@ -482,7 +482,7 @@ internal object Utils {
         }
 
         private fun validate(text: String): Boolean {
-            val uri = Uri.parse(text)
+            val uri = Uri.parse(normalizeUrl(text)) // molina-ytdl
             return uri.isHierarchical && !uri.isRelative &&
                     !(uri.host.isNullOrEmpty() && uri.path.isNullOrEmpty()) &&
                     PROTOCOLS.contains(uri.scheme)
@@ -497,7 +497,7 @@ internal object Utils {
         }
 
         val text: String
-            get() = editText.text.toString()
+            get() = normalizeUrl(editText.text.toString())
     }
 
     inline fun <reified T: Parcelable> getParcelableArray(bundle: Bundle, key: String): Array<T> {
@@ -577,4 +577,18 @@ internal object Utils {
         "file", "content", "http", "https", "data", "ftp",
         "rtmp", "rtmps", "rtp", "rtsp", "mms", "mmst", "mmsh", "tcp", "udp", "lavf"
     )
+
+    // molina-ytdl: alamat tanpa skema (mis. youtu.be/xxx atau 192.168.1.5:8080/a.mp4) diberi skema
+    private val HOST_RE = Regex("^[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+(:\\d+)?([/?#].*)?$")
+    private val IPV4_RE = Regex("^\\d{1,3}(\\.\\d{1,3}){3}([:/?#].*)?$")
+
+    fun normalizeUrl(raw: String): String {
+        val t = raw.trim()
+        if (t.isEmpty() || t.any { it.isWhitespace() }) return t
+        val scheme = Uri.parse(t).scheme?.lowercase()
+        if (scheme != null && PROTOCOLS.contains(scheme)) return t
+        if (!HOST_RE.matches(t)) return t
+        val prefix = if (IPV4_RE.matches(t)) "http" else "https"
+        return "$prefix://$t"
+    }
 }

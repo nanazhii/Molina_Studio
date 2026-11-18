@@ -21,6 +21,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
 
         // apply phone-optimized defaults
         MPVLib.setOptionString("profile", "fast")
+        YtdlRuntime.applyOptions(context) // molina-ytdl
 
         // vo
         setVo(if (sharedPreferences.getBoolean("gpu_next", false))
