@@ -54,13 +54,32 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
 
     protected abstract fun observeProperties()
 
-    private var filePath: String? = null
+    // molina-resolver: pemuatan awal bisa datang dari thread lain (setelah resolusi URL), jadi
+    // status surface dan muatan tertunda dijaga satu kunci agar tidak ada muatan yang hilang.
+    private val loadLock = Any()
+    private var surfaceAttached = false
+    private var pendingLoad: Array<String>? = null
 
     /**
      * Set the first file to be played once the player is ready.
      */
-    fun playFile(filePath: String) {
-        this.filePath = filePath
+    fun playFile(filePath: String) = loadArgs(arrayOf("loadfile", filePath, "replace"))
+
+    /**
+     * Jalankan perintah `loadfile` sekarang bila surface sudah terpasang, jika belum tunda sampai
+     * surfaceCreated(). Aman dipanggil dari thread mana pun, tetapi JNI bisa memblokir: panggil
+     * dari thread mpv khusus, bukan main thread.
+     */
+    fun loadArgs(args: Array<String>) {
+        val now = synchronized(loadLock) {
+            if (surfaceAttached) {
+                true
+            } else {
+                pendingLoad = args
+                false
+            }
+        }
+        if (now) MPVLib.command(args)
     }
 
     private var voInUse: String = "gpu"
@@ -86,9 +105,12 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
         // This forces mpv to render subs/osd/whatever into our surface even if it would ordinarily not
         MPVLib.setOptionString("force-window", "yes")
 
-        if (filePath != null) {
-            MPVLib.command(arrayOf("loadfile", filePath as String))
-            filePath = null
+        val pending = synchronized(loadLock) {
+            surfaceAttached = true
+            pendingLoad.also { pendingLoad = null }
+        }
+        if (pending != null) {
+            MPVLib.command(pending)
         } else {
             // We disable video output when the context disappears, enable it back
             MPVLib.setPropertyString("vo", voInUse)
@@ -97,6 +119,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         Log.w(TAG, "detaching surface")
+        synchronized(loadLock) { surfaceAttached = false }
         MPVLib.setPropertyString("vo", "null")
         MPVLib.setPropertyString("force-window", "no")
         // Note that before calling detachSurface() we need to be sure that libmpv

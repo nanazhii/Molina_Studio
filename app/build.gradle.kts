@@ -55,6 +55,7 @@ dependencies {
     implementation(project(":core-ui"))
     implementation(project(":core-log"))
     implementation(project(":core-security"))
+    implementation(project(":engine-newpipe")) // molina-resolver: dipasang ke pemutar lewat StreamResolverRegistry
     implementation(project(":core-storage"))
     implementation(project(":files"))
     implementation(project(":terminal"))

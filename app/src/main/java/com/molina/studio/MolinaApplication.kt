@@ -5,6 +5,8 @@ import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.os.Debug
 import com.molina.core.common.CrashContext
+import com.molina.core.common.StreamResolverRegistry
+import com.molina.engine.newpipe.NewPipeStreamResolver
 import com.molina.core.storage.SevenZipBackend
 import com.molina.log.CrashReporter
 import com.molina.log.MolinaEvents
@@ -23,6 +25,7 @@ class MolinaApplication : Application() {
         )
         ShieldBootstrap.start(this)
         SevenZipBackend.writer = DebianSevenZip(this) // molina-27q: 7z bersandi lewat Debian
+        StreamResolverRegistry.install { NewPipeStreamResolver() } // molina-resolver: dibuat malas saat resolusi pertama
     }
 
     /** Mencatat pemakaian memori tiap sistem meminta pangkas, untuk menyetel tanpa adb. */

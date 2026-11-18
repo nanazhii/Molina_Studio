@@ -53,6 +53,14 @@ import androidx.media.AudioManagerCompat
 import java.io.File
 import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
+import com.molina.core.common.StreamError
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 typealias ActivityResultCallback = (Int, Intent?) -> Unit
 typealias StateRestoreCallback = () -> Unit
@@ -265,6 +273,13 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     }
     private var onloadCommands = mutableListOf<Array<String>>()
 
+    // molina-resolver: resolusi URL situs (NewPipe) sebelum loadfile. Semua panggilan mpv sinkron
+    // dari jalur ini berjalan di thread khusus (mpvThread), bukan main thread.
+    private val streamScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val mpvThread = MpvThread()
+    private var resolveJob: Job? = null
+    @Volatile private var pendingAudioUrl: String? = null
+
     // Activity lifetime
 
     override fun onCreate(icicle: Bundle?) {
@@ -321,7 +336,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         player.addObserver(this)
         MPVLib.addLogObserver(errorLogObserver)
         player.initialize(filesDir.path, cacheDir.path)
-        player.playFile(filepath)
+        loadSource(filepath, null) // molina-resolver
 
         mediaSession = initMediaSession()
         updateMediaSession()
@@ -342,6 +357,91 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
             Log.w(TAG, "AudioManager.generateAudioSessionId() returned error")
 
         volumeControlStream = STREAM_TYPE
+    }
+
+    // molina-resolver ------------------------------------------------------------------------
+
+    private object MpvLoadFlag {
+        const val REPLACE = "replace"
+        const val APPEND = "append"
+    }
+
+    /**
+     * Muat masukan: halaman situs yang dikenali di-resolve dulu, lainnya diputar apa adanya.
+     * [flag] null = pemuatan awal (ditunda sampai surface siap), selain itu flag `loadfile`.
+     * [onQueued] dipanggil sekali perintah muat sudah diantrekan.
+     */
+    private fun loadSource(raw: String, flag: String?, onQueued: (() -> Unit)? = null) {
+        resolveJob?.cancel()
+        PlaybackLog.request(raw)
+        if (StreamLoader.isPageUrl(raw)) showToast(getString(R.string.notice_resolving), cancel = true)
+        resolveJob = streamScope.launch {
+            val initial = flag == null
+            when (val p = withContext(Dispatchers.Default) { StreamLoader.prepare(raw) }) {
+                is StreamLoader.Prepared.Direct -> {
+                    pendingAudioUrl = null
+                    queueLoad(arrayOf("loadfile", p.url, flag ?: MpvLoadFlag.REPLACE), initial, onQueued)
+                }
+                is StreamLoader.Prepared.Ready -> {
+                    PlaybackLog.resolved(p.url, p.audioUrl != null)
+                    // Trek audio terpisah menempel pada berkas yang sedang dimuat: tidak bisa di-append.
+                    val eff = if (p.audioUrl != null && flag == MpvLoadFlag.APPEND) MpvLoadFlag.REPLACE else (flag ?: MpvLoadFlag.REPLACE)
+                    pendingAudioUrl = p.audioUrl
+                    queueLoad(StreamLoader.loadfileArgs(p.url, eff, p.headers), initial, onQueued)
+                }
+                is StreamLoader.Prepared.Failed -> {
+                    PlaybackLog.failed(p.error, p.action)
+                    showResolveFailure(resolveMessage(p.error), initial)
+                }
+                is StreamLoader.Prepared.Blocked -> {
+                    PlaybackLog.blocked(p.reason)
+                    showResolveFailure(getString(R.string.error_resolve_blocked), initial)
+                }
+            }
+        }
+    }
+
+    private fun queueLoad(args: Array<String>, initial: Boolean, onQueued: (() -> Unit)?) {
+        mpvThread.post(streamScope, "loadfile") {
+            if (initial) player.loadArgs(args) else MPVLib.command(args)
+        }
+        onQueued?.invoke()
+    }
+
+    private fun resolveMessage(error: StreamError): String = getString(
+        when (error) {
+            StreamError.NOT_FOUND -> R.string.error_resolve_not_found
+            StreamError.PRIVATE -> R.string.error_resolve_private
+            StreamError.AGE_RESTRICTED -> R.string.error_resolve_age
+            StreamError.GEO_BLOCKED -> R.string.error_resolve_geo
+            StreamError.NETWORK -> R.string.error_resolve_network
+            else -> R.string.error_resolve_generic
+        }
+    )
+
+    private fun showResolveFailure(msg: String, initial: Boolean) {
+        if (isFinishing || isDestroyed) return
+        if (!initial) {
+            showToast(msg, cancel = true)
+            return
+        }
+        // Belum ada yang diputar: tampilkan dialog lalu tutup, seperti galat putar biasa.
+        errorShown = true
+        AlertDialog.Builder(this)
+            .setTitle(R.string.error_play_title)
+            .setMessage(msg)
+            .setPositiveButton(R.string.dialog_ok) { _, _ -> finishWithResult(RESULT_CANCELED) }
+            .setOnCancelListener { finishWithResult(RESULT_CANCELED) }
+            .show()
+    }
+
+    /** Trek audio terpisah (stream adaptif): ditambahkan setelah video terbuka, di thread mpv. */
+    private fun attachExternalAudio() {
+        val audio = pendingAudioUrl ?: return
+        pendingAudioUrl = null
+        mpvThread.post(streamScope, "audio-add") {
+            MPVLib.command(arrayOf("audio-add", audio, "select", "molina-audio"))
+        }
     }
 
     // molina-fase-a
@@ -413,6 +513,8 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         // take the background service with us
         stopServiceRunnable.run()
 
+        streamScope.cancel() // molina-resolver
+        mpvThread.close()
         player.removeObserver(this)
         player.destroy()
         super.onDestroy()
@@ -430,16 +532,13 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         }
 
         if (!activityIsForeground && didResumeBackgroundPlayback) {
-            if (this.newIntentReplace) {
-                MPVLib.command(arrayOf("loadfile", filepath, "replace"))
-                showToast(getString(R.string.notice_file_play))
-            } else {
-                MPVLib.command(arrayOf("loadfile", filepath, "append"))
-                showToast(getString(R.string.notice_file_appended))
+            val replace = this.newIntentReplace
+            loadSource(filepath, if (replace) MpvLoadFlag.REPLACE else MpvLoadFlag.APPEND) {
+                showToast(getString(if (replace) R.string.notice_file_play else R.string.notice_file_appended))
             }
             moveTaskToBack(true)
         } else {
-            MPVLib.command(arrayOf("loadfile", filepath))
+            loadSource(filepath, MpvLoadFlag.REPLACE)
         }
     }
 
@@ -2057,8 +2156,10 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
                 runOnUiThread { showPlaybackError() }
         }
 
-        if (eventId == MpvEvent.MPV_EVENT_FILE_LOADED)
+        if (eventId == MpvEvent.MPV_EVENT_FILE_LOADED) {
             fileLoaded = true
+            attachExternalAudio() // molina-resolver
+        }
 
         if (eventId == MpvEvent.MPV_EVENT_START_FILE) {
             val cmds = onloadCommands.toTypedArray()

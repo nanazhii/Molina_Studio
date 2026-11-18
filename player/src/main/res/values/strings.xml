@@ -216,4 +216,12 @@
     <string name="error_play_title">Gagal memutar</string>
     <string name="error_play_generic">Media tidak bisa dibuka. Periksa tautan atau berkasnya.</string>
     <string name="error_play_needs_ytdl">Tautan situs web belum bisa diputar. Dukungan situs sedang disiapkan; tautan berkas langsung (mp4, m3u8) tetap bisa.</string>
+    <string name="notice_resolving">Memuat tautan…</string>
+    <string name="error_resolve_not_found">Video tidak ditemukan atau sudah dihapus.</string>
+    <string name="error_resolve_private">Video ini privat atau butuh login.</string>
+    <string name="error_resolve_age">Video ini dibatasi usia dan tidak bisa diputar.</string>
+    <string name="error_resolve_geo">Video ini tidak tersedia di wilayah Anda.</string>
+    <string name="error_resolve_network">Gagal menghubungi situs. Periksa koneksi lalu coba lagi.</string>
+    <string name="error_resolve_generic">Tautan ini belum bisa diputar.</string>
+    <string name="error_resolve_blocked">Tautan ditolak oleh kebijakan keamanan URL.</string>
 </resources>
