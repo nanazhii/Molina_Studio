@@ -97,6 +97,10 @@ jobs:
           mkdir -p player/src/main/jniLibs
           tar -xzf "$RUNNER_TEMP/molina-mpv-arm64.tgz" -C player/src/main/jniLibs
           ls -l player/src/main/jniLibs/arm64-v8a
+      - name: Pasang runtime yt-dlp arm64 (Release dipin)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/install_ytdl_libs.sh
       - name: Build APK Molina
         env:
           MOLINA_KEYSTORE_PASSWORD: ${{ secrets.MOLINA_KEYSTORE_PASSWORD }}
