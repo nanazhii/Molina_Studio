@@ -53,7 +53,10 @@ import androidx.media.AudioManagerCompat
 import java.io.File
 import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
+import com.molina.core.common.FailureAction
 import com.molina.core.common.StreamError
+import com.molina.core.common.StreamSearchItem
+import com.molina.core.common.stream.SearchLabel
 import com.molina.core.common.stream.UrlNormalizer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -373,6 +376,10 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
      * [onQueued] dipanggil sekali perintah muat sudah diantrekan.
      */
     private fun loadSource(raw: String, flag: String?, onQueued: (() -> Unit)? = null) {
+        if (StreamLoader.isSearch(raw)) { // molina-wave3
+            searchThenLoad(StreamLoader.searchQuery(raw), flag, onQueued)
+            return
+        }
         resolveJob?.cancel()
         PlaybackLog.request(raw)
         if (StreamLoader.isPageUrl(raw)) showToast(getString(R.string.notice_resolving), cancel = true)
@@ -392,7 +399,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
                 }
                 is StreamLoader.Prepared.Failed -> {
                     PlaybackLog.failed(p.error, p.action)
-                    showResolveFailure(resolveMessage(p.error), initial)
+                    showResolveFailure(resolveMessage(p.error, p.action), initial)
                 }
                 is StreamLoader.Prepared.Blocked -> {
                     PlaybackLog.blocked(p.reason)
@@ -407,6 +414,39 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
             if (initial) player.loadArgs(args) else MPVLib.command(args)
         }
         onQueued?.invoke()
+    }
+
+    /** Pencarian judul: hasil dipilih lewat dialog, lalu dimuat seperti tautan biasa. Teks pencarian tidak dicatat. */
+    private fun searchThenLoad(query: String, flag: String?, onQueued: (() -> Unit)?) {
+        resolveJob?.cancel()
+        val initial = flag == null
+        PlaybackLog.search()
+        showToast(getString(R.string.notice_searching), cancel = true)
+        resolveJob = streamScope.launch {
+            when (val s = withContext(Dispatchers.Default) { StreamLoader.search(query) }) {
+                is StreamLoader.Searched.Results -> showSearchResults(s.items, flag, onQueued, initial)
+                is StreamLoader.Searched.Empty -> showResolveFailure(getString(R.string.search_no_results), initial)
+                is StreamLoader.Searched.Failed -> showResolveFailure(getString(R.string.search_failed), initial)
+            }
+        }
+    }
+
+    private fun showSearchResults(items: List<StreamSearchItem>, flag: String?, onQueued: (() -> Unit)?, initial: Boolean) {
+        if (isFinishing || isDestroyed) return
+        val labels = items.map<StreamSearchItem, CharSequence> { SearchLabel.of(it) }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.search_results_title)
+            .setItems(labels) { _, which -> loadSource(items[which].pageUrl, flag, onQueued) }
+            .setNegativeButton(R.string.dialog_cancel) { d, _ -> d.cancel() }
+            .setOnCancelListener { if (initial) finishWithResult(RESULT_CANCELED) }
+            .show()
+    }
+
+    /** Saran perbaikan (pasang yt-dlp, impor cookies) lebih berguna daripada pesan galat umum. */
+    private fun resolveMessage(error: StreamError, action: FailureAction?): String = when (action) {
+        FailureAction.INSTALL_YTDLP -> getString(R.string.error_resolve_install_ytdlp)
+        FailureAction.IMPORT_COOKIES -> getString(R.string.error_resolve_need_cookies)
+        else -> resolveMessage(error)
     }
 
     private fun resolveMessage(error: StreamError): String = getString(
@@ -1400,8 +1440,12 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
                 openFilePickerFor(RCODE_LOAD_FILE, "", skip) { result, data ->
                     if (result == RESULT_OK) {
                         val path = data!!.getStringExtra("path")!!
-                        MPVLib.command(arrayOf("loadfile", path, "append"))
-                        impl.refresh()
+                        if (StreamLoader.isSearch(path)) { // molina-wave3
+                            loadSource(path, MpvLoadFlag.APPEND) { impl.refresh() }
+                        } else {
+                            MPVLib.command(arrayOf("loadfile", path, "append"))
+                            impl.refresh()
+                        }
                     }
                 }
             }
@@ -1411,8 +1455,12 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
                 val helper = Utils.OpenUrlDialog(this@MPVActivity)
                 with (helper) {
                     builder.setPositiveButton(R.string.dialog_ok) { _, _ ->
-                        MPVLib.command(arrayOf("loadfile", helper.text, "append"))
-                        impl.refresh()
+                        if (StreamLoader.isSearch(helper.text)) { // molina-wave3
+                            loadSource(helper.text, MpvLoadFlag.APPEND) { impl.refresh() }
+                        } else {
+                            MPVLib.command(arrayOf("loadfile", helper.text, "append"))
+                            impl.refresh()
+                        }
                     }
                     builder.setNegativeButton(R.string.dialog_cancel) { dialog, _ -> dialog.cancel() }
                     create().show()

@@ -3,6 +3,7 @@ package com.molina.player
 import android.util.Log
 import com.molina.core.common.FailureAction
 import com.molina.core.common.StreamError
+import com.molina.core.common.StreamSearchItem
 import com.molina.core.common.StreamOutcome
 import com.molina.core.common.StreamResolverRegistry
 import com.molina.core.common.stream.MediaUrl
@@ -35,6 +36,49 @@ internal object StreamLoader {
         data class Failed(val error: StreamError, val action: FailureAction?) : Prepared
 
         data class Blocked(val reason: UrlPolicy.Reason) : Prepared
+    }
+
+    // --- molina-wave3: pencarian judul ---
+
+    /** Awalan internal: teks bukan-tautan dari dialog Buka URL dibawa ke MPVActivity sebagai permintaan cari. */
+    const val SEARCH_PREFIX = "molina-search:"
+    private const val SEARCH_LIMIT = 15
+
+    sealed interface Searched {
+        data class Results(val items: List<StreamSearchItem>) : Searched
+
+        data object Empty : Searched
+
+        data class Failed(val error: StreamError) : Searched
+    }
+
+    fun searchRequest(text: String): String = SEARCH_PREFIX + text.trim()
+
+    fun isSearch(raw: String): Boolean = raw.startsWith(SEARCH_PREFIX)
+
+    fun searchQuery(raw: String): String = raw.removePrefix(SEARCH_PREFIX).trim()
+
+    /** True bila teks layak dicari sebagai judul: bukan jalur berkas dan tidak memuat "://" (tautan salah skema). */
+    fun looksLikeQuery(text: String): Boolean {
+        val t = text.trim()
+        return t.length >= 2 && !t.startsWith("/") && !t.contains("://")
+    }
+
+    /** Panggil dari coroutine di luar main thread. Hanya hasil http(s) yang lolos [UrlPolicy] diteruskan. */
+    suspend fun search(query: String): Searched {
+        val resolver = StreamResolverRegistry.get() ?: return Searched.Failed(StreamError.UNSUPPORTED)
+        return when (val out = resolver.search(query, SEARCH_LIMIT)) {
+            is StreamOutcome.Success -> {
+                val items = out.value.filter {
+                    MediaUrl.isHttp(it.pageUrl) && UrlPolicy.check(it.pageUrl) is UrlPolicy.Verdict.Allowed
+                }
+                if (items.isEmpty()) Searched.Empty else Searched.Results(items)
+            }
+            is StreamOutcome.Failure -> {
+                Log.w(TAG, "search: ${out.error} ${out.detail.orEmpty()}")
+                Searched.Failed(out.error)
+            }
+        }
     }
 
     /** True bila ini tautan halaman web (bukan berkas media langsung): layak diberi toast "memuat". */

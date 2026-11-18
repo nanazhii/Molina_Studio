@@ -13,6 +13,7 @@ import com.molina.core.common.stream.ChainStreamResolver
 import com.molina.core.common.stream.DirectResolver
 import com.molina.core.common.stream.GenericPageResolver
 import com.molina.core.common.stream.HttpPageFetcher
+import com.molina.core.common.stream.YtDlpResolver
 import com.molina.core.security.UrlPolicy
 import com.molina.engine.newpipe.NewPipeStreamResolver
 import com.molina.core.storage.SevenZipBackend
@@ -23,6 +24,7 @@ import com.molina.log.MolinaLogSetup
 class MolinaApplication : Application() {
     /** Cache hasil resolve; dipangkas saat sistem kekurangan memori. */
     private var resolverCache: CachingStreamResolver? = null
+    private var ytDlpWorker: DebianYtDlpWorker? = null // molina-wave3
 
     override fun onCreate() {
         super.onCreate()
@@ -39,11 +41,17 @@ class MolinaApplication : Application() {
         // molina-wave2: rantai resolver ringan -> berat, dibuat malas saat resolusi pertama.
         StreamResolverRegistry.install {
             val policy = { url: String -> UrlPolicy.check(url) is UrlPolicy.Verdict.Allowed }
+            // molina-wave3: yt-dlp (TikTok/Facebook) lewat worker Python persisten di Debian; berkas worker ditulis saat ini.
+            val ytDlp = DebianYtDlpWorker(this).also { w ->
+                ytDlpWorker = w
+                runCatching { w.ensureFiles() }
+            }
             CachingStreamResolver(
                 ChainStreamResolver(
                     listOf(
                         DirectResolver(),
                         NewPipeStreamResolver(),
+                        YtDlpResolver(ytDlp, validate = policy),
                         GenericPageResolver(HttpPageFetcher(validate = policy), validate = policy),
                     ),
                     onEvent = { Log.d("Molina/resolver", it) },
@@ -55,7 +63,10 @@ class MolinaApplication : Application() {
     /** Mencatat pemakaian memori tiap sistem meminta pangkas, untuk menyetel tanpa adb. */
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) resolverCache?.clear()
+        if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
+            resolverCache?.clear()
+            ytDlpWorker?.shutdown() // molina-wave3: proses Python di PRoot makan RAM; start ulang otomatis
+        }
         val rt = Runtime.getRuntime()
         val javaMb = (rt.totalMemory() - rt.freeMemory()) shr 20
         val nativeMb = Debug.getNativeHeapAllocatedSize() shr 20

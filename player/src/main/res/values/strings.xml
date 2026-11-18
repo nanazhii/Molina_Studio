@@ -224,4 +224,11 @@
     <string name="error_resolve_network">Gagal menghubungi situs. Periksa koneksi lalu coba lagi.</string>
     <string name="error_resolve_generic">Tautan ini belum bisa diputar.</string>
     <string name="error_resolve_blocked">Tautan ditolak oleh kebijakan keamanan URL.</string>
+    <string name="notice_searching">Mencari…</string>
+    <string name="search_results_title">Hasil pencarian</string>
+    <string name="search_no_results">Tidak ada hasil untuk pencarian ini.</string>
+    <string name="search_failed">Pencarian gagal. Periksa koneksi lalu coba lagi.</string>
+    <string name="hint_url_or_title">Tautan atau judul video</string>
+    <string name="error_resolve_install_ytdlp">Mesin ekstraksi (yt-dlp) belum terpasang. Di Molina Terminal jalankan: sh ~/.molina/pasang_ytdlp.sh</string>
+    <string name="error_resolve_need_cookies">Video ini butuh login. Letakkan cookies.txt di ~/.config/molina/ pada Debian, lalu coba lagi.</string>
 </resources>

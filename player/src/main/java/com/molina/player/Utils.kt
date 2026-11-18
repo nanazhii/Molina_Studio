@@ -460,7 +460,9 @@ internal object Utils {
         private lateinit var dialog: AlertDialog
 
         init {
-            editText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+            // molina-wave3: kolom ini juga menerima judul untuk dicari, jadi papan ketik biasa tanpa saran/koreksi.
+            editText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            editText.hint = context.getString(R.string.hint_url_or_title)
             editText.addTextChangedListener {
                 val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                 if (it.isNullOrEmpty()) {
@@ -481,12 +483,15 @@ internal object Utils {
             }
         }
 
-        private fun validate(text: String): Boolean {
+        private fun isUrl(text: String): Boolean {
             val uri = Uri.parse(normalizeUrl(text)) // molina-ytdl
             return uri.isHierarchical && !uri.isRelative &&
                     !(uri.host.isNullOrEmpty() && uri.path.isNullOrEmpty()) &&
                     PROTOCOLS.contains(uri.scheme)
         }
+
+        // molina-wave3: masukan yang bukan tautan dianggap judul untuk dicari.
+        private fun validate(text: String): Boolean = isUrl(text) || StreamLoader.looksLikeQuery(text)
 
         fun create(): AlertDialog {
             dialog = builder.create()
@@ -497,7 +502,11 @@ internal object Utils {
         }
 
         val text: String
-            get() = normalizeUrl(editText.text.toString())
+            get() {
+                val raw = editText.text.toString()
+                val url = normalizeUrl(raw)
+                return if (isUrl(url) || !StreamLoader.looksLikeQuery(raw)) url else StreamLoader.searchRequest(raw)
+            }
     }
 
     inline fun <reified T: Parcelable> getParcelableArray(bundle: Bundle, key: String): Array<T> {

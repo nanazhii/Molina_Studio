@@ -28,6 +28,11 @@ internal object PlaybackLog {
         Log.i(TAG, "Permintaan putar: ${target(raw)}")
     }
 
+    /** Teks pencarian tidak dicatat. */
+    fun search() {
+        Log.i(TAG, "Pencarian judul diminta")
+    }
+
     fun resolved(raw: String, hasAudio: Boolean) {
         Log.i(TAG, "Resolusi berhasil: ${target(raw)} (audio terpisah=$hasAudio)")
     }
