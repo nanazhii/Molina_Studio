@@ -9,3 +9,10 @@ a7e8bcbec0e6f761b4af24f25677626b35f762f68eef79c08677a363212d11f6  https://github
 a569ee9c59eabb197a0d5047046d757ee14c86fb2d4a734555b633cb5584ad25  https://gitlab.gnome.org/GNOME/libxml2/-/archive/v2.15.4/libxml2-v2.15.4.tar.gz
 b9e2e4aad6789b3b63a056d442f7b39f0ecfca3ae0f1fc0ae4e9614401b69f4b  https://www.lua.org/ftp/lua-5.2.4.tar.gz
 d07a007327277708a2a73ae437887cdbaf282937f6d03ca5467723e9099af586  https://github.com/harfbuzz/harfbuzz/releases/download/14.6.0/harfbuzz-14.6.0.tar.xz
+2385f46e173d525f079946957c007000a8ad11d8496ba66bae99129183d74bd9  https://github.com/beeware/cpython-android-source-deps/releases/download/bzip2-1.0.8-3/bzip2-1.0.8-3-aarch64-linux-android.tar.gz
+9f2c0255ce025c177d44db16174ad5158c7560efe3c7ef0c8c0c64b2196e6a9d  https://github.com/beeware/cpython-android-source-deps/releases/download/libffi-3.4.4-3/libffi-3.4.4-3-aarch64-linux-android.tar.gz
+bf115f29963d577e20a1595dac13baec7ccd559bf8a05f37659ba6b735a8778b  https://github.com/beeware/cpython-android-source-deps/releases/download/openssl-3.5.9-0/openssl-3.5.9-0-aarch64-linux-android.tar.gz
+11dfa2e8360b3022fb5da98743273bee09559cb546bbd00398e1578fefb3b3db  https://github.com/beeware/cpython-android-source-deps/releases/download/sqlite-3.53.4-0/sqlite-3.53.4-0-aarch64-linux-android.tar.gz
+320b76d45dc3499cf855e5310f875cba61c2608e4a98bb280cc4f1b8f189da1a  https://github.com/beeware/cpython-android-source-deps/releases/download/xz-5.4.6-1/xz-5.4.6-1-aarch64-linux-android.tar.gz
+c3ae98fbe54b0cef9601d9dc120ed692d79609087e6926c70d8fc30face07fe7  https://github.com/beeware/cpython-android-source-deps/releases/download/zstd-1.5.7-2/zstd-1.5.7-2-aarch64-linux-android.tar.gz
+e51e69e89489f199530f13d32a4342da3ddb2cf34842f364603a066db05afbf3  https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/yt-dlp
