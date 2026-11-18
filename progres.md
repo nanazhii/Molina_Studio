@@ -8,3 +8,4 @@
 - 2026-11-18: B2-2 dipasang di Molina_Studio (pin ytdl-runtime, install_ytdl_libs.sh, langkah CI build.yml). Insiden: MOLINA_ROOT di terminal menunjuk /sdcard/Molina sehingga file sempat tertulis ke repo lain; sudah dipindah dan script diperbaiki tanpa variabel lingkungan.
 - 2026-11-18: repo Molina_Studio di-clone ulang (HEAD ede0ac7). Aturan allowlist telemetry_gate dipetakan; langkah 2 (YtdlRuntime, input teks/URL, dialog Coba lagi) dibuat ulang dari repo tanpa URL di luar allowlist.
 - 2026-11-18: bundle yt-dlp dihapus dari repo (YtdlRuntime, workflow native-ytdl, skrip, pin, langkah build.yml); mpv ytdl=no. Tautan situs (YouTube/TikTok/FB) tidak diputar sampai UrlResolver selesai; tautan langsung tetap jalan.
+- 2026-11-18: langkah 1 NewPipe: kontrak StreamResolver di core-common (+audioUrl, IMPORT_COOKIES), modul :engine-newpipe (v0.26.5, pin SHA-256, JitPack terbatas), gerbang modul diperbarui. Belum terhubung ke player (langkah 2). Menunggu CI.

@@ -5,6 +5,12 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google(); mavenCentral()
+        // JitPack hanya untuk NewPipeExtractor + nanojson (grup com.github.TeamNewPipe); hash dipin
+        // di scripts/newpipe/pins.sha256 dan diverifikasi tugas verifyNewPipePins.
+        exclusiveContent {
+            forRepository { maven("https://jitpack.io") } // gate:allow JitPack khusus NewPipeExtractor, hash dipin
+            filter { includeGroup("com.github.TeamNewPipe") }
+        }
     }
 }
 rootProject.name = "Molina_Studio"
@@ -17,3 +23,5 @@ include(":core-security")
 include(":code")
 
 include(":player")
+
+include(":engine-newpipe")
