@@ -84,12 +84,14 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
                 R.id.nav_files -> "files"
                 R.id.nav_code -> "code"
                 R.id.nav_terminal -> "terminal"
+                R.id.nav_player -> "player"
                 else -> "settings"
             }
             val fragment: Fragment = when (tab) {
                 "files" -> BerkasFragment() // molina-27b (balik: FilesFragment())
                 "code" -> CodeFragment()
                 "terminal" -> TerminalFragment()
+                "player" -> PlayerFragment()
                 else -> SettingsFragment()
             }
             MolinaEvents.behavior("app", "nav", fields = mapOf("tab" to tab, "from" to (currentTab ?: "start")))
