@@ -13,3 +13,10 @@ patch_*.py
 # keluaran build native lokal (pipeline native)
 _native/
 _native_out/
+
+# keluaran build native mpv (pipeline native)
+_mpv_out/
+third_party/mpv-build/deps/
+third_party/mpv-build/prefix/
+third_party/mpv-build/sdk/
+player/src/main/jniLibs/arm64-v8a/

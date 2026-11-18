@@ -1,0 +1,8 @@
+Sumber upstream : https://github.com/mpv-android/mpv-android
+Commit          : ebf1b3f0cbe9d6154a43cf6ec1ad6fc32a1b2d47
+Tanggal commit  : 2026-11-08T14:12:38+01:00
+Lisensi upstream: MIT (LICENSE-mpv-android.txt, wajib dipertahankan);
+                  berkas filepicker berlisensi MPL-2.0 (header berkas dipertahankan).
+Perubahan Molina: package is.xyz.mpv -> com.molina.player (termasuk JNI), AppTheme -> MolinaPlayerTheme,
+                  manifest tanpa launcher/atribut aplikasi, jadi library, hanya arm64-v8a.
+Skrip build native: third_party/mpv-build (salinan buildscripts upstream, tidak diubah).

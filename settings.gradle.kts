@@ -15,3 +15,5 @@ include(":terminal-proot")
 include(":filemanager")
 include(":core-security")
 include(":code")
+
+include(":player")
