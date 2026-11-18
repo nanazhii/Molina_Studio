@@ -212,4 +212,8 @@
     <!-- File picker -->
     <string name="nnf_name">Name</string>
     <string name="nnf_permission_external_write_denied">Permission to access file system denied</string>
+    <!-- molina-fase-a -->
+    <string name="error_play_title">Gagal memutar</string>
+    <string name="error_play_generic">Media tidak bisa dibuka. Periksa tautan atau berkasnya.</string>
+    <string name="error_play_needs_ytdl">Situs ini memerlukan yt-dlp, yang belum terpasang di Molina Player.</string>
 </resources>

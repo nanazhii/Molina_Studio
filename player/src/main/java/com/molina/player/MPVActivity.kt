@@ -247,6 +247,22 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     }
 
     private var playbackHasStarted = false
+
+    // molina-fase-a: tangkap log error mpv agar kegagalan putar bisa dijelaskan ke pengguna
+    private val errorLines = ArrayList<String>()
+    private var errorShown = false
+    // START_FILE selalu terjadi walau file gagal dibuka; FILE_LOADED baru terjadi bila benar-benar terbuka
+    private var fileLoaded = false
+    private val errorLogObserver = object : MPVLib.LogObserver {
+        override fun logMessage(prefix: String, level: Int, text: String) {
+            // level mpv: 10 fatal, 20 error, 30 warn
+            if (level > 30 || (level == 30 && prefix != "ytdl_hook")) return
+            synchronized(errorLines) {
+                errorLines.add("[$prefix] ${text.trim()}")
+                if (errorLines.size > 8) errorLines.removeAt(0)
+            }
+        }
+    }
     private var onloadCommands = mutableListOf<Array<String>>()
 
     // Activity lifetime
@@ -303,6 +319,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         }
 
         player.addObserver(this)
+        MPVLib.addLogObserver(errorLogObserver)
         player.initialize(filesDir.path, cacheDir.path)
         player.playFile(filepath)
 
@@ -327,6 +344,30 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         volumeControlStream = STREAM_TYPE
     }
 
+    // molina-fase-a
+    private fun showPlaybackError() {
+        if (isFinishing || isDestroyed) return
+        if (errorShown) return
+        errorShown = true
+        val lines = synchronized(errorLines) { errorLines.toList() }
+        val needsYtdl = lines.any {
+            it.contains("ytdl_hook") || it.contains("youtube-dl") || it.contains("yt-dlp") ||
+            it.contains("Failed to recognize file format")
+        }
+        val web = intent.getStringExtra("filepath")?.startsWith("http") == true ||
+            intent.data?.scheme?.startsWith("http") == true
+        val msg = buildString {
+            append(getString(if (needsYtdl && web) R.string.error_play_needs_ytdl else R.string.error_play_generic))
+            if (lines.isNotEmpty()) append("\n\n").append(lines.takeLast(3).joinToString("\n"))
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.error_play_title)
+            .setMessage(msg)
+            .setPositiveButton(R.string.dialog_ok) { _, _ -> finishWithResult(RESULT_CANCELED) }
+            .setOnCancelListener { finishWithResult(RESULT_CANCELED) }
+            .show()
+    }
+
     private fun finishWithResult(code: Int, includeTimePos: Boolean = false) {
         // Refer to (dokumentasi intent Molina Player)
         // FIXME: should track end-file events to accurately report OK vs CANCELED
@@ -347,6 +388,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
 
         // Suppress any further callbacks
         activityIsForeground = false
+        MPVLib.removeLogObserver(errorLogObserver)
 
         if (becomingNoisyReceiverRegistered) {
             unregisterReceiver(becomingNoisyReceiver)
@@ -2008,8 +2050,15 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
             updateMediaSession()
         }
 
-        if (eventId == MpvEvent.MPV_EVENT_SHUTDOWN)
-            finishWithResult(if (playbackHasStarted) RESULT_OK else RESULT_CANCELED)
+        if (eventId == MpvEvent.MPV_EVENT_SHUTDOWN) {
+            if (fileLoaded)
+                finishWithResult(RESULT_OK)
+            else
+                runOnUiThread { showPlaybackError() }
+        }
+
+        if (eventId == MpvEvent.MPV_EVENT_FILE_LOADED)
+            fileLoaded = true
 
         if (eventId == MpvEvent.MPV_EVENT_START_FILE) {
             val cmds = onloadCommands.toTypedArray()
