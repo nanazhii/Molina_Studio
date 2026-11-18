@@ -51,6 +51,7 @@ android {
     }
 }
 dependencies {
+    implementation(project(":player"))
     implementation(project(":core-ui"))
     implementation(project(":core-log"))
     implementation(project(":core-security"))
