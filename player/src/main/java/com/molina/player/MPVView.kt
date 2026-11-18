@@ -21,7 +21,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
 
         // apply phone-optimized defaults
         MPVLib.setOptionString("profile", "fast")
-        YtdlRuntime.applyOptions(context) // molina-ytdl
+        MPVLib.setOptionString("ytdl", "no") // molina: bundle yt-dlp dihapus; resolver URL (UrlResolver) menyusul
 
         // vo
         setVo(if (sharedPreferences.getBoolean("gpu_next", false))

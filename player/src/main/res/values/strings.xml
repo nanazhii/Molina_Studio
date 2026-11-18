@@ -215,5 +215,5 @@
     <!-- molina-fase-a -->
     <string name="error_play_title">Gagal memutar</string>
     <string name="error_play_generic">Media tidak bisa dibuka. Periksa tautan atau berkasnya.</string>
-    <string name="error_play_needs_ytdl">Tautan ini gagal dibaca yt-dlp. Periksa tautan dan koneksi internet.</string>
+    <string name="error_play_needs_ytdl">Tautan situs web belum bisa diputar. Dukungan situs sedang disiapkan; tautan berkas langsung (mp4, m3u8) tetap bisa.</string>
 </resources>

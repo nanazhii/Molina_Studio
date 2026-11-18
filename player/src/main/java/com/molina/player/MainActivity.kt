@@ -9,9 +9,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
         supportActionBar?.setTitle(R.string.mpv_activity)
 
-        // molina-ytdl: siapkan runtime yt-dlp di latar belakang agar pemutaran pertama tidak menunggu
-        Thread { YtdlRuntime.warmUp(applicationContext) }.start()
-
         // The original plan was to have the file/doc picker live as fragments
         // under here but that requires refactoring I'm really not willing to figure out now.
         // (catatan upstream, 2022-06-30)

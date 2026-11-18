@@ -20,4 +20,3 @@ third_party/mpv-build/deps/
 third_party/mpv-build/prefix/
 third_party/mpv-build/sdk/
 player/src/main/jniLibs/arm64-v8a/
-player/src/main/assets/ytdl/
