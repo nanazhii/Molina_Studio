@@ -56,6 +56,7 @@ import kotlin.math.roundToInt
 import com.molina.core.common.FailureAction
 import com.molina.core.common.StreamError
 import com.molina.core.common.StreamSearchItem
+import com.molina.player.search.SearchResultsSheet
 import com.molina.core.common.stream.UrlNormalizer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

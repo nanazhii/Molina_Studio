@@ -254,4 +254,9 @@
     <string name="notice_folder_playlist">Playlist: %d berkas</string>
     <string name="notice_folder_truncated">Playlist dibatasi %d berkas</string>
     <string name="notice_saf_unavailable">Pemilih sistem tidak tersedia di perangkat ini</string>
+    <!-- molina-search-v2 -->
+    <string name="search_count">%1$d hasil</string>
+    <string name="search_filter_hint">Ketik judul, atau nomor untuk melompat</string>
+    <string name="search_prev">‹ Sebelumnya</string>
+    <string name="search_next">Berikut ›</string>
 </resources>
