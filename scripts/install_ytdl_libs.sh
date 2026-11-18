@@ -35,7 +35,11 @@ skip_dyn = ("_test", "_xxtestfuzz", "_ctypes_test")
 n = 0
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
     z.writestr("STAMP", sha + "\n")
-    z.write(os.path.join(src, "yt-dlp"), "yt-dlp")
+    # molina-ytdl: zipapp diekstrak ke ytdlp/ agar Python bisa menyimpan bytecode (.pyc); dari zipapp tidak bisa
+    with zipfile.ZipFile(os.path.join(src, "yt-dlp")) as za:
+        for zi in za.infolist():
+            if not zi.filename.endswith("/"):
+                z.writestr("ytdlp/" + zi.filename, za.read(zi.filename))
     for dp, dns, fns in os.walk(std):
         dns[:] = sorted(d for d in dns if d != "__pycache__")
         for fn in sorted(fns):

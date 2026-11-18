@@ -29,7 +29,7 @@ internal object YtdlRuntime {
             val stamp = readStamp(app) ?: return null
             val stampFile = File(root, "STAMP")
             val ready = stampFile.exists() && stampFile.readText().trim() == stamp &&
-                File(root, "yt-dlp").exists()
+                File(root, "ytdlp/__main__.py").exists()
             if (!ready) extract(app, root)
             val wrapper = File(root, WRAPPER)
             val script = buildScript(app, nativeDir, root)
@@ -42,13 +42,27 @@ internal object YtdlRuntime {
         }
     }
 
+    /** Dipanggil dari thread latar belakang: siapkan runtime lalu jalankan sekali agar bytecode (.pyc) tercache. */
+    fun warmUp(context: Context) {
+        val wrapper = prepare(context) ?: return
+        val marker = File(context.applicationContext.filesDir, "ytdl/.warm")
+        if (marker.exists()) return
+        try {
+            val p = ProcessBuilder(wrapper.path, "--version").redirectErrorStream(true).start()
+            p.inputStream.use { it.readBytes() }
+            if (p.waitFor() == 0) marker.writeText("ok")
+        } catch (e: Exception) {
+            Log.w(TAG, "pemanasan yt-dlp gagal", e)
+        }
+    }
+
     /** Dipanggil sebelum MPVLib.init(): arahkan ytdl_hook ke skrip pembungkus dan quickjs. */
     fun applyOptions(context: Context) {
         val wrapper = prepare(context) ?: return
         val qjs = File(context.applicationContext.applicationInfo.nativeLibraryDir, QJS_EXEC)
         MPVLib.setOptionString("ytdl", "yes")
         MPVLib.setOptionString("script-opts", "ytdl_hook-ytdl_path=${wrapper.path}")
-        MPVLib.setOptionString("ytdl-raw-options", "js-runtimes=quickjs:${qjs.path}")
+        MPVLib.setOptionString("ytdl-raw-options", "js-runtimes=quickjs:${qjs.path},no-playlist=")
         // batasi 1080p agar nyaman di perangkat lama; mpv.conf pengguna tetap bisa menimpa
         MPVLib.setOptionString("ytdl-format", "bv*[height<=1080]+ba/b[height<=1080]/b")
     }
@@ -87,15 +101,14 @@ internal object YtdlRuntime {
     private fun buildScript(app: Context, nativeDir: File, root: File): String = buildString {
         append("#!/system/bin/sh\n")
         append("export PYTHONHOME=").append(sq(File(root, "py").path)).append('\n')
-        append("export PYTHONDONTWRITEBYTECODE=1\n")
         append("export PYTHONNOUSERSITE=1\n")
         append("export LD_LIBRARY_PATH=").append(sq(nativeDir.path))
             .append("\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}\n")
         append("export SSL_CERT_FILE=").append(sq(File(app.filesDir, "cacert.pem").path)).append('\n')
         append("export HOME=").append(sq(app.filesDir.path)).append('\n')
         append("export TMPDIR=").append(sq(app.cacheDir.path)).append('\n')
-        append("export XDG_CACHE_HOME=").append(sq(app.cacheDir.path)).append('\n')
+        append("export XDG_CACHE_HOME=").append(sq(File(app.filesDir, "ytdl-cache").path)).append('\n')
         append("exec ").append(sq(File(nativeDir, PY_EXEC).path)).append(' ')
-            .append(sq(File(root, "yt-dlp").path)).append(" \"\$@\"\n")
+            .append(sq(File(root, "ytdlp").path)).append(" \"\$@\"\n")
     }
 }
