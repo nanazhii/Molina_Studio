@@ -231,4 +231,27 @@
     <string name="hint_url_or_title">Tautan atau judul video</string>
     <string name="error_resolve_install_ytdlp">Mesin ekstraksi (yt-dlp) belum terpasang. Di Molina Terminal jalankan: sh ~/.molina/pasang_ytdlp.sh</string>
     <string name="error_resolve_need_cookies">Video ini butuh login. Letakkan cookies.txt di ~/.config/molina/ pada Debian, lalu coba lagi.</string>
+    <!-- molina-home-mint -->
+    <string name="home_subtitle">Home Theater</string>
+    <string name="home_search_label">Putar dari tautan atau judul</string>
+    <string name="home_paste">Tempel</string>
+    <string name="home_play">Putar</string>
+    <string name="home_search_youtube">Cari di YouTube</string>
+    <string name="home_open">Buka dari perangkat</string>
+    <string name="chooser_title">Buka dari perangkat</string>
+    <string name="chooser_file">Pilih berkas</string>
+    <string name="chooser_file_sub">Putar satu video atau audio</string>
+    <string name="chooser_folder">Pilih folder</string>
+    <string name="chooser_folder_sub">Semua media di folder jadi playlist</string>
+    <string name="chooser_folder_deep">Folder dalam folder</string>
+    <string name="chooser_folder_deep_sub">Termasuk subfolder, maksimal 1000 berkas</string>
+    <string name="chooser_system">Pemilih sistem (SAF)</string>
+    <string name="chooser_system_sub">Untuk kartu SD atau penyimpanan tanpa izin berkas</string>
+    <string name="chooser_cancel">Batal</string>
+    <string name="hint_pick_folder_longpress">Buka folder, lalu tekan lama pada folder yang ingin diputar</string>
+    <string name="notice_scanning">Memindai folder…</string>
+    <string name="notice_folder_empty">Tidak ada media di folder ini</string>
+    <string name="notice_folder_playlist">Playlist: %d berkas</string>
+    <string name="notice_folder_truncated">Playlist dibatasi %d berkas</string>
+    <string name="notice_saf_unavailable">Pemilih sistem tidak tersedia di perangkat ini</string>
 </resources>

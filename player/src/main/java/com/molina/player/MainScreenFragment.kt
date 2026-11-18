@@ -5,25 +5,46 @@ import com.molina.player.preferences.PreferenceActivity
 import com.molina.player.databinding.FragmentMainScreenBinding
 import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import com.molina.core.common.stream.UrlNormalizer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
+/**
+ * Beranda Molina Player (gaya panel Linux Mint): satu kolom untuk tautan ATAU judul (dicari di YouTube),
+ * satu tombol "Buka dari perangkat" (berkas, folder, folder dalam folder, pemilih sistem), dan Setelan.
+ * Pencarian dan pemutaran tetap ditangani MPVActivity lewat [StreamLoader.searchRequest].
+ */
 class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
     private lateinit var binding: FragmentMainScreenBinding
 
     private lateinit var documentTreeOpener: ActivityResultLauncher<Uri?>
     private lateinit var filePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var playerLauncher: ActivityResultLauncher<Intent>
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private var firstRun = false
     private var returningFromPlayer = false
@@ -32,9 +53,28 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
     private var prevData: String? = null
     private var lastPath = ""
 
+    /** Mode pemilih berkas yang sedang terbuka; menentukan arti folder yang dipilih. */
+    private var pickMode = PickMode.FILE
+
+    private enum class PickMode(val key: String) {
+        FILE("file"), FOLDER("folder"), DEEP("deep");
+
+        companion object {
+            fun of(key: String?): PickMode? = values().firstOrNull { it.key == key }
+        }
+    }
+
+    private sealed interface Parsed {
+        data class Url(val value: String) : Parsed
+        data class Query(val text: String) : Parsed
+        data object Invalid : Parsed
+        data object Empty : Parsed
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         firstRun = savedInstanceState == null
+        pickMode = PickMode.of(savedInstanceState?.getString(STATE_PICK_MODE)) ?: PickMode.FILE
 
         documentTreeOpener = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
             it?.let { root ->
@@ -57,11 +97,11 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
                 lastPath = path
             }
             it.data?.getStringExtra("path")?.let { path ->
-                playFile(path)
+                onPathPicked(path)
                 return@registerForActivityResult
             }
             it.data?.getStringArrayExtra("paths")?.let { paths ->
-                // need to convert to playlist at this point
+                // pemilih dokumen (SAF): isi folder langsung, perlu dijadikan playlist
                 if (paths.size == 1) {
                     playFile(paths[0])
                 } else {
@@ -81,36 +121,21 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
         binding = FragmentMainScreenBinding.bind(view)
 
         Utils.handleInsetsAsPadding(binding.root)
+        capContentWidth()
 
-        binding.docBtn.setOnClickListener {
-            try {
-                documentTreeOpener.launch(null)
-            } catch (e: ActivityNotFoundException) {
-                // Android TV doesn't come with a document picker and certain versions just throw
-                // instead of handling this gracefully
-                binding.docBtn.isEnabled = false
+        binding.urlInput.addTextChangedListener { refreshInputState() }
+        binding.urlInput.setOnEditorActionListener { _, actionId, event ->
+            val enter = event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN
+            if (actionId == EditorInfo.IME_ACTION_GO || actionId == EditorInfo.IME_ACTION_SEARCH || enter) {
+                submit()
+                true
+            } else {
+                false
             }
         }
-        binding.urlBtn.setOnClickListener {
-            saveChoice("url")
-            val helper = Utils.OpenUrlDialog(requireContext())
-            with (helper) {
-                builder.setPositiveButton(R.string.dialog_ok) { _, _ ->
-                    playFile(helper.text)
-                }
-                builder.setNegativeButton(R.string.dialog_cancel) { dialog, _ -> dialog.cancel() }
-                create().show()
-            }
-        }
-        binding.filepickerBtn.setOnClickListener {
-            saveChoice("file")
-            val i = Intent(context, FilePickerActivity::class.java)
-            i.putExtra("skip", FilePickerActivity.FILE_PICKER)
-            i.putExtra("allow_dir", true)
-            if (lastPath != "")
-                i.putExtra("default_path", lastPath)
-            filePickerLauncher.launch(i)
-        }
+        binding.pasteBtn.setOnClickListener { pasteFromClipboard() }
+        binding.playBtn.setOnClickListener { submit() }
+        binding.openBtn.setOnClickListener { showOpenChooser() }
         binding.settingsBtn.setOnClickListener {
             saveChoice("") // will reset
             startActivity(Intent(context, PreferenceActivity::class.java))
@@ -120,7 +145,151 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
             binding.settingsBtn.setOnLongClickListener { showDebugMenu(); true }
         }
 
-        onConfigurationChanged(view.resources.configuration)
+        refreshInputState()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(STATE_PICK_MODE, pickMode.key)
+    }
+
+    override fun onDestroy() {
+        scope.cancel()
+        super.onDestroy()
+    }
+
+    // --- Kolom tautan / judul ---
+
+    private fun parse(raw: String): Parsed {
+        val t = raw.trim()
+        if (t.isEmpty()) return Parsed.Empty
+        val url = Utils.normalizeUrl(t)
+        return when {
+            Utils.isUrl(url) -> Parsed.Url(url)
+            StreamLoader.looksLikeQuery(t) -> Parsed.Query(t)
+            else -> Parsed.Invalid
+        }
+    }
+
+    private fun refreshInputState() {
+        val p = parse(binding.urlInput.text.toString())
+        binding.urlInput.error = if (p is Parsed.Invalid) getString(R.string.uri_invalid_protocol) else null
+        binding.playBtn.isEnabled = p is Parsed.Url || p is Parsed.Query
+        binding.playBtn.setText(if (p is Parsed.Query) R.string.home_search_youtube else R.string.home_play)
+    }
+
+    private fun submit() {
+        when (val p = parse(binding.urlInput.text.toString())) {
+            is Parsed.Url -> {
+                saveChoice("url")
+                playFile(p.value)
+            }
+            is Parsed.Query -> {
+                saveChoice("url")
+                playFile(StreamLoader.searchRequest(p.text)) // MPVActivity: cari, tampilkan kartu hasil, lalu putar
+            }
+            Parsed.Invalid -> binding.urlInput.error = getString(R.string.uri_invalid_protocol)
+            Parsed.Empty -> Unit
+        }
+    }
+
+    private fun pasteFromClipboard() {
+        val ctx = requireContext()
+        val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = cm.primaryClip
+        val text = if (clip != null && clip.itemCount > 0) clip.getItemAt(0).coerceToText(ctx).toString().trim() else ""
+        if (text.isEmpty()) return
+        binding.urlInput.setText(UrlNormalizer.extractUrl(text) ?: text)
+        binding.urlInput.setSelection(binding.urlInput.text.length)
+    }
+
+    private fun focusUrlInput() {
+        binding.urlInput.requestFocus()
+        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.showSoftInput(binding.urlInput, InputMethodManager.SHOW_IMPLICIT)
+    }
+
+    /** Di tablet/TV panel dibatasi 560dp dan di tengah; di ponsel selebar layar. */
+    private fun capContentWidth() {
+        val density = resources.displayMetrics.density
+        val max = (MAX_CONTENT_DP * density).toInt()
+        val margin = (CONTENT_MARGIN_DP * density).toInt()
+        binding.root.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+            val target = if (v.width > max + margin) max else ViewGroup.LayoutParams.MATCH_PARENT
+            val lp = binding.content.layoutParams
+            if (lp.width != target) {
+                lp.width = target
+                binding.content.layoutParams = lp
+            }
+        }
+    }
+
+    // --- Buka dari perangkat ---
+
+    private fun showOpenChooser() {
+        OpenChooserSheet.show(requireContext()) { choice ->
+            when (choice) {
+                OpenChooserSheet.Choice.FILE -> launchPicker(PickMode.FILE)
+                OpenChooserSheet.Choice.FOLDER -> launchPicker(PickMode.FOLDER)
+                OpenChooserSheet.Choice.FOLDER_DEEP -> launchPicker(PickMode.DEEP)
+                OpenChooserSheet.Choice.SYSTEM -> launchDocTree()
+            }
+        }
+    }
+
+    private fun launchPicker(mode: PickMode) {
+        saveChoice(mode.key)
+        pickMode = mode
+        if (mode != PickMode.FILE) {
+            // pemilih lama memilih folder lewat tekan-lama; beri petunjuk agar tidak membingungkan
+            Toast.makeText(requireContext(), R.string.hint_pick_folder_longpress, Toast.LENGTH_LONG).show()
+        }
+        val i = Intent(context, FilePickerActivity::class.java)
+        i.putExtra("skip", FilePickerActivity.FILE_PICKER)
+        i.putExtra("allow_dir", mode != PickMode.FILE)
+        if (lastPath != "")
+            i.putExtra("default_path", lastPath)
+        filePickerLauncher.launch(i)
+    }
+
+    private fun launchDocTree() {
+        try {
+            documentTreeOpener.launch(null)
+        } catch (e: ActivityNotFoundException) {
+            // Android TV doesn't come with a document picker and certain versions just throw
+            // instead of handling this gracefully
+            Toast.makeText(requireContext(), R.string.notice_saf_unavailable, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun onPathPicked(path: String) {
+        val f = File(path)
+        if (pickMode != PickMode.FILE && f.isDirectory) {
+            playFolder(f, deep = pickMode == PickMode.DEEP)
+        } else {
+            playFile(path)
+        }
+    }
+
+    private fun playFolder(dir: File, deep: Boolean) {
+        val ctx = requireContext().applicationContext
+        Toast.makeText(ctx, R.string.notice_scanning, Toast.LENGTH_SHORT).show()
+        scope.launch {
+            val scan = withContext(Dispatchers.IO) { MediaFolder.scan(dir, deep) }
+            val uri = MediaFolder.memoryPlaylist(scan.paths)
+            if (!isAdded) return@launch
+            if (uri == null) {
+                Toast.makeText(ctx, R.string.notice_folder_empty, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val msg = if (scan.truncated) {
+                ctx.getString(R.string.notice_folder_truncated, MediaFolder.MAX_ENTRIES)
+            } else {
+                ctx.getString(R.string.notice_folder_playlist, scan.paths.size)
+            }
+            Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+            playFile(uri)
+        }
     }
 
     private fun showDebugMenu() {
@@ -134,14 +303,6 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
                 startActivity(intent)
             }
             create().show()
-        }
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        // phone screens are too small to show the action buttons alongside the logo
-        if (!Utils.isXLargeTablet(requireContext())) {
-            binding.logo.isVisible = newConfig.orientation != Configuration.ORIENTATION_LANDSCAPE
         }
     }
 
@@ -202,8 +363,8 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
                     i.putExtra("default_path", lastPath)
                 filePickerLauncher.launch(i)
             }
-            "url" -> binding.urlBtn.callOnClick()
-            "file" -> binding.filepickerBtn.callOnClick()
+            "url" -> focusUrlInput()
+            else -> PickMode.of(type)?.let { launchPicker(it) }
         }
     }
 
@@ -222,6 +383,9 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
 
     companion object {
         private const val TAG = "mpv"
+        private const val STATE_PICK_MODE = "pick_mode"
+        private const val MAX_CONTENT_DP = 560
+        private const val CONTENT_MARGIN_DP = 32
 
         // list of debug or testing activities that can be launched
         private val DEBUG_ACTIVITIES = arrayOf(

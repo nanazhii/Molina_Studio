@@ -483,12 +483,7 @@ internal object Utils {
             }
         }
 
-        private fun isUrl(text: String): Boolean {
-            val uri = Uri.parse(normalizeUrl(text)) // molina-ytdl
-            return uri.isHierarchical && !uri.isRelative &&
-                    !(uri.host.isNullOrEmpty() && uri.path.isNullOrEmpty()) &&
-                    PROTOCOLS.contains(uri.scheme)
-        }
+        private fun isUrl(text: String): Boolean = Utils.isUrl(text)
 
         // molina-wave3: masukan yang bukan tautan dianggap judul untuk dicari.
         private fun validate(text: String): Boolean = isUrl(text) || StreamLoader.looksLikeQuery(text)
@@ -590,6 +585,14 @@ internal object Utils {
     // molina-ytdl: alamat tanpa skema (mis. youtu.be/xxx atau 192.168.1.5:8080/a.mp4) diberi skema
     private val HOST_RE = Regex("^[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+(:\\d+)?([/?#].*)?$")
     private val IPV4_RE = Regex("^\\d{1,3}(\\.\\d{1,3}){3}([:/?#].*)?$")
+
+    /** True bila [text] (setelah [normalizeUrl]) adalah tautan dengan protokol yang didukung. Dipakai Home dan dialog Buka URL. */
+    fun isUrl(text: String): Boolean {
+        val uri = Uri.parse(normalizeUrl(text)) // molina-ytdl
+        return uri.isHierarchical && !uri.isRelative &&
+                !(uri.host.isNullOrEmpty() && uri.path.isNullOrEmpty()) &&
+                PROTOCOLS.contains(uri.scheme)
+    }
 
     fun normalizeUrl(raw: String): String {
         val t = raw.trim()
