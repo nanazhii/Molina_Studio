@@ -82,6 +82,9 @@ for nv in $CPYTHON_DEPS; do
   f="$nv-$CPYTHON_HOST.tar.gz"
   bash "$ROOT/scripts/native_wget.sh" "$CPYTHON_DEPS_BASE/$nv/$f" -O "$CACHE/$f"
 done
+# android.py: target "build" membuat Python pendamping (cross-build/build) yang WAJIB ada sebelum target host;
+# memberi nama host saja melewatinya dan gagal dengan "cross-build/build does not exist".
+( cd "$WORK/cpython" && python3 Android/android.py build build )
 ( cd "$WORK/cpython" && python3 Android/android.py build "$CPYTHON_HOST" --cache-dir "$CACHE" )
 ( cd "$WORK/cpython" && python3 Android/android.py package "$CPYTHON_HOST" )
 PKG="$(ls "$WORK"/cpython/cross-build/"$CPYTHON_HOST"/dist/python-*-"$CPYTHON_HOST".tar.gz 2>/dev/null | head -n1 || true)"
