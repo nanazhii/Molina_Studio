@@ -20,4 +20,11 @@
     <color name="nnf_light_separator_color">#1e000000</color>
     <!-- 12% white in BLACK THEME -->
     <color name="nnf_dark_separator_color">#1effffff</color>
+
+    <!-- molina-wave3b: palet Home Theater untuk kartu hasil pencarian -->
+    <color name="molina_sheet_bg">#1E1E1E</color>
+    <color name="molina_card_bg">#2F2F2F</color>
+    <color name="molina_card_line">#3C3C3C</color>
+    <color name="molina_accent">#87CF3E</color>
+    <color name="molina_text_secondary">#B8B8B8</color>
 </resources>

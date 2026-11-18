@@ -56,7 +56,6 @@ import kotlin.math.roundToInt
 import com.molina.core.common.FailureAction
 import com.molina.core.common.StreamError
 import com.molina.core.common.StreamSearchItem
-import com.molina.core.common.stream.SearchLabel
 import com.molina.core.common.stream.UrlNormalizer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -433,13 +432,12 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
 
     private fun showSearchResults(items: List<StreamSearchItem>, flag: String?, onQueued: (() -> Unit)?, initial: Boolean) {
         if (isFinishing || isDestroyed) return
-        val labels = items.map<StreamSearchItem, CharSequence> { SearchLabel.of(it) }.toTypedArray()
-        AlertDialog.Builder(this)
-            .setTitle(R.string.search_results_title)
-            .setItems(labels) { _, which -> loadSource(items[which].pageUrl, flag, onQueued) }
-            .setNegativeButton(R.string.dialog_cancel) { d, _ -> d.cancel() }
-            .setOnCancelListener { if (initial) finishWithResult(RESULT_CANCELED) }
-            .show()
+        // molina-wave3b: kartu Home Theater dengan chip sumber (lihat SearchResultsSheet).
+        SearchResultsSheet.show(
+            this, items,
+            onPick = { loadSource(it.pageUrl, flag, onQueued) },
+            onCancel = { if (initial) finishWithResult(RESULT_CANCELED) },
+        )
     }
 
     /** Saran perbaikan (pasang yt-dlp, impor cookies) lebih berguna daripada pesan galat umum. */
