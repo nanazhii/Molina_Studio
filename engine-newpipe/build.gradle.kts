@@ -44,7 +44,12 @@ val verifyNewPipePins by tasks.registering {
                 require(parts.size == 2) { "baris pins.sha256 tidak valid: $line" }
                 parts[1].trim() to parts[0].lowercase()
             }
-        val files = configurations.getByName("releaseRuntimeClasspath").resolve().associateBy { it.name }
+        val files = configurations.getByName("releaseRuntimeClasspath").incoming
+            .artifactView {
+                attributes {
+                    attribute(org.gradle.api.attributes.Attribute.of("artifactType", String::class.java), "jar")
+                }
+            }.files.files.associateBy { it.name }
         val problems = mutableListOf<String>()
         for ((name, expected) in pins) {
             val f = files[name]
