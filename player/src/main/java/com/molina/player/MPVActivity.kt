@@ -54,6 +54,7 @@ import java.io.File
 import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
 import com.molina.core.common.StreamError
+import com.molina.core.common.stream.UrlNormalizer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -1211,7 +1212,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
                 var parsed = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)
                 if (parsed == null) {
                     parsed = intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
-                        Uri.parse(it.trim())
+                        Uri.parse(UrlNormalizer.extractUrl(it) ?: it.trim())
                     }
                 }
 

@@ -1,7 +1,6 @@
 package com.molina.player
 
 import android.content.Context
-import android.os.Build
 import android.os.Environment
 import android.preference.PreferenceManager
 import android.util.AttributeSet
@@ -100,10 +99,14 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
         MPVLib.setOptionString("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
         MPVLib.setOptionString("input-default-bindings", "yes")
         MPVLib.setOptionString("flatten-editions", "yes")
-        // Limit demuxer cache since the defaults are too high for mobile devices
-        val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 64 else 32
-        MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
-        MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
+        // molina: cache asimetris. Buffer maju cukup untuk 1-2 menit stream 720p; buffer mundur kecil
+        // karena hanya dipakai seek ke belakang. Menghemat RAM native di perangkat 2-3 GB.
+        val forwardMegs = 32
+        val backMegs = 8
+        MPVLib.setOptionString("demuxer-max-bytes", "${forwardMegs * 1024 * 1024}")
+        MPVLib.setOptionString("demuxer-max-back-bytes", "${backMegs * 1024 * 1024}")
+        MPVLib.setOptionString("cache-secs", "90")
+        MPVLib.setOptionString("network-timeout", "20")
         //
         val screenshotDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         screenshotDir.mkdirs()

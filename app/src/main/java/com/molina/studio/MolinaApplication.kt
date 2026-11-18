@@ -1,11 +1,19 @@
 package com.molina.studio
 
 import android.app.Application
+import android.content.ComponentCallbacks2
 import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.os.Debug
+import android.util.Log
 import com.molina.core.common.CrashContext
 import com.molina.core.common.StreamResolverRegistry
+import com.molina.core.common.stream.CachingStreamResolver
+import com.molina.core.common.stream.ChainStreamResolver
+import com.molina.core.common.stream.DirectResolver
+import com.molina.core.common.stream.GenericPageResolver
+import com.molina.core.common.stream.HttpPageFetcher
+import com.molina.core.security.UrlPolicy
 import com.molina.engine.newpipe.NewPipeStreamResolver
 import com.molina.core.storage.SevenZipBackend
 import com.molina.log.CrashReporter
@@ -13,6 +21,9 @@ import com.molina.log.MolinaEvents
 import com.molina.log.MolinaLogSetup
 
 class MolinaApplication : Application() {
+    /** Cache hasil resolve; dipangkas saat sistem kekurangan memori. */
+    private var resolverCache: CachingStreamResolver? = null
+
     override fun onCreate() {
         super.onCreate()
         MolinaLogSetup.init(this)
@@ -25,12 +36,26 @@ class MolinaApplication : Application() {
         )
         ShieldBootstrap.start(this)
         SevenZipBackend.writer = DebianSevenZip(this) // molina-27q: 7z bersandi lewat Debian
-        StreamResolverRegistry.install { NewPipeStreamResolver() } // molina-resolver: dibuat malas saat resolusi pertama
+        // molina-wave2: rantai resolver ringan -> berat, dibuat malas saat resolusi pertama.
+        StreamResolverRegistry.install {
+            val policy = { url: String -> UrlPolicy.check(url) is UrlPolicy.Verdict.Allowed }
+            CachingStreamResolver(
+                ChainStreamResolver(
+                    listOf(
+                        DirectResolver(),
+                        NewPipeStreamResolver(),
+                        GenericPageResolver(HttpPageFetcher(validate = policy), validate = policy),
+                    ),
+                    onEvent = { Log.d("Molina/resolver", it) },
+                ),
+            ).also { resolverCache = it }
+        }
     }
 
     /** Mencatat pemakaian memori tiap sistem meminta pangkas, untuk menyetel tanpa adb. */
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
+        if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) resolverCache?.clear()
         val rt = Runtime.getRuntime()
         val javaMb = (rt.totalMemory() - rt.freeMemory()) shr 20
         val nativeMb = Debug.getNativeHeapAllocatedSize() shr 20
