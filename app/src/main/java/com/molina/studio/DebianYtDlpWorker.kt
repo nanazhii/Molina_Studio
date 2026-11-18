@@ -162,7 +162,8 @@ class DebianYtDlpWorker(
         val args = SevenZipCommand.prootArgsScoped(l.rootfsDir.path, emptyList(), PYTHON, listOf(SCRIPT))
         val pb = ProcessBuilder(listOf(l.prootBin.path) + args)
             .directory(context.filesDir)
-            .redirectError(ProcessBuilder.Redirect.DISCARD)
+            // stderr dibuang (bisa memuat URL). Redirect.DISCARD tidak tersedia di semua API Android, jadi pakai /dev/null.
+            .redirectError(File("/dev/null"))
         pb.environment().apply {
             clear()
             putAll(
@@ -196,8 +197,8 @@ class DebianYtDlpWorker(
             val deadline = SystemClock.elapsedRealtime() + READY_TIMEOUT_MS
             while (true) {
                 val left = deadline - SystemClock.elapsedRealtime()
-                val raw = if (left > 0) lines.poll(left, TimeUnit.MILLISECONDS) else null
-                if (raw == null) throw Unavailable("TIMEOUT", "worker tidak siap")
+                val raw: String = (if (left > 0) lines.poll(left, TimeUnit.MILLISECONDS) else null)
+                    ?: throw Unavailable("TIMEOUT", "worker tidak siap")
                 if (raw == EOF) throw Unavailable("UNKNOWN", "worker berhenti saat start")
                 when (val m = YtDlpProtocol.parse(raw)) {
                     is YtDlpProtocol.Message.Ready -> {
