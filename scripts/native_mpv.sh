@@ -42,6 +42,18 @@ export WGET="bash $ROOT/scripts/native_wget.sh"
 
 cd "$B"
 IN_CI=1 ./include/download-deps.sh
+# Pin git dependency ke SHA persis (native/git.pins: "<nama> <sha>"); skrip upstream tidak diubah.
+while read -r name sha _; do
+  case "$name" in ''|'#'*) continue ;; esac
+  d="$B/deps/$name"
+  [ -d "$d/.git" ] || fail "deps/$name tidak ada untuk dipin"
+  if [ "$(git -C "$d" rev-parse HEAD)" != "$sha" ]; then
+    git -C "$d" cat-file -e "$sha^{commit}" 2>/dev/null || git -C "$d" fetch -q --depth=1 origin "$sha"
+    git -C "$d" checkout -q --detach "$sha"
+  fi
+  case "$name" in libplacebo|freetype2) git -C "$d" submodule update -q --init --recursive ;; esac
+  [ "$(git -C "$d" rev-parse HEAD)" = "$sha" ] || fail "pin $name gagal"
+done < "$ROOT/native/git.pins"
 ./buildall.sh --only-deps mpv --arch arm64
 ./buildall.sh -n mpv --arch arm64
 [ -s "$B/prefix/arm64/lib/libmpv.so" ] || fail "libmpv.so arm64 tidak terbentuk"

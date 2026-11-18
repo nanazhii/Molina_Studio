@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           for f in scripts/native_mpv.sh scripts/native_wget.sh scripts/ensure_ndk.sh \
-                   native/pins.env native/pins.sha256 \
+                   native/pins.env native/pins.sha256 native/git.pins \
                    third_party/mpv-build/buildall.sh third_party/mpv-build/include/depinfo.sh \
                    player/src/main/jni/Android.mk; do
             [ -s "$f" ] || { echo "::error::$f tidak ada atau kosong"; exit 1; }
@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: _mpv_out
-          key: native-mpv-arm64-v1-${{ runner.os }}-${{ hashFiles('native/pins.env', 'native/pins.sha256', 'scripts/native_mpv.sh', 'scripts/native_wget.sh', 'scripts/ensure_ndk.sh', 'third_party/mpv-build/**', 'player/src/main/jni/**') }}
+          key: native-mpv-arm64-v1-${{ runner.os }}-${{ hashFiles('native/pins.env', 'native/pins.sha256', 'native/git.pins', 'scripts/native_mpv.sh', 'scripts/native_wget.sh', 'scripts/ensure_ndk.sh', 'third_party/mpv-build/**', 'player/src/main/jni/**') }}
       - name: Verifikasi hasil cache
         id: verify
         env:

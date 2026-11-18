@@ -1,0 +1,8 @@
+# Pin git dependency native mpv (dari BUILD-INFO.txt Release native-mpv-f4bf2f1-run10, 2026-11-18).
+# Format: <nama di third_party/mpv-build/deps> <SHA commit>. Dibaca scripts/native_mpv.sh.
+dav1d 6c7bee685677fd997a431302be4fea8ea4017606
+ffmpeg 946fcce07b6dcd0331c8cc609192aeff5e1924f8
+freetype2 37515cf56ba3349656049edbed89ffc6f6466f2d
+libass 21b5a54fceff49c126c201d4b51c6445287a5072
+libplacebo f2e04cb1840ef1f1586b71050bff40b04cbd8d91
+mpv f92afa75cdb06e077a9ecd9a9ec2eb36b16327c2
