@@ -79,7 +79,7 @@ class TrashBinTest {
 
     @Test fun itemDilindungiDitolakTanpaMemindahApaPun() {
         val r = root()
-        val protectedDir = dir(r, "cinema")
+        val protectedDir = dir(r, "terminal")
         val ok = file(r, "a.txt")
         val bin = TrashBin(r)
         val e = bin.trash(listOf(ok, protectedDir), setOf(protectedDir)).errorOrNull()

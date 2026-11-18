@@ -3,7 +3,7 @@ package com.molina.code.ui
 import androidx.compose.ui.graphics.Color
 
 /**
- * Token warna Code Editor "Molina Cinema". Satu-satunya sumber warna untuk layar Code.
+ * Token warna Code Editor "Molina". Satu-satunya sumber warna untuk layar Code.
  * Acuan: docs/blueprint-code-editor.md bagian 13.2 (v2) dan 22 (v3). Nilai v1 yang digantikan
  * v2 tidak dipakai. Jangan hardcode warna di layar; tambahkan token di sini.
  */

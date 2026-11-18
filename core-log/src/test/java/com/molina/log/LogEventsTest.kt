@@ -59,14 +59,14 @@ class LogEventsTest {
     fun emitHelpersUseConventionTagsAndLevels() {
         val sink = CaptureSink()
         val log = MolinaLogger(listOf(sink), clock = { 0L })
-        val boom = IllegalStateException("mpv belum siap")
-        MolinaEvents.crash("mpv", boom, "main", logger = log)
+        val boom = IllegalStateException("net belum siap")
+        MolinaEvents.crash("net", boom, "main", logger = log)
         MolinaEvents.bug("proot", "install-failed", "unduhan terputus", boom, id = "s1", logger = log)
         MolinaEvents.bug("proot", "slow", "lambat", level = LogLevel.WARN, logger = log)
         MolinaEvents.behavior("term", "session.start", fields = mapOf("kind" to "debian"), logger = log)
 
         val (crash, bug, warn, behav) = sink.entries
-        assertEquals("Molina/mpv", crash.tag)
+        assertEquals("Molina/net", crash.tag)
         assertEquals(LogLevel.ERROR, crash.level)
         assertSame(boom, crash.throwable)
         val ce = LogEvents.parse(crash.message)!!
@@ -92,7 +92,7 @@ class LogEventsTest {
     fun qualifyPrefixesAreaOnce() {
         assertEquals("proot.install-failed", LogEvents.qualify("proot", "install-failed"))
         assertEquals("proot.install-failed", LogEvents.qualify("proot", "proot.install-failed"))
-        assertEquals("mpv.error", LogEvents.qualify("mpv", "Error"))
+        assertEquals("net.error", LogEvents.qualify("net", "Error"))
         assertEquals("term.session.start", LogEvents.qualify("term", "session.start"))
     }
 }

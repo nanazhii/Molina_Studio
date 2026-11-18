@@ -18,7 +18,7 @@ class MolinaLogger(
     fun flush() = sinks.forEach { runCatching { it.flush() } }
 
     companion object {
-        /** Konvensi tag: Molina/<area>[/<id>], mis. Molina/term/s1, Molina/mpv/p1. */
+        /** Konvensi tag: Molina/<area>[/<id>], mis. Molina/term/s1, Molina/proot. */
         fun tag(area: String, id: String? = null): String =
             if (id == null) "Molina/$area" else "Molina/$area/$id"
     }

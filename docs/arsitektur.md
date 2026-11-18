@@ -4,10 +4,10 @@ Satu peran per modul. Dilarang menjadi "god module".
 
 | Lapisan | Modul | Peran |
 |---|---|---|
-| app | `app` | Cangkang: MainActivity, nav 5 tab (Cinema, Berkas, Code, Terminal, Setelan), wiring |
-| feature | `cinema`, `files`, `terminal`, `settings`, `code` | UI dan ViewModel per tab |
-| api | `player-api`, `terminal-api` | Kontrak murni (interface, event, state). Tanpa implementasi |
-| engine | `player-mpv`, `terminal-core`, `terminal-emulator`, `terminal-view`, `terminal-pty`, `filemanager` | Implementasi di balik kontrak (JNI mpv, proses terminal) |
+| app | `app` | Cangkang: MainActivity, nav 4 tab (Berkas, Code, Terminal, Setelan), wiring |
+| feature | `files`, `terminal`, `settings`, `code` | UI dan ViewModel per tab |
+| api | `terminal-api` | Kontrak murni (interface, event, state). Tanpa implementasi |
+| engine | `terminal-core`, `terminal-emulator`, `terminal-view`, `terminal-pty`, `filemanager` | Implementasi di balik kontrak (proses terminal, PTY, PRoot) |
 | core | `core-common`, `core-log`, `core-storage`, `core-ui`, `core-security` | Utilitas lintas fitur |
 
 `native/` bukan modul Gradle: hanya pin dan profil untuk build pustaka native.
@@ -20,11 +20,9 @@ Satu peran per modul. Dilarang menjadi "god module".
 - Tidak ada feature -> feature.
 
 ## Catatan
-- Kontrak dipindah antarmodul tanpa mengubah package (`com.molina.cinema`, `com.molina.terminal.core`) agar JNI `Java_com_molina_cinema_MPVLib_*` dan impor tetap aman.
-- `:mpv-native` dihapus (P11). Mesin pemutar akan divendor dari mpv-android penuh; package JNI Kotlin dan C/JNI hasil vendoring harus disamakan.
+- Kontrak dipindah antarmodul tanpa mengubah package (mis. `com.molina.terminal.core`) agar impor tetap aman.
 
-## Modul yang direncanakan (belum dibuat)
-- `player-mpv`: SUDAH ADA (P12): mpv-android penuh divendor, package `com.molina.player.mpv`. Implementasi `MolinaPlayerSession` di atasnya menyusul (tahap 2/3).
+## Modul lain
 - `terminal-proot`: lingkungan Debian PRoot dan manajemen proses.
 
 ## Injeksi sesi terminal

@@ -13,8 +13,8 @@ class ScopedKeyValueStoreTest {
     @Test fun scopeBerbedaTidakSalingMembaca() {
         val molina = ScopedKeyValueStore(base, "/sdcard/Molina")
         val penuh = ScopedKeyValueStore(base, "/sdcard")
-        molina.putString("recent_v1", "cinema")
-        assertEquals("cinema", molina.getString("recent_v1"))
+        molina.putString("recent_v1", "media")
+        assertEquals("media", molina.getString("recent_v1"))
         assertNull(penuh.getString("recent_v1"))
     }
 
@@ -25,8 +25,8 @@ class ScopedKeyValueStoreTest {
     }
 
     @Test fun riwayatTerakhirTerikatKeRoot() {
-        ExplorerRecent(ScopedKeyValueStore(base, "/sdcard/Molina")).push("cinema")
+        ExplorerRecent(ScopedKeyValueStore(base, "/sdcard/Molina")).push("media")
         assertEquals(emptyList<String>(), ExplorerRecent(ScopedKeyValueStore(base, "/sdcard")).paths())
-        assertEquals(listOf("cinema"), ExplorerRecent(ScopedKeyValueStore(base, "/sdcard/Molina")).paths())
+        assertEquals(listOf("media"), ExplorerRecent(ScopedKeyValueStore(base, "/sdcard/Molina")).paths())
     }
 }

@@ -19,8 +19,6 @@ internal fun rootCauseOf(t: Throwable): Throwable = causeChain(t).last()
 
 /** Menentukan area (segmen kedua tag) dari stack trace, agar crash masuk ke area yang benar. */
 object CrashAttribution {
-    private val MPV_CLASS = Regex("(?i)(mpv|player)")
-
     private val PREFIXES = listOf(
         "com.molina.terminal.proot." to "proot",
         "com.molina.terminal." to "term",
@@ -29,7 +27,6 @@ object CrashAttribution {
         "com.molina.log." to "core",
         "com.molina.core." to "core",
         "com.molina.studio." to "app",
-        "com.molina.player." to "mpv",
     )
 
     /** Penyebab terdalam dulu; frame Molina pertama menentukan area. Tanpa frame Molina: core. */
@@ -43,10 +40,6 @@ object CrashAttribution {
     }
 
     fun areaOfClass(className: String): String? {
-        if (className.startsWith("com.molina.cinema.")) {
-            val simple = className.substringAfterLast('.')
-            return if (MPV_CLASS.containsMatchIn(simple)) "mpv" else "cinema"
-        }
         for ((prefix, area) in PREFIXES) {
             if (className.startsWith(prefix)) return area
         }
@@ -57,7 +50,7 @@ object CrashAttribution {
 /**
  * Handler exception tak tertangani: catat crash (stack trace lengkap) ke logger, tunggu antrean
  * file log tuntas, lalu teruskan ke handler sebelumnya agar proses tetap mati seperti biasa.
- * Crash native (SIGSEGV di libmpv) tidak lewat sini; lihat docs/log-contract.md.
+ * Crash native (SIGSEGV di pustaka .so) tidak lewat sini; lihat docs/log-contract.md.
  */
 class CrashReporter(
     private val logger: () -> MolinaLogger = { MolinaLog.logger },

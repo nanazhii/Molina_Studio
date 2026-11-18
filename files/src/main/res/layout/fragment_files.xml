@@ -236,7 +236,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:text="Batal"
-                android:textColor="@color/molina_cinema_accent" />
+                android:textColor="@color/molina_brand_accent" />
         </LinearLayout>
     </LinearLayout>
 

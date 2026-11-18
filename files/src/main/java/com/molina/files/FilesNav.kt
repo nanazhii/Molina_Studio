@@ -20,7 +20,6 @@ internal object FilesNav {
 
     /** Folder standar Molina yang selalu tampil di Favorit (path relatif, label). */
     val BUILT_IN: List<Pair<String, String>> = listOf(
-        "cinema" to "Cinema",
         "terminal" to "Terminal",
         "logs" to "Log",
     )

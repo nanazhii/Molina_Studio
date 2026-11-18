@@ -9,8 +9,8 @@ internal enum class EventFilter(val label: String, val marker: String?) {
     BEHAV("BEHAV", "[BEHAV:"),
 }
 
-/** Jenis sesi menurut awalan id: t<angka> = Terminal, p<angka> = Cinema (mpv). */
-internal enum class SessionKind { TERMINAL, CINEMA, OTHER }
+/** Jenis sesi menurut awalan id: t<angka> = Terminal, lainnya = OTHER. */
+internal enum class SessionKind { TERMINAL, OTHER }
 
 /** Satu baris Log Viewer. [head] = baris pembawa penanda; false = baris biasa atau lanjutan stack trace. */
 internal class ViewLine(val text: String, val kind: EventFilter, val head: Boolean, val tag: String = "")
@@ -71,19 +71,16 @@ internal object LogFilter {
     }
 
     private val TERM_ID = Regex("t\\d+")
-    private val CINEMA_ID = Regex("p\\d+")
 
     fun sessionKind(id: String?): SessionKind = when {
         id == null -> SessionKind.OTHER
         TERM_ID.matches(id) -> SessionKind.TERMINAL
-        CINEMA_ID.matches(id) -> SessionKind.CINEMA
         else -> SessionKind.OTHER
     }
 
-    /** Teks chip: "Term t1", "Cinema p1", atau "Sesi <id>" untuk id lain. */
+    /** Teks chip: "Term t1" atau "Sesi <id>" untuk id lain. */
     fun sessionLabel(id: String): String = when (sessionKind(id)) {
         SessionKind.TERMINAL -> "Term $id"
-        SessionKind.CINEMA -> "Cinema $id"
         SessionKind.OTHER -> "Sesi $id"
     }
 

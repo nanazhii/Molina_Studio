@@ -10,14 +10,12 @@ Lapisan: app > feature > (api, engine) > core. Aturan:
 """
 import re, sys, pathlib
 
-FEATURE = {"cinema", "files", "terminal", "settings", "code"}
-API = {"player-api", "terminal-api"}
-ENGINE = {"engine-newpipe", "player-mpv", "player-subtitle", "player-spectrum", "terminal-core", "terminal-emulator", "terminal-view", "terminal-pty", "terminal-proot", "filemanager"}
-OWN_API = {"cinema": {"player-api"}, "terminal": {"terminal-api"},
+FEATURE = {"files", "terminal", "settings", "code"}
+API = {"terminal-api"}
+ENGINE = {"terminal-core", "terminal-emulator", "terminal-view", "terminal-pty", "terminal-proot", "filemanager"}
+OWN_API = {"terminal": {"terminal-api"},
            "terminal-core": {"terminal-api"}}
 OWN_ENGINE = {"files": {"filemanager"},
-              "cinema": set(),
-              "player-mpv": {"player-subtitle", "player-spectrum"},
               "terminal": {"terminal-core", "terminal-view", "terminal-proot", "filemanager"},
               "terminal-core": {"terminal-emulator", "terminal-pty"},
               "terminal-view": {"terminal-emulator"}}
@@ -46,33 +44,6 @@ for f in sorted(pathlib.Path(".").glob("*/build.gradle.kts")):
         if not allowed(src, dst):
             errors.append(f"{src} ({kind(src)}) -> {dst} ({kind(dst)}) dilarang")
 
-# [P17-SHIELD] Gerbang manifest :player-mpv: tidak boleh ada komponen exported=true atau filter VIEW/SEND/BROWSABLE
-# (jalur pemutaran dari luar app akan melewati Shield).
-import xml.etree.ElementTree as ET
-_A = "{http://schemas.android.com/apk/res/android}"
-_mf = pathlib.Path("player-mpv/src/main/AndroidManifest.xml")
-if _mf.exists():
-    for _el in ET.parse(_mf).getroot().iter():
-        if _el.tag not in ("activity", "activity-alias", "service", "receiver", "provider"):
-            continue
-        _n = _el.get(_A + "name")
-        if _el.get(_A + "exported") == "true":
-            errors.append(f"player-mpv manifest: {_n} exported=true dilarang (Shield bypass)")
-        for _f in _el.findall("intent-filter"):
-            _acts = {a.get(_A + "name") for a in _f.findall("action")}
-            _cats = {c.get(_A + "name") for c in _f.findall("category")}
-            if _acts & {"android.intent.action.VIEW", "android.intent.action.SEND", "android.intent.action.SEND_MULTIPLE"} \
-                    or "android.intent.category.BROWSABLE" in _cats:
-                errors.append(f"player-mpv manifest: {_n} punya filter VIEW/SEND/BROWSABLE dilarang (Shield bypass)")
-
-# [P18-LOADFILE] Pemuatan media ("loadfile") hanya boleh di sesi Shield dan dua berkas debug upstream.
-# Jalur lain melewati PlaybackGuard (blacklist protokol, preflight, proxy Shield).
-_LOADFILE_OK = {"MpvPlayerSession.kt", "MPVActivity.kt", "BaseMPVView.kt", "MpvLoad.kt"}  # MpvLoad = satu-satunya penyusun loadfile, lewat PlaybackGuard
-for _p in sorted(pathlib.Path(".").glob("*/src/main/**/*")):
-    if _p.suffix not in (".kt", ".java") or _p.name in _LOADFILE_OK:
-        continue
-    if "loadfile" in _p.read_text(encoding="utf-8", errors="ignore"):
-        errors.append(f"{_p}: memuat 'loadfile' di luar sesi Shield (bypass PlaybackGuard)")
 
 if errors:
     print("MODULE GATE GAGAL:")

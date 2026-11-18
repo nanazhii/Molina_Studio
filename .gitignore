@@ -10,6 +10,6 @@ local.properties
 
 patch_*.py
 
-# keluaran build native lokal (pipeline mpv)
+# keluaran build native lokal (pipeline native)
 _native/
 _native_out/

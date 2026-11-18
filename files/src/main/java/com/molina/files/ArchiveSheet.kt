@@ -139,7 +139,7 @@ internal class ArchiveSheet : BottomSheetDialogFragment() {
         val dim = ContextCompat.getColor(ctx, UiR.color.molina_on_surface_variant)
         val frame = ContextCompat.getColor(ctx, UiR.color.molina_header_frame)
         val green = ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent) // molina-27x: aksen teal Molina untuk yang bisa diketuk
-        val amber = ContextCompat.getColor(ctx, UiR.color.molina_cinema_accent)
+        val amber = ContextCompat.getColor(ctx, UiR.color.molina_brand_accent)
 
         val root = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL

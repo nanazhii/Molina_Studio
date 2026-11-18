@@ -24,7 +24,7 @@
             android:theme="@style/Theme.Molina.Splash"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- Satu alias aktif pada satu waktu; dipilih di Setelan (IconPicker). -->
+        <!-- Alias peluncur tunggal. -->
         <activity-alias
             android:name=".IconGreen"
             android:targetActivity=".MainActivity"
@@ -33,19 +33,6 @@
             android:label="Molina"
             android:icon="@mipmap/ic_launcher"
             android:roundIcon="@mipmap/ic_launcher_round">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconAmber"
-            android:targetActivity=".MainActivity"
-            android:enabled="false"
-            android:exported="true"
-            android:label="Molina Cinema"
-            android:icon="@mipmap/ic_launcher_cinema"
-            android:roundIcon="@mipmap/ic_launcher_cinema">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

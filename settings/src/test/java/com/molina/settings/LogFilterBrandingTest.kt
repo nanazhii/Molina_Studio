@@ -6,10 +6,10 @@ import org.junit.Test
 
 class LogFilterBrandingTest {
     @Test
-    fun terminalIdsAreTealKindAndCinemaIdsAreAmberKind() {
+    fun terminalIdsAreTealKind() {
         assertEquals(SessionKind.TERMINAL, LogFilter.sessionKind("t1"))
         assertEquals(SessionKind.TERMINAL, LogFilter.sessionKind("t12"))
-        assertEquals(SessionKind.CINEMA, LogFilter.sessionKind("p3"))
+        assertEquals(SessionKind.OTHER, LogFilter.sessionKind("p3"))
     }
 
     @Test
@@ -23,7 +23,6 @@ class LogFilterBrandingTest {
     @Test
     fun labelsNameTheArea() {
         assertEquals("Term t1", LogFilter.sessionLabel("t1"))
-        assertEquals("Cinema p2", LogFilter.sessionLabel("p2"))
         assertEquals("Sesi x9", LogFilter.sessionLabel("x9"))
     }
 }

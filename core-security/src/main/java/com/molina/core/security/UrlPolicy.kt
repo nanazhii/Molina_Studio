@@ -1,7 +1,7 @@
 package com.molina.core.security
 
 /**
- * Kebijakan URL untuk semua yang akan dibuka mpv atau yt-dlp. Jaringan dianggap rawan: URL dari
+ * Kebijakan URL untuk semua yang akan dibuka klien jaringan. Jaringan dianggap rawan: URL dari
  * tautan, daftar putar, atau hasil resolver bisa diracik untuk membaca berkas lokal (file://,
  * concat:, edl://, fd://), memindai jaringan rumah (SSRF), atau menyamar lewat userinfo.
  * Daftar putih skema, bukan daftar hitam. Murni, tanpa Android.

@@ -30,7 +30,7 @@ class LocalMolinaStorageTest {
         val root = File(tmp.root, "Molina")
         val s = storage(root)
         assertTrue(s.ensureLayout().getOrNull() != null)
-        assertTrue(File(root, "logs").isDirectory && File(root, "terminal").isDirectory && File(root, "cinema").isDirectory)
+        assertTrue(File(root, "logs").isDirectory && File(root, "terminal").isDirectory)
         assertTrue(s.ensureLayout().getOrNull() != null)
     }
 

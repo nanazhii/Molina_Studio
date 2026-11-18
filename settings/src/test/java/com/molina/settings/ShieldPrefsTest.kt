@@ -1,24 +1,13 @@
 package com.molina.settings
 
-import com.molina.core.security.DirectStreamPolicy
 import com.molina.core.security.ShieldSnapshot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ShieldPrefsTest {
-    @Test fun blockMapsToBlock() {
-        val c = ShieldPrefs.toConfig(true, true, false, false, "block")
-        assertEquals(DirectStreamPolicy.BLOCK, c.directStreams)
-    }
-
-    @Test fun unknownOrNullFallsBackToPreflight() {
-        assertEquals(DirectStreamPolicy.PREFLIGHT, ShieldPrefs.toConfig(true, true, false, false, "apa-saja").directStreams)
-        assertEquals(DirectStreamPolicy.PREFLIGHT, ShieldPrefs.toConfig(true, true, false, false, null).directStreams)
-    }
-
     @Test fun flagsAreCarried() {
-        val c = ShieldPrefs.toConfig(enabled = false, blockTrackers = false, allowLan = true, stripReferer = true, directStreams = "preflight")
+        val c = ShieldPrefs.toConfig(enabled = false, blockTrackers = false, allowLan = true, stripReferer = true)
         assertEquals(false, c.enabled)
         assertEquals(false, c.blockTrackers)
         assertEquals(true, c.allowLan)

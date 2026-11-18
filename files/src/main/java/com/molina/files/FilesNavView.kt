@@ -119,7 +119,7 @@ internal class FilesNavView(
     private fun debian(ctx: Context): View {
         val text = SpannableString("\u25CF  Debian \u00B7 di luar root")
         text.setSpan(
-            ForegroundColorSpan(ContextCompat.getColor(ctx, UiR.color.molina_cinema_accent)),
+            ForegroundColorSpan(ContextCompat.getColor(ctx, UiR.color.molina_brand_accent)),
             0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
         )
         return TextView(ctx).apply {

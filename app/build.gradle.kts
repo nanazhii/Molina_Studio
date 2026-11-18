@@ -55,17 +55,14 @@ dependencies {
     implementation(project(":core-log"))
     implementation(project(":core-security"))
     implementation(project(":core-storage"))
-    implementation(project(":cinema"))
-    implementation(project(":core-stream"))
-    implementation(project(":engine-newpipe"))
-    implementation(project(":player-mpv"))
     implementation(project(":files"))
     implementation(project(":terminal"))
     implementation(project(":terminal-core"))
     implementation(project(":terminal-proot"))
     implementation(project(":settings"))
     implementation(project(":code"))
-    // NewPipeExtractor memakai API Java 11+ (mis. List.of); API 26 memerlukan desugaring.
+    // Core library desugaring dulu diperlukan NewPipeExtractor (API Java 11+). Tetap aktif sampai CI membuktikan
+    // tidak ada kode lain yang membutuhkannya; setelah itu lepas bersama isCoreLibraryDesugaringEnabled.
     // Dipin 2.0.4: nio 2.1.x + AGP 8.7.x membuat D8 gagal ("android.jar is located outside the root directory",
     // Google issue 362339872). Naikkan lagi setelah AGP diperbarui dan CI release terbukti hijau.
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.0.4")

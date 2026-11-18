@@ -13,7 +13,7 @@ class FilesNavTest {
     fun orderIsFavoritesThenStorage() {
         val items = FilesNav.build(listOf("Film/2024"), "")
         assertEquals(
-            listOf("Favorit", "Cinema", "Terminal", "Log", "2024", "Penyimpanan", "Molina", "Debian", "Sampah"),
+            listOf("Favorit", "Terminal", "Log", "2024", "Penyimpanan", "Molina", "Debian", "Sampah"),
             labels(items),
         )
         assertTrue(items.first().star)
@@ -22,14 +22,14 @@ class FilesNavTest {
     @Test
     fun rootActiveOnlyAtRoot() {
         assertTrue(FilesNav.build(emptyList(), "").single { it.label == "Molina" }.active)
-        assertFalse(FilesNav.build(emptyList(), "cinema").single { it.label == "Molina" }.active)
+        assertFalse(FilesNav.build(emptyList(), "terminal").single { it.label == "Molina" }.active)
     }
 
     @Test
     fun activeMatchesExactPathOnly() {
         val items = FilesNav.build(listOf("Film"), "Film")
         assertTrue(items.single { it.path == "Film" }.active)
-        assertFalse(items.single { it.path == "cinema" }.active)
+        assertFalse(items.single { it.path == "terminal" }.active)
         assertFalse(FilesNav.build(listOf("Film"), "Film/Sub").single { it.path == "Film" }.active)
     }
 
@@ -37,13 +37,13 @@ class FilesNavTest {
     fun userFavoriteIsRemovableAndBuiltInIsNot() {
         val items = FilesNav.build(listOf("Film"), "")
         assertTrue(items.single { it.path == "Film" }.removable)
-        assertFalse(items.single { it.path == "cinema" }.removable)
+        assertFalse(items.single { it.path == "terminal" }.removable)
     }
 
     @Test
     fun builtInAndRootAreNotDuplicatedFromUserFavorites() {
-        val items = FilesNav.build(listOf("cinema", "", "Film"), "")
-        assertEquals(1, items.count { it.path == "cinema" })
+        val items = FilesNav.build(listOf("terminal", "", "Film"), "")
+        assertEquals(1, items.count { it.path == "terminal" })
         assertEquals(1, items.count { it.label == "Molina" })
         assertTrue(FilesNav.isBuiltIn("terminal"))
         assertFalse(FilesNav.isBuiltIn("Film"))

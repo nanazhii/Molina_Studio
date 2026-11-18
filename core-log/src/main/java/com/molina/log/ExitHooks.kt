@@ -4,7 +4,7 @@ package com.molina.log
 import kotlin.concurrent.thread
 
 /**
- * Kait pembersihan saat aplikasi keluar total. Modul yang memegang sumber daya native (mis. mpv)
+ * Kait pembersihan saat aplikasi keluar total. Modul yang memegang sumber daya native (mis. proxy Shield)
  * mendaftar di sini; AppExit menjalankan semuanya sebelum proses dimatikan.
  */
 object ExitHooks {

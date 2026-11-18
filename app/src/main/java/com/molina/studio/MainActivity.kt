@@ -11,7 +11,6 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.molina.cinema.CinemaFragment
 import com.molina.code.CodeFragment
 import com.molina.core.common.CrashContext
 import com.molina.core.common.MolinaResult
@@ -82,14 +81,12 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
         KeyboardNavHider.install(this, findViewById(R.id.nav_container))
         nav.setOnItemSelectedListener { item ->
             val tab = when (item.itemId) {
-                R.id.nav_cinema -> "cinema"
                 R.id.nav_files -> "files"
                 R.id.nav_code -> "code"
                 R.id.nav_terminal -> "terminal"
                 else -> "settings"
             }
             val fragment: Fragment = when (tab) {
-                "cinema" -> CinemaFragment()
                 "files" -> BerkasFragment() // molina-27b (balik: FilesFragment())
                 "code" -> CodeFragment()
                 "terminal" -> TerminalFragment()
@@ -103,7 +100,7 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
             true
         }
         if (savedInstanceState == null) {
-            nav.selectedItemId = R.id.nav_cinema
+            nav.selectedItemId = R.id.nav_files
             MolinaSessionService.start(this)
             if (Build.VERSION.SDK_INT >= 33 &&
                 checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -120,7 +117,6 @@ class MainActivity : AppCompatActivity(), TerminalSessionFactoryOwner, NanoKeysS
 
     override fun onResume() {
         super.onResume()
-        // MPVActivity mengisi HOST_PLAYER; kembalikan saat layar utama di depan lagi.
         CrashContext.host = CrashContext.HOST_APP
     }
 

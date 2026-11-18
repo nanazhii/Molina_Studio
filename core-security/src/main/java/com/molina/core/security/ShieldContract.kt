@@ -25,15 +25,6 @@ interface ThreatScanner<in T> {
     fun scan(input: T): List<Finding>
 }
 
-/** Perlakuan arus langsung (rtmp/rtsp) yang tidak lewat proxy HTTP. */
-enum class DirectStreamPolicy {
-    /** Periksa tujuan (port, pelacak, semua IP hasil DNS) sebelum dimuat. Default: IPTV rtmp tetap jalan. */
-    PREFLIGHT,
-
-    /** Tolak semua rtmp/rtsp, termasuk yang dibuka dari dalam playlist. */
-    BLOCK,
-}
-
 /** Pengaturan Shield. Dibuat tak berubah; ganti seluruhnya lewat [MolinaShield.updateConfig]. */
 data class ShieldConfig(
     val enabled: Boolean = true,
@@ -43,10 +34,9 @@ data class ShieldConfig(
     val stripReferer: Boolean = false,
     /** Pengecualian pengguna atas daftar pelacak; menang atas daftar blokir. */
     val trackerAllowlist: Set<String> = emptySet(),
-    val directStreams: DirectStreamPolicy = DirectStreamPolicy.PREFLIGHT,
 )
 
-/** Alamat proxy lokal untuk mesin pemutar. [toString] menyembunyikan token agar tidak bocor ke log. */
+/** Alamat proxy lokal untuk klien jaringan. [toString] menyembunyikan token agar tidak bocor ke log. */
 class ProxyEndpoint(val host: String, val port: Int, val user: String, val token: String) {
     fun url(): String = "http" + "://" + user + ":" + token + "@" + host + ":" + port
     override fun toString(): String = "ProxyEndpoint($host:$port, token=***)"
@@ -63,7 +53,7 @@ data class ShieldSnapshot(
 )
 
 /**
- * Kontrak bersama Molina Shield. Cinema, Terminal, dan Setelan hanya bergantung ke antarmuka ini;
+ * Kontrak bersama Molina Shield. Terminal dan Setelan hanya bergantung ke antarmuka ini;
  * implementasinya ([LocalShieldProxy]) disuntik dari :app.
  */
 interface MolinaShield {
@@ -73,7 +63,7 @@ interface MolinaShield {
     fun updateConfig(config: ShieldConfig)
     fun config(): ShieldConfig
 
-    /** Alamat proxy untuk mesin pemutar, atau null bila Shield dimatikan atau tidak berjalan. */
+    /** Alamat proxy untuk klien jaringan, atau null bila Shield dimatikan atau tidak berjalan. */
     fun endpoint(): ProxyEndpoint?
 
     /** True bila pengguna menyalakan Shield tetapi proxy tidak berjalan: lalu lintas jarak jauh harus ditolak. */

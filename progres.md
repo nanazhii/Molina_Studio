@@ -366,3 +366,7 @@
 - [ ] SpectrumSeekTests lama usang (API restart/frameAt/frameIndex sudah hilang); tulis ulang untuk SpectrumPlanner/SpectrumFrameBuilder saat ini
 - [ ] Verifikasi CI: build.yml + jvm-tests; lalu tahap 3c (:player-mpv-native dan :player-background)
 - [x] fix(player): CrashContext dipulihkan di :core-common; MPVActivity tidak lagi merujuk com.molina.core.stream.CrashContext (CI run #9 merah)
+- [x] fix(build): naikkan heap Gradle ke 4g (dexing :app:mergeDexRelease gagal 'Error while dexing' di :core-storage pada CI run #9; repo lama memakai 3g)
+- [x] feat(log): CrashReporter menulis mode=<layar> dari CrashContext; MainActivity mengisi host/tab (HOST_PLAYER diisi MPVActivity)
+- [x] fix(build): desugar_jdk_libs_nio dipin 2.0.4 (2.1.5 memicu D8 'android.jar outside root directory' di dexing :core-storage; Google issue 362339872)
+- [x] feat(cinema): Home punya Pilih berkas (penelusur folder) dan Terakhir diputar (hanya path lokal); tes CinemaBrowseTest

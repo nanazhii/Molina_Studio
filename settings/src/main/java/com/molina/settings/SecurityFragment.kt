@@ -6,8 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.RadioButton
-import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -16,7 +14,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.materialswitch.MaterialSwitch
-import com.molina.core.security.DirectStreamPolicy
 import com.molina.core.security.ShieldRegistry
 import com.molina.core.ui.R as UiR
 import kotlinx.coroutines.launch
@@ -24,7 +21,7 @@ import kotlinx.coroutines.launch
 /**
  * Layar Keamanan: sakelar Molina Shield, ringkasan langsung dari snapshot, dan blokir terbaru
  * (hanya host dan kode alasan, tidak pernah URL atau token). Perubahan langsung disimpan
- * ([ShieldPrefs]) dan diterapkan ke Shield; Cinema memakainya pada pemutar yang dibuka berikutnya.
+ * ([ShieldPrefs]) dan diterapkan ke Shield; Terminal memakainya pada sesi yang dibuka berikutnya.
  */
 class SecurityFragment : Fragment() {
     private var summary: TextView? = null
@@ -63,25 +60,11 @@ class SecurityFragment : Fragment() {
             addView(TextView(ctx).apply { text = "Keamanan"; textSize = 24f })
             addView(sum, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = pad / 2; bottomMargin = pad / 2 })
             addView(toggle("Molina Shield", cfg.enabled) { v -> ShieldPrefs.update(ctx) { it.copy(enabled = v) } })
-            addView(note("Menyaring http/https pemutar lewat proxy lokal. Bila dimatikan, lalu lintas langsung tanpa penyaringan. Berlaku di pemutar yang dibuka berikutnya."))
+            addView(note("Menyaring lalu lintas http/https lewat proxy lokal. Bila dimatikan, lalu lintas langsung tanpa penyaringan. Berlaku di sesi terminal yang dibuka berikutnya."))
             addView(toggle("Blokir pelacak", cfg.blockTrackers) { v -> ShieldPrefs.update(ctx) { it.copy(blockTrackers = v) } })
             addView(toggle("Izinkan jaringan lokal (NAS, DLNA)", cfg.allowLan) { v -> ShieldPrefs.update(ctx) { it.copy(allowLan = v) } })
-            addView(note("Bawaan mati: jaringan dianggap tidak tepercaya. Nyalakan hanya bila memutar dari server di rumah."))
+            addView(note("Bawaan mati: jaringan dianggap tidak tepercaya. Nyalakan hanya bila perlu mengakses server di jaringan rumah."))
             addView(toggle("Hapus header Referer", cfg.stripReferer) { v -> ShieldPrefs.update(ctx) { it.copy(stripReferer = v) } })
-            addView(TextView(ctx).apply { text = "Arus langsung rtmp/rtsp"; textSize = 14f; setPadding(0, pad / 2, 0, 0) })
-            addView(RadioGroup(ctx).apply {
-                listOf(
-                    DirectStreamPolicy.PREFLIGHT to "Periksa dulu (port, pelacak, semua IP)",
-                    DirectStreamPolicy.BLOCK to "Tolak semua rtmp/rtsp",
-                ).forEach { (value, label) ->
-                    addView(RadioButton(ctx).apply {
-                        text = label
-                        isChecked = value == cfg.directStreams
-                        setOnCheckedChangeListener { _, on -> if (on) ShieldPrefs.update(ctx) { it.copy(directStreams = value) } }
-                    })
-                }
-            })
-            addView(note("Preflight tidak menutup DNS rebinding cepat; pilih tolak bila perlu."))
             addView(TextView(ctx).apply { text = "Diblokir terbaru"; textSize = 18f; setPadding(0, pad, 0, 0) })
             addView(rec)
         }
@@ -91,7 +74,7 @@ class SecurityFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val ctx = requireContext()
         val teal = ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent)
-        val amber = ContextCompat.getColor(ctx, UiR.color.molina_cinema_accent)
+        val amber = ContextCompat.getColor(ctx, UiR.color.molina_brand_accent)
         val shield = ShieldRegistry.current()
         if (shield == null) {
             summary?.text = "Shield tidak tersedia di proses ini."

@@ -1,11 +1,11 @@
 package com.molina.studio
 
 import android.app.Application
+import android.content.ComponentName
+import android.content.pm.PackageManager
 import android.os.Debug
 import com.molina.core.common.CrashContext
 import com.molina.core.storage.SevenZipBackend
-import com.molina.core.stream.StreamResolvers
-import com.molina.engine.newpipe.NewPipeStreamResolver
 import com.molina.log.CrashReporter
 import com.molina.log.MolinaEvents
 import com.molina.log.MolinaLogSetup
@@ -16,9 +16,12 @@ class MolinaApplication : Application() {
         MolinaLogSetup.init(this)
         CrashReporter.install(context = { CrashContext.describe() })
         BuildInfo.log(this)
+        // Alias ikon alternatif sudah dihapus: kembalikan alias peluncur ke status bawaan manifest.
+        packageManager.setComponentEnabledSetting(
+            ComponentName(this, "com.molina.studio.IconGreen"),
+            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT, PackageManager.DONT_KILL_APP,
+        )
         ShieldBootstrap.start(this)
-        // Resolver stream dibuat malas di thread latar saat pertama dipakai (Shield sudah menyala).
-        StreamResolvers.install { NewPipeStreamResolver() }
         SevenZipBackend.writer = DebianSevenZip(this) // molina-27q: 7z bersandi lewat Debian
     }
 

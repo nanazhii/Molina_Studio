@@ -6,7 +6,6 @@ import java.io.File
 class MolinaPaths(val root: File = File(DEFAULT_ROOT)) {
     val logs: File get() = File(root, "logs")
     val terminal: File get() = File(root, "terminal")
-    val cinema: File get() = File(root, "cinema")
 
     /** molina-patch26h: Sampah di dalam root (rename satu volume, instan). Dibuat saat item pertama dihapus. */
     val trash: File get() = File(root, TRASH_DIR)
@@ -15,7 +14,7 @@ class MolinaPaths(val root: File = File(DEFAULT_ROOT)) {
     val arsipCache: File get() = File(root, ARSIP_CACHE_DIR)
 
     /** Urutan pembuatan: root lebih dulu. */
-    val layout: List<File> get() = listOf(root, logs, terminal, cinema)
+    val layout: List<File> get() = listOf(root, logs, terminal)
 
     companion object {
         const val DEFAULT_ROOT = "/storage/emulated/0/Molina"

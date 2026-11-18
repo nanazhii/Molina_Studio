@@ -6,9 +6,8 @@ package com.molina.core.common
  */
 object CrashContext {
     const val HOST_APP = "Aplikasi"
-    const val HOST_PLAYER = "Player (mpv)"
 
-    /** Activity di depan: [HOST_APP] atau [HOST_PLAYER] (MPVActivity). */
+    /** Activity di depan: [HOST_APP]. */
     @Volatile var host: String? = null
 
     /** Tab aktif di aplikasi utama. */
@@ -17,10 +16,9 @@ object CrashContext {
     /** Layar penuh di atas tab; null bila tidak ada. */
     @Volatile var overlay: String? = null
 
-    /** Contoh: "Aplikasi > Cinema", atau "Player (mpv)"; "?" bila belum ada yang tercatat. */
+    /** Contoh: "Aplikasi > Berkas"; "?" bila belum ada yang tercatat. */
     fun describe(): String {
         val h = host
-        if (h == HOST_PLAYER) return HOST_PLAYER
         return listOfNotNull(h, tab, overlay).joinToString(" > ").ifEmpty { "?" }
     }
 }

@@ -28,7 +28,7 @@ API: `MolinaEvents.crash/bug/behavior` (core-log). Jangan menulis awalan `[BUG:.
 
 - Kode: `<alur>.<peristiwa>` huruf kecil, angka, titik, hubung (`proot.install-failed`). Kode
   stabil: jangan diganti hanya karena ganti redaksi, agar log lama tetap bisa dicari.
-- Area baku: `core`, `app`, `term`, `proot`, `mpv`, `cinema`, `files`, `settings`.
+- Area baku: `core`, `app`, `term`, `proot`, `files`, `code`, `settings`.
 - Nilai kolom tanpa spasi (spasi diubah menjadi `_`), maksimal 200 karakter.
 - Privasi: tidak mencatat isi input/output terminal maupun path/query penuh media.
 - `BEHAV` dicatat pada titik keputusan (sesi mulai, pemasangan selesai), bukan di loop panas.
@@ -40,7 +40,7 @@ API: `MolinaEvents.crash/bug/behavior` (core-log). Jangan menulis awalan `[BUG:.
 
 ## Batas
 
-- Crash native (SIGSEGV di libmpv) tidak melewati handler Java. Jejaknya hanya ada di buffer
+- Crash native (SIGSEGV di pustaka .so) tidak melewati handler Java. Jejaknya hanya ada di buffer
   `crash` logcat (`logcat -b crash`), yang bisa dibaca bila izin READ_LOGS diberikan.
 - Bila logger belum diinisialisasi (crash sangat awal sebelum `Application.onCreate`), peristiwa
   hanya ada di logcat bawaan sistem.
@@ -65,38 +65,13 @@ alur itu belum memanggil `MolinaEvents.behavior`; tambahkan di sana.
 Log Viewer: chip `Semua | CRASH | BUG | BEHAV` (dengan jumlah peristiwa) menyaring berdasarkan
 penanda. Penanda hanya dikenali pada tag `Molina/...`. Baris stack trace yang mengikuti CRASH/BUG
 (pid, tid, dan tag sama) ikut tersaring masuk. Warna: CRASH merah (`molina_error`), BUG amber
-(`molina_cinema_accent`), BEHAV teal (`molina_terminal_accent`); baris lain warna bawaan.
+(`molina_brand_accent`), BEHAV teal (`molina_terminal_accent`); baris lain warna bawaan.
 
-Baris chip kedua memuat `Semua sesi | Term t1 | Cinema p1 | ...` (teal untuk sesi Terminal `t*`, amber untuk Cinema/mpv `p*`) (id dari tag `Molina/<area>/<id>`, 8 terakhir). Memilih sesi menampilkan semua area dengan id itu (mis. `term/t1` dan `proot/t1`) dan bisa digabung dengan filter jenis. Tombol "Salin tampilan" menyalin baris build, keterangan filter, dan maksimal 300 baris yang sedang tampil, siap ditempel ke chat saat melapor bug.
+Baris chip kedua memuat `Semua sesi | Term t1 | ...` (teal untuk sesi Terminal `t*`) (id dari tag `Molina/<area>/<id>`, 8 terakhir). Memilih sesi menampilkan semua area dengan id itu (mis. `term/t1` dan `proot/t1`) dan bisa digabung dengan filter jenis. Tombol "Salin tampilan" menyalin baris build, keterangan filter, dan maksimal 300 baris yang sedang tampil, siap ditempel ke chat saat melapor bug.
 
 ## Penamaan kode
 `MolinaEvents.bug/behavior` otomatis mengawali kode dengan area bila belum ada
 (`MolinaEvents.bug("proot", "install-failed", ...)` -> `[BUG:proot.install-failed]`).
-
-## Kode baku: mpv
-| Kode | Jenis | Arti | Kolom |
-|---|---|---|---|
-| `mpv.load` / `mpv.loaded` | BEHAV | perintah load / berkas berhasil dimuat | `file` (nama saja) |
-| `mpv.state` | BEHAV | perubahan status pemutar | `state` |
-| `mpv.play` / `mpv.pause` / `mpv.release` | BEHAV | perintah pengguna / sesi dilepas | - |
-| `mpv.ended` | BEHAV | pemutaran selesai | - |
-| `mpv.error` | BUG | kegagalan dari lapisan pemutar | `code` |
-| `mpv.native` | BUG | log internal libmpv level FATAL/ERROR (rate-limit) | `prefix`, `level` |
-| `mpv.native-suppressed` | BUG (W) | jumlah log libmpv yang dibuang pembatas | `count` |
-| `mpv.session-start` | BEHAV | sesi pemutar dibuat (id p1, p2, ...; libmpv dimuat, observer log terpasang) | - |
-| `mpv.surface-attach` / `mpv.surface-detach` | BEHAV | Surface video dipasang / dilepas | - |
-| `mpv.native-missing` | BUG | libmpv/libplayer tidak termuat saat sesi dibuka | - |
-| `mpv.init-failed` | BUG | MPVLib.create/init melempar exception | - |
-| `mpv.release-failed` | BUG | MPVLib.destroy melempar exception | - |
-| `mpv.tls-ca-missing` | BUG (W) | cacert.pem gagal disiapkan di config-dir; HTTPS gagal verifikasi (tls-verify=yes) | - |
-| `mpv.fonts-conf-missing` | BUG (W) | fonts.conf gagal ditulis; font subtitle sistem mungkin tidak ditemukan | - |
-| `mpv.audio-select` / `mpv.sub-select` | BEHAV | pengguna memilih trek audio / subtitle (`id=off` = subtitle dimatikan) | `id` |
-| `mpv.aspect` | BEHAV | rasio layar diganti | `mode` |
-| `mpv.tracks` | BEHAV | daftar trek berubah (setelah berkas dimuat / berganti berkas) | `audio`, `sub` (jumlah) |
-| `mpv.speed` | BEHAV | kecepatan berubah (nilai yang dilaporkan mpv) | `value` |
-| `mpv.track-invalid` | BUG (W) | id trek tidak ada di daftar saat ini; perintah dipilih diabaikan | `kind`, `id` |
-
-Path dan URL media tidak pernah dicatat; hanya nama berkas.
 
 ## Kode baku: term
 Tag `Molina/term/<id>`; id sesi (`t1`, `t2`, ...) sama untuk semua peristiwa satu sesi.
@@ -192,12 +167,12 @@ di luar dialog izin (mis. path bukan milik Molina atau volume dicabut); lihat `e
 ## Kode baku: app
 | Kode | Jenis | Arti | Kolom |
 |---|---|---|---|
-| `app.nav` | BEHAV | pengguna pindah tab (cinema, files, terminal, settings) | `tab`, `from` (`start` bila belum ada tab sebelumnya) |
+| `app.nav` | BEHAV | pengguna pindah tab (files, code, terminal, settings) | `tab`, `from` (`start` bila belum ada tab sebelumnya) |
 | `app.exit.requested` | BEHAV | pengguna menekan Keluar di notifikasi; semua sesi ditutup lalu proses dimatikan | `via` |
 | `app.exit.swept` | BEHAV | semua kait modul selesai dan sisa proses UID dimatikan sebelum keluar | `killed`, `leftover`, `ms` |
 | `app.exit-failed` | BUG | langkah keluar gagal (proses aplikasi tetap dimatikan) | - |
 | `app.exit-leftover` | BUG | masih ada proses hidup (bukan zombie) setelah putaran terakhir | `leftover` |
-| `app.exit-hook-timeout` | BUG | kait keluar modul (mis. mpv release) melewati 1,5 detik | `hooks` |
+| `app.exit-hook-timeout` | BUG | kait keluar modul (mis. proxy Shield) melewati 1,5 detik | `hooks` |
 | `app.trim` | BEHAV | sistem meminta pangkas memori; level 20 UI tersembunyi, 40 latar, 60 sedang, 80 kritis | `level`, `java_mb`, `native_mb` |
 | `app.session-service-failed` | BUG | layanan notifikasi gagal dijalankan | - |
 

@@ -41,7 +41,7 @@ internal fun dialDirect(ip: InetAddress, port: Int): Socket {
 
 /**
  * Molina Shield: proxy HTTP lokal di 127.0.0.1 (port acak, wajib token). Semua lalu lintas
- * http/https mesin pemutar lewat sini, termasuk redirect, segmen HLS/DASH, dan isi playlist, jadi
+ * http/https klien (mis. terminal/PRoot) lewat sini, termasuk redirect, segmen HLS/DASH, dan isi playlist, jadi
  * tiap lompatan diperiksa ulang. Alur per permintaan:
  * 1. token (klien membalas tantangan 407 dengan Proxy-Authorization),
  * 2. [UrlPolicy] pada URL, port sensitif ([ShieldPolicy]), daftar pelacak ([TrackerBlocklist]),

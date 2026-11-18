@@ -10,7 +10,7 @@ import com.molina.terminal.core.SessionRegistry
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Keluar total tanpa sisa: kait modul (mpv dilepas rapi), tutup sesi terminal, matikan semua
+ * Keluar total tanpa sisa: kait modul (sumber daya dilepas rapi), tutup sesi terminal, matikan semua
  * proses lain milik UID, verifikasi tidak ada yang tersisa, flush log, lalu matikan proses ini.
  */
 internal object AppExit {

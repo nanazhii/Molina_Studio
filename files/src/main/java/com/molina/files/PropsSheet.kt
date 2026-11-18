@@ -31,7 +31,7 @@ import java.io.File
 import com.molina.core.ui.R as UiR
 
 /**
- * [molina-27v] Properti sebagai lembar bawah gaya Molina Cinema: ikon besar di kepala, baris label/nilai dari
+ * [molina-27v] Properti sebagai lembar bawah gaya Molina: ikon besar di kepala, baris label/nilai dari
  * [PropsText.rows], tombol "Salin path" dan "SHA-256" (hanya satu berkas biasa). Logika teks tetap di PropsText.
  * Hash dihitung di storage (thread IO) dan dibatalkan saat lembar ditutup.
  */
@@ -52,7 +52,7 @@ internal class PropsSheet(
         val bg = ContextCompat.getColor(ctx, UiR.color.molina_bg)
         val white = ContextCompat.getColor(ctx, UiR.color.molina_on_surface)
         val dim = ContextCompat.getColor(ctx, UiR.color.molina_on_surface_variant)
-        val accent = ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent) // molina-27x: teal Molina, selaras Berkas (sebelumnya amber cinema)
+        val accent = ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent) // molina-27x: teal Molina, selaras Berkas
         val onAccent = ContextCompat.getColor(ctx, UiR.color.molina_on_terminal_accent)
         val tile = ContextCompat.getColor(ctx, UiR.color.molina_surface_variant)
 

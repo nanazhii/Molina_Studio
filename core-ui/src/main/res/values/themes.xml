@@ -22,24 +22,24 @@
         <item name="textAppearanceBodyMedium">@style/TextAppearance.Molina.Mono</item>
     </style>
 
-    <style name="Theme.Molina.Cinema" parent="Theme.Molina">
-        <item name="android:windowBackground">@color/molina_cinema_bg</item>
-        <item name="colorPrimary">@color/molina_cinema_accent</item>
-        <item name="colorOnPrimary">@color/molina_on_cinema_accent</item>
-        <item name="colorPrimaryContainer">@color/molina_cinema_container</item>
-        <item name="colorOnPrimaryContainer">@color/molina_cinema_accent</item>
-        <item name="colorSecondary">@color/molina_cinema_secondary</item>
+    <style name="Theme.Molina.Brand" parent="Theme.Molina">
+        <item name="android:windowBackground">@color/molina_brand_bg</item>
+        <item name="colorPrimary">@color/molina_brand_accent</item>
+        <item name="colorOnPrimary">@color/molina_on_brand_accent</item>
+        <item name="colorPrimaryContainer">@color/molina_brand_container</item>
+        <item name="colorOnPrimaryContainer">@color/molina_brand_accent</item>
+        <item name="colorSecondary">@color/molina_brand_secondary</item>
         <!-- molina-patch-c1c: seekbar/EditText memakai colorAccent = colorSecondary (merah); paksa mint -->
-        <item name="colorAccent">@color/molina_cinema_accent</item>
-        <item name="colorControlActivated">@color/molina_cinema_accent</item>
+        <item name="colorAccent">@color/molina_brand_accent</item>
+        <item name="colorControlActivated">@color/molina_brand_accent</item>
     </style>
 
     <style name="Theme.Molina.App" parent="Theme.Molina">
         <item name="colorPrimary">@color/molina_terminal_accent</item>
         <item name="colorOnPrimary">@color/molina_on_terminal_accent</item>
-        <item name="colorSecondary">@color/molina_cinema_accent</item>
-        <item name="colorOnSecondary">@color/molina_on_cinema_accent</item>
-        <item name="colorSecondaryContainer">@color/molina_cinema_container</item>
-        <item name="colorOnSecondaryContainer">@color/molina_cinema_accent</item>
+        <item name="colorSecondary">@color/molina_brand_accent</item>
+        <item name="colorOnSecondary">@color/molina_on_brand_accent</item>
+        <item name="colorSecondaryContainer">@color/molina_brand_container</item>
+        <item name="colorOnSecondaryContainer">@color/molina_brand_accent</item>
     </style>
 </resources>

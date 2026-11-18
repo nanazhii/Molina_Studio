@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/nav_cinema"
-        android:icon="@drawable/ic_nav_cinema"
-        android:title="Cinema" />
     <item android:id="@+id/nav_files"
         android:icon="@drawable/ic_nav_files"
         android:title="Berkas" />

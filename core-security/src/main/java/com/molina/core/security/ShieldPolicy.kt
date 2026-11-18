@@ -9,7 +9,7 @@ import java.net.InetAddress
  * diarahkan ke alamat privat atau loopback (DNS rebinding) ikut tertolak. Murni, tanpa Android.
  */
 object ShieldPolicy {
-    /** Port layanan sensitif yang tidak pernah dibutuhkan pemutar media (surel, basis data, SMB, RDP, SSH). */
+    /** Port layanan sensitif yang tidak pernah dibutuhkan lalu lintas web biasa (surel, basis data, SMB, RDP, SSH). */
     private val BLOCKED_PORTS = setOf(
         22, 23, 25, 110, 135, 139, 143, 445, 465, 587, 993, 995,
         1433, 3306, 3389, 5432, 6379, 27017,

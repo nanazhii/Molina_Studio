@@ -4,7 +4,7 @@ package com.molina.core.ui
 import android.graphics.Color
 
 /**
- * Jenis berkas menurut ekstensi + warna bersama (satu sumber untuk drawer Terminal, Berkas, dan Cinema).
+ * Jenis berkas menurut ekstensi + warna bersama (satu sumber untuk drawer Terminal dan Berkas).
  * [color] = warna ikon/lambang; [nameColor] = warna teks nama (putih dicampur sedikit [color], tetap tenang).
  * Tanpa ekstensi / tidak dikenal = [OTHER] (putih polos).
  */

@@ -1,15 +1,12 @@
 # Branding Molina
 
 - Terminal: ikon jendela dengan prompt `>_`, gradient hijau `#69F0AE` -> `#00E676` -> `#00BFA5`, latar `#0E1114` -> `#04231D`.
-- Cinema: ikon layar dengan segitiga play, gradient amber `#FFD54F` -> `#FFB300` -> `#FF8F00`, latar `#07090B` -> `#261A00`.
 - Wordmark `MOLINA_`: `core-ui/.../drawable/molina_wordmark.xml` (vektor, gradient hijau), dipakai di `molina_splash.xml`.
 - Splash: tema `Theme.Molina.Splash` (hanya untuk MainActivity), diganti ke `Theme.Molina.App` lewat `setTheme` sebelum `super.onCreate`. Android 12+ memakai splash sistem dengan ikon peluncur di latar `molina_bg`.
 - Ikon notifikasi: `R.drawable.ic_stat_molina_terminal` (modul core-ui); pakai `setSmallIcon(...)` dengan warna aksen `molina_terminal_accent`.
-- Ikon Cinema (`@mipmap/ic_launcher_cinema`) disiapkan untuk modul Player yang dipisah nanti; belum dipasang di manifest.
 
-## Pemilih ikon dan Tentang
-- Pemilih ikon: Setelan -> Ikon aplikasi (Terminal hijau / Cinema amber). Diimplementasikan dengan dua `activity-alias` (`.IconGreen` aktif bawaan, `.IconAmber` nonaktif) yang menunjuk `.MainActivity`; `IconPicker` (modul settings) menukar status keduanya dengan `DONT_KILL_APP`.
-- Label peluncur ikut berganti: "Molina" dan "Molina Cinema". Launcher bisa butuh beberapa detik, dan sebagian launcher menutup pintasan yang sudah ditaruh di layar utama saat ikon berganti.
+## Ikon dan Tentang
+- Satu ikon peluncur: `activity-alias` `.IconGreen` (aktif bawaan) menunjuk `.MainActivity`. Pemilih ikon dan ikon alternatif dihapus; `MolinaApplication` mengembalikan alias ke status bawaan manifest.
 - Peluncuran lewat adb memakai `MainActivity` langsung atau salah satu alias, mis. `am start -n com.molina.studio/.MainActivity`.
 - Tentang: Setelan -> Tentang menampilkan wordmark, versi (versionName dan versionCode dari PackageManager), dan nama paket.
 
@@ -18,12 +15,6 @@
 - Nilainya `BuildConfig.COMMIT_SHA` (modul settings), diambil dari env `GITHUB_SHA` saat build di GitHub Actions. Build di luar CI menampilkan `dev`.
 - Cocokkan angka itu dengan `git log --oneline` untuk tahu APK berasal dari commit mana.
 
-## Rencana pemisahan Molina Player
-Saat Player menjadi aplikasi sendiri (`com.molina.player`):
-1. Pindahkan `ic_launcher_cinema*` (drawable dan mipmap) ke modul aplikasi Player sebagai `ic_launcher`.
-2. Jadikan label aplikasi Player "Molina Cinema" dan pakai `Theme.Molina.Cinema`.
-3. Hapus `.IconAmber`, pilihan "Cinema" di `IconPicker`, dan referensi `ic_launcher_cinema` dari aplikasi Terminal; `.IconGreen` boleh dikembalikan menjadi filter LAUNCHER pada `MainActivity` biasa.
-4. Salin pola penanda commit (`COMMIT_SHA`) ke build Player.
 
 ## Baris versi di log
 - Saat start (dan sekali lagi setelah izin penyimpanan diberikan, ketika log pindah ke folder publik) aplikasi menulis satu baris `Molina <versi> (<kode>) · <commit> · API <level>` dengan tag `Molina/core`.
@@ -34,6 +25,6 @@ Saat Player menjadi aplikasi sendiri (`com.molina.player`):
 - Logika baris ada di satu tempat: `BuildLine.describe` (modul settings); `BuildInfo` (app) hanya memanggilnya untuk log.
 
 ## Salin laporan masalah
-- Setelan -> Tentang -> "Salin laporan masalah" menyalin: baris info build, ringkasan "Error terbaru per area" (mpv, term, proot, files, dst., dikelompokkan dari tag `Molina/<area>`), dan 50 entri log terakhir dari `molina.log` (termasuk stack trace, dipotong 12 baris per entri, maksimal 60.000 karakter).
+- Setelan -> Tentang -> "Salin laporan masalah" menyalin: baris info build, ringkasan "Error terbaru per area" (term, proot, files, dst., dikelompokkan dari tag `Molina/<area>`), dan 50 entri log terakhir dari `molina.log` (termasuk stack trace, dipotong 12 baris per entri, maksimal 60.000 karakter).
 - Sumber: `molina.log` di folder log yang aktif (publik atau privat aplikasi) ditambah `molina.1.log`; logika ada di `LogReport` (murni, diuji `LogReportTest`) dan `LogReportSource` (baca berkas).
 - Batas: crash yang mematikan proses tanpa sempat tercatat lewat `MolinaLog` tidak ada di `molina.log`; untuk itu lihat layar Logcat.

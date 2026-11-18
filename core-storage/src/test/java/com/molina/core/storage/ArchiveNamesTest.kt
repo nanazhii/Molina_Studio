@@ -92,9 +92,9 @@ class ArchiveNamesTest {
     }
 
     @Test fun namaDasarBawaan() {
-        assertEquals("Film", ArchiveNames.defaultBaseName("Film", true, "Cinema"))
-        assertEquals("catatan", ArchiveNames.defaultBaseName("catatan.txt", false, "Cinema"))
-        assertEquals("Cinema", ArchiveNames.defaultBaseName(null, false, "Cinema"))
+        assertEquals("Film", ArchiveNames.defaultBaseName("Film", true, "Arsip"))
+        assertEquals("catatan", ArchiveNames.defaultBaseName("catatan.txt", false, "Arsip"))
+        assertEquals("Arsip", ArchiveNames.defaultBaseName(null, false, "Arsip"))
         assertEquals("Arsip", ArchiveNames.defaultBaseName(null, false, ""))
     }
 

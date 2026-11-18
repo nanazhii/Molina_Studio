@@ -12,7 +12,7 @@ Molina Shield. Modul ini murni JVM (tanpa Android), sehingga seluruh logikanya d
 | `ThreatScanner<T>` | Kontrak pemindai murni: data masuk, `List<Finding>` keluar |
 | `Finding` | Temuan: `kind`, `code`, `severity`, `subject` (host/paket saja), `detail` |
 
-Feature (Cinema, Terminal, Setelan) hanya memakai antarmuka ini. `LocalShieldProxy` disuntik dari `:app`.
+Feature (Terminal, Setelan) hanya memakai antarmuka ini. `LocalShieldProxy` disuntik dari `:app`.
 
 ## Alur `LocalShieldProxy`
 Proxy HTTP di `127.0.0.1`, port acak, wajib token (Basic, dibandingkan konstan-waktu). Per permintaan:
@@ -30,30 +30,23 @@ Heuristik atas `AppFootprint` (izin + paket SDK). Hasilnya petunjuk, bukan vonis
 Aplikasi sistem dilewati. Pengumpul data Android (`PackageManager`) belum dibuat.
 
 ## Batas yang diketahui
-- Tidak mencakup rtmp/rtsp (tidak lewat proxy HTTP) dan proses lain seperti yt-dlp di Debian.
+- Hanya http/https. Protokol lain (mis. ssh, rtmp) dan proses di Debian yang mengabaikan variabel proxy tidak tersaring.
 - Daftar pelacak statis dan kecil (`TrackerDomains.kt`); belum bisa diperbarui.
 - Shield menyaring tujuan, bukan isi. Konten berbahaya di host publik yang sah tidak terdeteksi.
 - Aplikasi lain di perangkat yang sudah punya akses jaringan tidak tersentuh Shield.
 
-## Rencana penyambungan (belum dikerjakan)
-1. `:app` membuat `LocalShieldProxy`, memanggil `start()` sebelum mpv diinisialisasi.
-2. Cinema memasang `http_proxy` lewat `stream-lavf-o` dan `demuxer-lavf-o` (nilai berawalan panjang `%n%nilai`) beserta `protocol_blacklist`.
-3. Bila `failClosed()` true, Cinema menolak sumber jarak jauh.
-4. Setelan: sakelar Shield, pelacak, LAN, Referer, kebijakan rtmp/rtsp, ringkasan dari `snapshot` dan `recentBlocks()` (SELESAI: Setelan > Keamanan, `ShieldPrefs`). Daftar pengecualian pelacak belum punya UI.
-5. Pengumpul `AppFootprint` di lapisan Android, pemindaian dijalankan atas permintaan pengguna.
+## Penyambungan
+1. `:app` membuat `LocalShieldProxy` dan memanggil `start()` saat proses mulai (`ShieldBootstrap`).
+2. Setelan: sakelar Shield, pelacak, LAN, Referer, ringkasan dari `snapshot` dan `recentBlocks()` (SELESAI: Setelan > Keamanan, `ShieldPrefs`). Daftar pengecualian pelacak belum punya UI.
+3. Pengumpul `AppFootprint` di lapisan Android, pemindaian dijalankan atas permintaan pengguna (belum dikerjakan).
 
 ## Cakupan diperluas (Patch 2)
 | Jalur | Perlakuan |
 |---|---|
-| http/https mpv | lewat proxy (`http_proxy` di `stream-lavf-o` dan `demuxer-lavf-o`), dipasang sebelum `MPVLib.init()` |
-| Shield menyala tetapi proxy mati | fail-closed: `protocol_whitelist` hanya `file,crypto,data` dan `PlaybackGuard` menolak sumber jarak jauh |
-| Shield dimulai ulang | sesi lama menolak memuat (`shield.changed`) sampai pemutar dibuka ulang |
-| rtmp/rtmps/rtsp | `DirectStreamPolicy.PREFLIGHT` (bawaan): port, pelacak, dan SEMUA IP hasil DNS diperiksa di thread latar; `BLOCK`: ditolak penuh, termasuk dari dalam playlist |
 | yt-dlp, pip, apt di Debian | `ChildProcessProxy.env(endpoint)` menghasilkan `http_proxy`/`https_proxy`; PRoot berbagi jaringan Android. Belum dipasang ke sesi terminal (opsi opt-in) |
 | Daftar pelacak | bawaan + berkas lokal `/storage/emulated/0/Molina/shield/trackers.txt` (opsional `.sha256`), tanpa server pembaruan |
 
-Batas: preflight rtmp/rtsp tidak menutup DNS rebinding cepat (mpv meresolve ulang); gunakan `BLOCK` bila perlu.
-Uji perangkat wajib: pemutaran lokal, https publik, LAN (harus ditolak), rtmp, dan Shield dimatikan lewat prefs.
+Uji perangkat wajib: curl https publik, IP LAN (harus ditolak), dan Shield dimatikan lewat prefs.
 
 ## Proxy opt-in untuk Terminal/Debian (Patch 3)
 Setelan > Terminal > "Lalu lintas Debian lewat Molina Shield" (bawaan mati, berlaku di sesi baru).
@@ -75,5 +68,4 @@ Diuji dengan curl sungguhan (403 untuk pelacak dan IP metadata, gagal tersambung
 | Tempat | Petunjuk |
 |---|---|
 | Setelan > Keamanan | Kartu ringkasan berbingkai tipis; teks teal saat Shield aktif, amber saat dimatikan atau fail-closed |
-| Cinema | Sumber ditolak: "Diblokir Shield: host: alasan" (host saja, tanpa URL, userinfo, atau query; kode `SHIELD_BLOCKED_CODE` = -403) |
 | Prompt Debian | `[SHIELD] ` bila Shield menyaring sesi, `[SHIELD!] ` bila fail-closed. Dibaca dari `MOLINA_SHIELD` (ditulis `molina-shield.sh`), bukan dari `https_proxy` buatan pengguna |

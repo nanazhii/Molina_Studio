@@ -28,10 +28,6 @@ class CrashReporterTest {
         assertEquals("proot", area("android.view.View", "com.molina.terminal.proot.RootfsInstaller"))
         assertEquals("term", area("com.molina.terminal.core.PtyTerminalSession"))
         assertEquals("term", area("com.molina.terminal.TerminalFragment"))
-        assertEquals("mpv", area("com.molina.player.mpv.MPVLib"))
-        assertEquals("mpv", area("com.molina.player.filepicker.FilePickerActivity"))
-        assertEquals("mpv", area("com.molina.cinema.LoggingMolinaPlayerSession"))
-        assertEquals("cinema", area("com.molina.cinema.CinemaFragment"))
         assertEquals("files", area("com.molina.files.FilesFragment"))
         assertEquals("settings", area("com.molina.settings.LogReport"))
         assertEquals("app", area("com.molina.studio.MainActivity"))
@@ -52,11 +48,11 @@ class CrashReporterTest {
         val log = MolinaLogger(listOf(sink), clock = { 0L })
         var delegated: Throwable? = null
         val reporter = CrashReporter({ log }, Thread.UncaughtExceptionHandler { _, e -> delegated = e })
-        val boom = trace("com.molina.cinema.MpvNative")
+        val boom = trace("com.molina.files.Browser")
         reporter.uncaughtException(Thread.currentThread(), boom)
 
         val e = sink.entries.single()
-        assertEquals("Molina/mpv", e.tag)
+        assertEquals("Molina/files", e.tag)
         assertEquals(LogLevel.ERROR, e.level)
         assertSame(boom, e.throwable)
         assertTrue(e.message.startsWith("[CRASH:uncaught]"))
@@ -86,9 +82,9 @@ class CrashReporterTest {
     fun crashIncludesModeFromContext() {
         val sink = CaptureSink()
         val log = MolinaLogger(listOf(sink), clock = { 0L })
-        val reporter = CrashReporter({ log }, null, { "Player (mpv)" })
-        reporter.uncaughtException(Thread.currentThread(), trace("com.molina.player.MPVActivity"))
-        assertTrue(sink.entries.single().message.contains("mode=Player"))
+        val reporter = CrashReporter({ log }, null, { "Aplikasi > Berkas" })
+        reporter.uncaughtException(Thread.currentThread(), trace("com.molina.files.Browser"))
+        assertTrue(sink.entries.single().message.contains("mode=Aplikasi"))
     }
 
     @Test

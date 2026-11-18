@@ -32,7 +32,7 @@ internal class LiveBadge(val label: String, val color: Color)
 
 internal fun liveBadge(state: LiveState, detail: String?): LiveBadge? = when (state) {
     LiveState.OFF -> null
-    // [CODE-BADGE] Emas hangat (keluarga Molina Cinema, sama dengan penanda aktif pemutar) = siap; redup = belum siap.
+    // [CODE-BADGE] Emas hangat (keluarga aksen hijau Molina) = siap; redup = belum siap.
     LiveState.IDLE -> if (detail != null) LiveBadge("LSP RAM", CodeColors.ClaudeOrange) else LiveBadge("LSP siaga", CodeColors.TextSecondary)
     LiveState.STARTING -> LiveBadge("LSP memuat", CodeColors.TextSecondary)
     LiveState.READY -> LiveBadge("LSP siap", CodeColors.Brand)

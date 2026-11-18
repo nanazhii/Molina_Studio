@@ -90,12 +90,12 @@ class LogReportEventsTest {
     fun plainLogHasNoStructuredSections() {
         val r = report(
             "2026-11-13 09:00:00.100 I/Molina/core: Logger aktif\n" +
-                "2026-11-13 09:00:01.000 E/Molina/mpv/p1: gagal memuat\n",
+                "2026-11-13 09:00:01.000 E/Molina/net/p1: gagal memuat\n",
         )
         assertFalse("Crash terbaru" in r)
         assertFalse("Bug (" in r)
         assertFalse("Perilaku" in r)
-        assertTrue("- mpv: 1 error; terakhir: gagal memuat" in r)
+        assertTrue("- net: 1 error; terakhir: gagal memuat" in r)
     }
 
     @Test

@@ -66,8 +66,8 @@ class LocalMolinaStorageTrashTest {
         val root = tmp.newFolder("Molina")
         val s = storage(root)
         s.ensureLayout()
-        assertEquals(ErrorKind.PROTECTED, s.trash(listOf("cinema")).errorOrNull()?.kind)
-        assertTrue(File(root, "cinema").isDirectory)
+        assertEquals(ErrorKind.PROTECTED, s.trash(listOf("terminal")).errorOrNull()?.kind)
+        assertTrue(File(root, "terminal").isDirectory)
     }
 
     @Test fun pathKeluarRootDitolak() = runBlocking {

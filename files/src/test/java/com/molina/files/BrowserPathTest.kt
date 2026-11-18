@@ -9,13 +9,13 @@ class BrowserPathTest {
     @Test
     fun rootIsEmptyPath() {
         assertTrue(BrowserPath.isRoot(""))
-        assertFalse(BrowserPath.isRoot("cinema"))
+        assertFalse(BrowserPath.isRoot("media"))
     }
 
     @Test
     fun childFromRootAndNested() {
-        assertEquals("cinema", BrowserPath.child("", "cinema"))
-        assertEquals("cinema/film", BrowserPath.child("cinema", "film"))
+        assertEquals("media", BrowserPath.child("", "media"))
+        assertEquals("media/film", BrowserPath.child("media", "film"))
     }
 
     @Test
@@ -34,16 +34,16 @@ class BrowserPathTest {
     @Test
     fun titleShowsMolinaRoot() {
         assertEquals("Molina", BrowserPath.title(""))
-        assertEquals("Molina/cinema/film", BrowserPath.title("cinema/film"))
+        assertEquals("Molina/media/film", BrowserPath.title("media/film"))
     }
 
     // molina-patch26b
     @Test
     fun entryPathLangsungDanDariHasilPencarian() {
-        assertEquals("cinema/a.mp4", BrowserPath.entryPath("cinema", null, "a.mp4"))
-        assertEquals("cinema/a.mp4", BrowserPath.entryPath("cinema", "", "a.mp4"))
+        assertEquals("media/a.mp4", BrowserPath.entryPath("media", null, "a.mp4"))
+        assertEquals("media/a.mp4", BrowserPath.entryPath("media", "", "a.mp4"))
         assertEquals("a.mp4", BrowserPath.entryPath("", null, "a.mp4"))
-        assertEquals("cinema/film/2024/a.mp4", BrowserPath.entryPath("cinema", "film/2024", "a.mp4"))
+        assertEquals("media/film/2024/a.mp4", BrowserPath.entryPath("media", "film/2024", "a.mp4"))
         assertEquals("film/a.mp4", BrowserPath.entryPath("", "film", "a.mp4"))
     }
 
@@ -51,8 +51,8 @@ class BrowserPathTest {
     fun crumbsFromRootAndNested() {
         assertEquals(listOf("Molina" to ""), BrowserPath.crumbs(""))
         assertEquals(
-            listOf("Molina" to "", "cinema" to "cinema", "film" to "cinema/film"),
-            BrowserPath.crumbs("cinema/film"),
+            listOf("Molina" to "", "media" to "media", "film" to "media/film"),
+            BrowserPath.crumbs("media/film"),
         )
     }
 }

@@ -12,13 +12,13 @@ class ExplorerFavoritesTest {
 
     @Test fun kosongAwalnya() {
         assertEquals(emptyList<String>(), fav.paths())
-        assertFalse(fav.contains("cinema"))
+        assertFalse(fav.contains("media"))
     }
 
     @Test fun tambahLaluContains() {
-        assertTrue(fav.add("cinema/film"))
-        assertTrue(fav.contains("cinema/film"))
-        assertTrue(fav.contains("/cinema/film/"))
+        assertTrue(fav.add("media/film"))
+        assertTrue(fav.contains("media/film"))
+        assertTrue(fav.contains("/media/film/"))
     }
 
     @Test fun duplikatDitolak() {

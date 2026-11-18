@@ -97,7 +97,6 @@ class SettingsFragment : Fragment() {
                 text = "Keluaran tetap tampil di terminal dan disalin ke berkas log. Program layar penuh (mis. curses) bisa tidak berfungsi saat dicatat; python dijalankan dengan -u, bahasa lain bisa menahan keluaran sampai skrip selesai."
                 textSize = 12f
             })
-            addView(IconPicker.build(ctx))
             addView(securityButton)
             addView(aboutButton)
             if (BuildConfig.DEBUG) {

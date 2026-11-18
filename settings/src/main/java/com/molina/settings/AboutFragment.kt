@@ -41,7 +41,7 @@ class AboutFragment : Fragment() {
             setPadding(0, (12 * d).toInt(), 0, 0)
         }
         val tagline = TextView(ctx).apply {
-            text = "Molina Studio: Terminal dan Cinema"
+            text = "Molina Studio: Terminal, Berkas, dan Code"
             textSize = 13f
             gravity = Gravity.CENTER
             alpha = 0.7f

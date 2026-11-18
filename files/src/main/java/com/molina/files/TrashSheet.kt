@@ -79,7 +79,7 @@ internal class TrashSheet : BottomSheetDialogFragment() {
         val clear = TextView(ctx).apply {
             text = "Kosongkan"
             textSize = 14f
-            setTextColor(ContextCompat.getColor(ctx, UiR.color.molina_cinema_accent))
+            setTextColor(ContextCompat.getColor(ctx, UiR.color.molina_brand_accent))
             setPadding(dp(12), dp(8), dp(12), dp(8))
             setOnClickListener { confirmEmpty() }
         }

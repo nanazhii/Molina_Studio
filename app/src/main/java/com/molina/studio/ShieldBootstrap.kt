@@ -11,9 +11,9 @@ import java.io.File
 import kotlin.concurrent.thread
 
 /**
- * Menyalakan Molina Shield saat proses mulai, SEBELUM sesi mpv pertama dibuat (opsi proxy dibaca
+ * Menyalakan Molina Shield saat proses mulai, SEBELUM sesi terminal pertama dibuat (opsi proxy dibaca
  * saat init). Pengaturan dibaca dari ShieldPrefs (diubah di Setelan > Keamanan);
- * bawaan: Shield menyala, pelacak diblokir, LAN ditolak, rtmp/rtsp diperiksa dulu.
+ * bawaan: Shield menyala, pelacak diblokir, LAN ditolak.
  * Daftar pelacak tambahan opsional: /storage/emulated/0/Molina/shield/trackers.txt
  * (+ trackers.txt.sha256 bila ingin memastikan berkas tidak berubah). Gagal membaca tidak fatal.
  */

@@ -9,13 +9,13 @@ class LogReportTest {
     private val sample = listOf(
         "potongan awal tanpa header",
         "2026-11-12 14:03:22.123 I/Molina/core: Logger aktif",
-        "2026-11-12 14:03:23.000 E/Molina/mpv/p1: gagal memuat berkas",
-        "java.lang.IllegalStateException: mpv belum siap",
-        "\tat com.molina.cinema.Mpv.load(Mpv.kt:42)",
+        "2026-11-12 14:03:23.000 E/Molina/net/p1: gagal memuat berkas",
+        "java.lang.IllegalStateException: net belum siap",
+        "\tat com.molina.files.Net.load(Net.kt:42)",
         "Caused by: java.io.IOException: ENOENT",
         "2026-11-12 14:03:24.500 E/Molina/term/s1: pty putus",
         "2026-11-12 14:03:25.000 W/Molina/proot: lambat",
-        "2026-11-12 14:03:26.000 E/Molina/mpv/p1: error lagi",
+        "2026-11-12 14:03:26.000 E/Molina/net/p1: error lagi",
         "kotlin.NotImplementedError: belum",
     ).joinToString("\n")
 
@@ -24,13 +24,13 @@ class LogReportTest {
         val entries = LogReport.parse(sample)
         assertEquals(5, entries.size)
         assertEquals(3, entries[1].extra.size)
-        assertEquals("Molina/mpv/p1", entries[1].tag)
+        assertEquals("Molina/net/p1", entries[1].tag)
     }
 
     @Test
     fun summaryGroupsErrorsByAreaAndShowsLatestException() {
         val report = LogReport.build("B", LogReport.parse(sample))
-        assertTrue("- mpv: 2 error; terakhir: error lagi | kotlin.NotImplementedError: belum" in report)
+        assertTrue("- net: 2 error; terakhir: error lagi | kotlin.NotImplementedError: belum" in report)
         assertTrue("- term: 1 error; terakhir: pty putus" in report)
         val summary = report.substringAfter("Error terbaru per area:").substringBefore("Log terakhir")
         assertFalse("proot" in summary)

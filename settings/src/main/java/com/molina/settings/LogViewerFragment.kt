@@ -198,11 +198,10 @@ class LogViewerFragment : Fragment() {
         }
     }
 
-    /** Teal untuk sesi Terminal (t*), amber untuk Cinema (p*); null = gaya bawaan. */
+    /** Teal untuk sesi Terminal (t*); null = gaya bawaan. */
     private fun accentOf(id: String?): Int? {
         val res = when (LogFilter.sessionKind(id)) {
             SessionKind.TERMINAL -> UiR.color.molina_terminal_accent
-            SessionKind.CINEMA -> UiR.color.molina_cinema_accent
             SessionKind.OTHER -> return null
         }
         return ContextCompat.getColor(requireContext(), res)
@@ -232,7 +231,7 @@ class LogViewerFragment : Fragment() {
         val ctx = requireContext()
         val colors = mapOf(
             EventFilter.CRASH to ContextCompat.getColor(ctx, UiR.color.molina_error),
-            EventFilter.BUG to ContextCompat.getColor(ctx, UiR.color.molina_cinema_accent),
+            EventFilter.BUG to ContextCompat.getColor(ctx, UiR.color.molina_brand_accent),
             EventFilter.BEHAV to ContextCompat.getColor(ctx, UiR.color.molina_terminal_accent),
         )
         val sb = SpannableStringBuilder()
