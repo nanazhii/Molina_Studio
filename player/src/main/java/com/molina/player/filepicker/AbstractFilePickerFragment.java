@@ -23,6 +23,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.view.Gravity;
+import android.widget.FrameLayout;
+import com.molina.core.ui.ExtLabel;
+import com.molina.core.ui.FileKind;
+import com.molina.core.ui.TreeIconView;
 
 import java.io.File;
 import java.util.HashMap;
@@ -299,8 +304,15 @@ public abstract class AbstractFilePickerFragment<T> extends Fragment
     @Override
     public void onBindViewHolder(@NonNull DirViewHolder vh, int position, @NonNull T data) {
         vh.file = data;
-        vh.icon.setVisibility(isDir(data) ? View.VISIBLE : View.GONE);
-        vh.text.setText(getName(data));
+        // molina-picker: ikon dan warna nama sama dengan file manager Molina
+        String name = getName(data);
+        boolean dir = isDir(data);
+        vh.icon.setVisibility(View.VISIBLE);
+        vh.iconView.setDir(dir);
+        vh.iconView.setKind(dir ? FileKind.OTHER : FileKind.Companion.of(name));
+        vh.iconView.setLabel(dir ? "" : ExtLabel.INSTANCE.of(name));
+        vh.text.setText(name);
+        vh.text.setTextColor(dir ? 0xFFFFFFFF : FileKind.Companion.of(name).getNameColor());
     }
 
 
@@ -479,6 +491,14 @@ public abstract class AbstractFilePickerFragment<T> extends Fragment
             super(v);
             v.setOnClickListener(this);
             text = (TextView) v.findViewById(android.R.id.text1);
+            // molina-picker: baris ".." memakai ikon folder yang sama
+            View hi = v.findViewById(R.id.item_icon);
+            if (hi instanceof ViewGroup) {
+                TreeIconView t = new TreeIconView(v.getContext());
+                t.setDir(true);
+                int px = (int) (30 * v.getResources().getDisplayMetrics().density + 0.5f);
+                ((ViewGroup) hi).addView(t, new FrameLayout.LayoutParams(px, px, Gravity.CENTER));
+            }
         }
 
         /**
@@ -495,6 +515,7 @@ public abstract class AbstractFilePickerFragment<T> extends Fragment
     public class DirViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
         public final View icon;
+        public final TreeIconView iconView; // molina-picker
         public final TextView text;
         public T file;
 
@@ -503,6 +524,9 @@ public abstract class AbstractFilePickerFragment<T> extends Fragment
             v.setOnClickListener(this);
             v.setOnLongClickListener(this);
             icon = v.findViewById(R.id.item_icon);
+            iconView = new TreeIconView(v.getContext());
+            int px = (int) (30 * v.getResources().getDisplayMetrics().density + 0.5f);
+            ((ViewGroup) icon).addView(iconView, new FrameLayout.LayoutParams(px, px, Gravity.CENTER));
             text = (TextView) v.findViewById(android.R.id.text1);
         }
 

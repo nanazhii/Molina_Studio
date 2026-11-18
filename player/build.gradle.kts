@@ -34,4 +34,5 @@ dependencies {
     implementation("androidx.media:media:1.8.0")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("com.google.android.material:material:1.14.0")
+    implementation(project(":core-ui")) // molina-picker: ikon dan warna sama dengan file manager
 }

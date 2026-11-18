@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="FilePickerTheme" parent="Theme.AppCompat">
-        <item name="nnf_separator_color">@color/primary</item>
+        <item name="nnf_separator_color">@color/molina_brand_panel_line</item>
 
         <!-- Set these to match your theme -->
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="colorAccent">@color/accent</item>
+        <item name="colorPrimary">@color/molina_brand_panel</item>
+        <item name="colorPrimaryDark">@color/molina_brand_bg</item>
+        <item name="colorAccent">@color/molina_brand_accent</item>
+        <item name="android:windowBackground">@color/molina_brand_bg</item>
 
         <!-- Need to set this also to style create folder dialog -->
         <item name="alertDialogTheme">@style/FilePickerTheme.AlertDialog</item>

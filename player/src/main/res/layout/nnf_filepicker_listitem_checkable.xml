@@ -25,17 +25,13 @@
     android:minHeight="?android:listPreferredItemHeight"
     android:orientation="horizontal">
 
-    <ImageView
+    <!-- molina-picker: TreeIconView (core-ui) dipasang dari kode -->
+    <FrameLayout
         android:id="@+id/item_icon"
         android:layout_width="?listPreferredItemHeight"
         android:layout_height="?listPreferredItemHeight"
         android:layout_gravity="center_vertical"
-        android:adjustViewBounds="true"
-        android:scaleType="center"
-        app:srcCompat="@drawable/nnf_ic_folder_black_48dp"
-        app:tint="?attr/colorAccent"
-        android:visibility="visible"
-        tools:ignore="ContentDescription" />
+        android:importantForAccessibility="no" />
 
     <TextView
         android:id="@android:id/text1"
