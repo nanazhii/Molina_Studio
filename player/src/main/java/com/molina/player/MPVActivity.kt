@@ -64,6 +64,7 @@ import com.molina.player.playlist.MPVActivityPlaylistHost
 import com.molina.player.playback.MPVActivityOnLoad
 import com.molina.player.playback.MPVActivityRepeat
 import com.molina.player.playback.MPVActivityStats
+import com.molina.player.audio.MPVActivityAudioPresence
 import com.molina.player.menu.MPVActivityMenu
 import com.molina.player.menu.MPVActivityMenu.MenuItem
 import com.molina.core.common.stream.UrlNormalizer
@@ -118,6 +119,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         })
     }
     private val menu by lazy { MPVActivityMenu(this) { player } }
+    private val audioPresence = MPVActivityAudioPresence()
     private val loopModes by lazy { MPVActivityRepeat { player } }
     private val stats = MPVActivityStats()
     private val onload = MPVActivityOnLoad()
@@ -487,29 +489,12 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         }
     }
 
-    private fun updateAudioPresence() {
-        val haveAudio = MPVLib.getPropertyBoolean("current-tracks/audio/selected")
-        if (haveAudio == null) {
-            // If we *don't know* if there's an active audio track then don't update to avoid
-            // spurious UI changes. The property will become available again later.
-            return
-        }
-        isPlayingAudio = (haveAudio && MPVLib.getPropertyBoolean("mute") != true)
-    }
-
-    private fun isPlayingAudioOnly(): Boolean {
-        if (!isPlayingAudio)
-            return false
-        val image = MPVLib.getPropertyString("current-tracks/video/image")
-        return image.isNullOrEmpty() || image == "yes"
-    }
-
     private fun shouldBackground(): Boolean {
         if (isFinishing) // about to exit?
             return false
         return when (backgroundPlayMode) {
             "always" -> true
-            "audio-only" -> isPlayingAudioOnly()
+            "audio-only" -> audioPresence.isAudioOnly()
             else -> false // "never"
         }
     }
@@ -665,7 +650,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
      * @warning Call from event thread, not UI thread
      */
     private fun handleAudioFocus() {
-        if ((psc.pause && !psc.cachePause) || !isPlayingAudio) {
+        if ((psc.pause && !psc.cachePause) || !audioPresence.isPlaying) {
             if (becomingNoisyReceiverRegistered)
                 unregisterReceiver(becomingNoisyReceiver)
             becomingNoisyReceiverRegistered = false
@@ -750,9 +735,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
 
     private var mightWantToToggleControls = false
 
-    /** true if we're actually outputting any audio (includes the mute state, but not pausing) */
-    private var isPlayingAudio = false
-
     private var useAudioUI = false
 
     private var lockedUI = false
@@ -760,7 +742,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     private fun pauseForDialog(): StateRestoreCallback {
         val useKeepOpen = when (noUIPauseMode) {
             "always" -> true
-            "audio-only" -> isPlayingAudioOnly()
+            "audio-only" -> audioPresence.isAudioOnly()
             else -> false // "never"
         }
         if (useKeepOpen) {
@@ -1419,7 +1401,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
                 }
         )
 
-        if (!isPlayingAudio)
+        if (!audioPresence.isPlaying)
             hiddenButtons.add(R.id.backgroundBtn)
         if (menu.chapterCount() == 0)
             hiddenButtons.add(R.id.rowChapter)
@@ -1478,7 +1460,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         val videoButtons = arrayOf(R.id.cycleAudioBtn, R.id.cycleSubsBtn, R.id.playBtn,
                 R.id.cycleDecoderBtn, R.id.cycleSpeedBtn)
 
-        val shouldUseAudioUI = isPlayingAudioOnly()
+        val shouldUseAudioUI = audioPresence.isAudioOnly()
         if (shouldUseAudioUI == useAudioUI)
             return
         useAudioUI = shouldUseAudioUI
@@ -1741,7 +1723,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         if (!activityIsForeground) return
         when (property) {
             "pause" -> updatePlaybackStatus(value)
-            "mute" -> { // indirectly from updateAudioPresence()
+            "mute" -> { // indirectly from audioPresence.update()
                 updateAudioUI()
             }
         }
@@ -1787,7 +1769,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         if (property == "loop-file" || property == "loop-playlist") {
             mediaSession?.setRepeatMode(loopModes.sessionRepeatMode())
         } else if (property == "current-tracks/audio/selected") {
-            updateAudioPresence()
+            audioPresence.update()
         }
 
         if (property == "pause" || property == "current-tracks/audio/selected")
@@ -1804,7 +1786,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         if (property == "shuffle") {
             mediaSession?.setShuffleMode(loopModes.sessionShuffleMode(value))
         } else if (property == "mute") {
-            updateAudioPresence()
+            audioPresence.update()
         }
 
         if (metaUpdated || property == "mute")
@@ -1898,7 +1880,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
                     else
                         getStreamMaxVolume(STREAM_TYPE)
                 }
-                if (!isPlayingAudio)
+                if (!audioPresence.isPlaying)
                     maxVolume = 0 // disallow volume gesture if no audio
                 pausedForSeek = 0
 

@@ -46,3 +46,5 @@
 - 2026-11-19: MPVActivity langkah 3 mode ulang dan statistik (menunggu CI): pemetaan mode ulang/acak MediaSession-mpv pindah ke player/playback/MPVActivityRepeat; pengaturan dan halaman stats ke MPVActivityStats (halaman skrip hanya dinyalakan pada berkas pertama); antrean perintah onload ke MPVActivityOnLoad. Semua pemanggilan mpv lewat MpvGateway/MpvProperties. Target: R2 MPVActivity 18 -> 14. Berikutnya: langkah 4 siklus hidup dan fokus audio.
 
 - Peta langkah 4 (2026-11-19) (menunggu persetujuan): 4a AudioPresence (R2 -3), 4b Position + MPVView.stop (R2 -3), 4c AudioFocus dengan flag released (R2 -2). Sisa R2 MPVActivity 6 (dialog keep-open dan gestur). Catatan: celah receiver noisy terdaftar ulang setelah rilis fokus ditutup oleh flag released.
+
+- 2026-11-19: MPVActivity langkah 4a AudioPresence (menunggu CI): status audio keluar dan audio-saja pindah ke player/audio/MPVActivityAudioPresence (lewat MpvProperties; isPlaying kini Volatile karena ditulis thread event dan dibaca UI). Target: R2 MPVActivity -3. Berikutnya: 4b Position + MPVView.stop, lalu 4c AudioFocus.
