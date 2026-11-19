@@ -66,6 +66,7 @@ import com.molina.player.playback.MPVActivityRepeat
 import com.molina.player.playback.MPVActivityStats
 import com.molina.player.audio.MPVActivityAudioPresence
 import com.molina.player.menu.MPVActivityMenu
+import com.molina.player.playback.MPVActivityPosition
 import com.molina.player.menu.MPVActivityMenu.MenuItem
 import com.molina.core.common.stream.UrlNormalizer
 import kotlinx.coroutines.CoroutineScope
@@ -119,6 +120,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         })
     }
     private val menu by lazy { MPVActivityMenu(this) { player } }
+    private val position = MPVActivityPosition()
     private val audioPresence = MPVActivityAudioPresence()
     private val loopModes by lazy { MPVActivityRepeat { player } }
     private val stats = MPVActivityStats()
@@ -202,8 +204,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
 
     private var backgroundPlayMode = ""
     private var noUIPauseMode = ""
-
-    private var shouldSavePosition = false
 
     private var autoRotationMode = ""
 
@@ -531,10 +531,10 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         activityIsForeground = false
         eventUiHandler.removeCallbacksAndMessages(null)
         if (isFinishing) {
-            savePosition()
+            position.save()
             // tell mpv to shut down so that any other property changes or such are ignored,
             // preventing useless busywork
-            MPVLib.command(arrayOf("stop"))
+            player.stop()
         } else if (!shouldBackground) {
             player.paused = true
             // clear any old thumbnails
@@ -569,7 +569,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         stats.syncSettings(statsMode)
         this.backgroundPlayMode = getString("background_play", R.string.pref_background_play_default)
         this.noUIPauseMode = getString("no_ui_pause", R.string.pref_no_ui_pause_default)
-        this.shouldSavePosition = prefs.getBoolean("save_position", false)
+        position.enabled = prefs.getBoolean("save_position", false)
         if (this.autoRotationMode != "manual") // don't reset
             this.autoRotationMode = getString("auto_rotation", R.string.pref_auto_rotation_default)
         this.controlsAtBottom = prefs.getBoolean("bottom_controls", true)
@@ -633,16 +633,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         refreshUi()
 
         super.onResume()
-    }
-
-    private fun savePosition() {
-        if (!shouldSavePosition)
-            return
-        if (MPVLib.getPropertyBoolean("eof-reached") ?: true) {
-            Log.d(TAG, "player indicates EOF, not saving watch-later config")
-            return
-        }
-        MPVLib.command(arrayOf("write-watch-later-config"))
     }
 
     /**

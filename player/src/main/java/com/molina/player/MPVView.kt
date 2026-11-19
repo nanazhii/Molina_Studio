@@ -349,6 +349,8 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
 
     // Commands
 
+    /** Hentikan pemutaran dan kosongkan daftar putar mpv. */
+    fun stop() { MpvGateway.command(arrayOf("stop")) }
     fun cyclePause() { MpvGateway.command(arrayOf("cycle", "pause")) }
     fun cycleAudio() { MpvGateway.command(arrayOf("cycle", "audio")) }
     fun cycleSub() { MpvGateway.command(arrayOf("cycle", "sub")) }

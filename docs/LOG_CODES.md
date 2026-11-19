@@ -50,6 +50,7 @@ Aturan:
 | `player.home-refresh` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
 | `player.home-return` | BEHAV | player/src/main/java/com/molina/player/MainScreenFragment.kt |
 | `player.menu-empty` | BEHAV | player/src/main/java/com/molina/player/menu/MPVActivityMenu.kt |
+| `player.position-skip-eof` | BEHAV | player/src/main/java/com/molina/player/playback/MPVActivityPosition.kt |
 | `player.recent-cleared` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
 | `player.recent-failed` | BUG | player/src/main/java/com/molina/player/home/HomeController.kt |
 | `player.recent-recorded` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
