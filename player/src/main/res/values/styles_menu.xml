@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-menu-strip: menu atas hanya ikon (tekan lama = tooltip), sama dengan repo lama; warna dari palet molina_tv_* -->
+<resources>
+    <style name="Widget.Molina.MenuIcon" parent="Widget.AppCompat.ImageButton">
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:tint">@color/molina_tv_text</item>
+        <item name="android:scaleType">center</item>
+        <item name="android:minWidth">56dp</item>
+        <item name="android:minHeight">56dp</item>
+    </style>
+</resources>

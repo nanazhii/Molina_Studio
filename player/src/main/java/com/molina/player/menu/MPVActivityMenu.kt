@@ -57,14 +57,15 @@ internal class MPVActivityMenu(
 
     fun genericMenu(
             @LayoutRes layoutRes: Int, buttons: List<MenuItem>, hiddenButtons: Set<Int>,
-            restoreState: StateRestoreCallback) {
+            restoreState: StateRestoreCallback,
+            docked: Boolean = false, maxHeightDp: Int = 0) { // molina-menu-strip
         lateinit var dialog: AlertDialog
 
-        val builder = AlertDialog.Builder(activity)
+        val builder = AlertDialog.Builder(activity, if (docked) R.style.MolinaPlayerTheme_PlayerDialog else 0)
         val dialogView = LayoutInflater.from(builder.context).inflate(layoutRes, null)
 
         for (button in buttons) {
-            val buttonView = dialogView.findViewById<Button>(button.idRes)
+            val buttonView = dialogView.findViewById<View>(button.idRes) // molina-menu-strip-view
             buttonView.setOnClickListener {
                 val ret = button.handler()
                 if (ret) // restore state immediately
@@ -89,6 +90,8 @@ internal class MPVActivityMenu(
             dialog = create()
         }
         dialog.show()
+        if (docked) MenuDock.dockBottomEnd(activity, dialog, 72, 12) // molina-menu-strip-dock
+        if (docked && maxHeightDp > 0) dialogView.post { MenuDock.capHeight(activity, dialog, maxHeightDp) }
     }
 
     fun genericPickerDialog(

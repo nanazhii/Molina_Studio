@@ -1308,7 +1308,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver {
             hiddenButtons.add(R.id.rowChapter)
         /******/
 
-        menu.genericMenu(R.layout.dialog_top_menu, buttons, hiddenButtons, restoreState)
+        menu.genericMenu(R.layout.dialog_top_menu, buttons, hiddenButtons, restoreState, docked = true, maxHeightDp = 264) // molina-menu-strip
     }
 
     private fun cycleOrientation() {
