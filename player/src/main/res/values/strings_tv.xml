@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_key_shuffle" translatable="false">Shuffle</string>
+    <string name="tv_key_repeat" translatable="false">Repeat</string>
+    <string name="tv_key_search" translatable="false">Cari</string>
+    <string name="tv_key_info" translatable="false">Info</string>
+    <string name="tv_search_hint">Cari nama atau ketik nomor channel</string>
+    <string name="tv_info_format">Channel %1$03d dari %2$03d  |  Shuffle: %3$s  |  Repeat: %4$s</string>
+    <string name="tv_on" translatable="false">On</string>
+    <string name="tv_off" translatable="false">Off</string>
+</resources>
