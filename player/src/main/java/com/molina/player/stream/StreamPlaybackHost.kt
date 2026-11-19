@@ -15,6 +15,14 @@ internal interface StreamPlaybackHost {
 
     fun showToast(message: String, cancelPrevious: Boolean)
 
+    /** Kartu pemuatan di tengah layar. [source] null = chip disembunyikan. */
+    fun showLoading(message: String, source: String?)
+
+    /** Ganti chip mesin pada kartu yang sedang tampil. */
+    fun setLoadingSource(source: String?)
+
+    fun hideLoading()
+
     /** Muat awal: ditunda sampai surface siap. Dipanggil dari thread mpv. */
     fun loadInitial(args: Array<String>)
 

@@ -31,6 +31,8 @@ internal object StreamLoader {
             val audioUrl: String?,
             val headers: Map<String, String>,
             val title: String?,
+            /** Id engine pemenang (lihat EngineLabel); null = tidak diketahui. */
+            val engine: String?,
         ) : Prepared
 
         data class Failed(val error: StreamError, val action: FailureAction?) : Prepared
@@ -87,6 +89,9 @@ internal object StreamLoader {
         return MediaUrl.isHttp(url) && !MediaUrl.hasMediaExtension(url)
     }
 
+    /** True bila masukan tautan http(s), halaman maupun media langsung: layak diberi kartu pemuatan. */
+    fun isRemote(raw: String): Boolean = MediaUrl.isHttp(UrlNormalizer.normalize(raw))
+
     /** Panggil dari coroutine di luar main thread. Pembatalan coroutine diteruskan. */
     suspend fun prepare(raw: String): Prepared {
         val url = UrlNormalizer.normalize(raw)
@@ -104,7 +109,7 @@ internal object StreamLoader {
                 s.audioUrl?.let { a ->
                     (UrlPolicy.check(a) as? UrlPolicy.Verdict.Blocked)?.let { return Prepared.Blocked(it.reason) }
                 }
-                Prepared.Ready(s.url, s.audioUrl, s.headers, s.title)
+                Prepared.Ready(s.url, s.audioUrl, s.headers, s.title, s.engine)
             }
             is StreamOutcome.Failure -> {
                 Log.w(TAG, "${resolver.id}: ${out.error} ${out.detail.orEmpty()}")

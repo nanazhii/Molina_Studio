@@ -39,7 +39,7 @@ class ChainStreamResolver(
             when (out) {
                 is StreamOutcome.Success -> {
                     onEvent("${r.id}: ok")
-                    return out
+                    return StreamOutcome.Success(out.value.copy(engine = out.value.engine ?: r.id))
                 }
                 is StreamOutcome.Failure -> {
                     onEvent("${r.id}: ${out.error}")

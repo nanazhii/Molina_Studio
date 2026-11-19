@@ -2,6 +2,7 @@ package com.molina.player.stream
 
 import androidx.appcompat.app.AlertDialog
 import com.molina.core.common.StreamSearchItem
+import com.molina.core.common.stream.EngineLabel
 import com.molina.player.MPVLib
 import com.molina.player.MpvThread
 import com.molina.player.PlaybackLog
@@ -39,16 +40,22 @@ internal class StreamPlaybackCoordinator(private val host: StreamPlaybackHost) {
         }
         resolveJob?.cancel()
         PlaybackLog.request(raw)
-        if (StreamLoader.isPageUrl(raw)) host.showToast(text(R.string.notice_resolving), true)
+        when {
+            StreamLoader.isPageUrl(raw) -> host.showLoading(text(R.string.notice_resolving), null)
+            StreamLoader.isRemote(raw) -> host.showLoading(text(R.string.notice_resolving), EngineLabel.of(null))
+            else -> host.hideLoading()
+        }
         resolveJob = scope.launch {
             val initial = flag == null
             when (val p = withContext(Dispatchers.Default) { StreamLoader.prepare(raw) }) {
                 is StreamLoader.Prepared.Direct -> {
+                    host.setLoadingSource(EngineLabel.of(null))
                     pendingAudioUrl = null
                     queueLoad(arrayOf("loadfile", p.url, flag ?: MpvLoadFlag.REPLACE), initial, onQueued)
                 }
                 is StreamLoader.Prepared.Ready -> {
                     PlaybackLog.resolved(p.url, p.audioUrl != null)
+                    host.setLoadingSource(EngineLabel.of(p.engine))
                     // Trek audio terpisah menempel pada berkas yang sedang dimuat: tidak bisa di-append.
                     val eff = if (p.audioUrl != null && flag == MpvLoadFlag.APPEND) MpvLoadFlag.REPLACE else (flag ?: MpvLoadFlag.REPLACE)
                     pendingAudioUrl = p.audioUrl
@@ -68,6 +75,8 @@ internal class StreamPlaybackCoordinator(private val host: StreamPlaybackHost) {
 
     /** Dipanggil saat mpv melaporkan FILE_LOADED: tempelkan trek audio terpisah (stream adaptif) bila ada. */
     fun onFileLoaded() {
+        // Dipanggil dari thread event mpv: tampilan hanya boleh disentuh di main thread.
+        scope.launch { host.hideLoading() }
         val audio = pendingAudioUrl ?: return
         pendingAudioUrl = null
         mpvThread.post(scope, "audio-add") {
@@ -93,7 +102,7 @@ internal class StreamPlaybackCoordinator(private val host: StreamPlaybackHost) {
         resolveJob?.cancel()
         val initial = flag == null
         PlaybackLog.search()
-        host.showToast(text(R.string.notice_searching), true)
+        host.showLoading(text(R.string.notice_searching), null)
         resolveJob = scope.launch {
             when (val s = withContext(Dispatchers.Default) { StreamLoader.search(query) }) {
                 is StreamLoader.Searched.Results -> showSearchResults(s.items, flag, onQueued, initial)
@@ -104,6 +113,7 @@ internal class StreamPlaybackCoordinator(private val host: StreamPlaybackHost) {
     }
 
     private fun showSearchResults(items: List<StreamSearchItem>, flag: String?, onQueued: (() -> Unit)?, initial: Boolean) {
+        host.hideLoading()
         if (host.isGone) return
         SearchResultsSheet.show(
             host.activity, items,
@@ -113,6 +123,7 @@ internal class StreamPlaybackCoordinator(private val host: StreamPlaybackHost) {
     }
 
     private fun showFailure(message: String, initial: Boolean) {
+        host.hideLoading()
         if (host.isGone) return
         if (!initial) {
             host.showToast(message, true)

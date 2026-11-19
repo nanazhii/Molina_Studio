@@ -56,6 +56,7 @@ import kotlin.math.roundToInt
 import com.molina.core.common.FailureAction
 import com.molina.core.common.StreamError
 import com.molina.core.common.StreamSearchItem
+import com.molina.player.stream.LoadingCard
 import com.molina.player.stream.MpvLoadFlag
 import com.molina.player.stream.StreamPlaybackCoordinator
 import com.molina.player.stream.StreamPlaybackHost
@@ -281,6 +282,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
 
     // molina-resolver: jembatan ke StreamPlaybackCoordinator (paket stream). Koordinator hanya meminta lewat
     // StreamPlaybackHost; semua panggilan mpv sinkron dari jalur itu berjalan di thread khusus, bukan main thread.
+    private val loadingCard by lazy { LoadingCard(binding.root) }
     private val streamHost = object : StreamPlaybackHost {
         override val activity: AppCompatActivity get() = this@MPVActivity
         override val isGone: Boolean get() = isFinishing || isDestroyed
@@ -288,6 +290,9 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         override fun loadInitial(args: Array<String>) = player.loadArgs(args)
         override fun markErrorShown() { errorShown = true }
         override fun finishCanceled() = finishWithResult(RESULT_CANCELED)
+        override fun showLoading(message: String, source: String?) = loadingCard.show(message, source)
+        override fun setLoadingSource(source: String?) = loadingCard.setSource(source)
+        override fun hideLoading() = loadingCard.hide()
     }
     private val streamPlayback = StreamPlaybackCoordinator(streamHost)
 

@@ -18,6 +18,8 @@ data class ResolvedStream(
     val durationSec: Long? = null,
     /** Epoch ms perkiraan URL kedaluwarsa; null = tidak diketahui. */
     val expiresAtMs: Long? = null,
+    /** Id engine yang menghasilkan stream ini (diisi rantai resolver); null = tidak diketahui. Untuk chip, bukan logika. */
+    val engine: String? = null,
 )
 
 /** Satu hasil pencarian judul. [pageUrl] diteruskan ke [StreamResolver.resolve] saat dipilih. */
