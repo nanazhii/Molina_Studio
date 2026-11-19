@@ -17,7 +17,7 @@
     <string name="channels_load_failed">Tautan daftar gagal dimuat. Saluran dari berkas tetap tampil.</string>
     <string name="channels_add_url">Tambah tautan M3U</string>
     <string name="channels_change_url">Ganti tautan M3U</string>
-    <string name="channels_url_hint">https://…/daftar.m3u</string>
+    <string name="channels_url_hint">Tempel tautan M3U</string>
     <string name="channels_url_invalid">Tautan harus diawali http:// atau https:// dan alamatnya publik.</string>
     <string name="channels_save">Simpan</string>
     <string name="channels_remove_url">Hapus tautan</string>
