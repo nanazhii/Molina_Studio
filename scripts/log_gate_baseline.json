@@ -13,7 +13,5 @@
     "player/src/main/java/com/molina/player/TouchGestures.kt": 2,
     "player/src/main/java/com/molina/player/Utils.kt": 4
   },
-  "mpv_direct": {
-    "player/src/main/java/com/molina/player/MPVActivity.kt": 6
-  }
+  "mpv_direct": {}
 }

@@ -352,6 +352,12 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
     /** Hentikan pemutaran dan kosongkan daftar putar mpv. */
     fun stop() { MpvGateway.command(arrayOf("stop")) }
     fun cyclePause() { MpvGateway.command(arrayOf("cycle", "pause")) }
+    /** Lompat cepat ke [seconds] (ke keyframe terdekat); lebih cepat dari mengisi timePos tapi kurang presisi. */
+    fun seekToKeyframe(seconds: Float) { MpvGateway.command(arrayOf("seek", "$seconds", "absolute+keyframes")) }
+    /** Geser [seconds] dari posisi sekarang (negatif = mundur). */
+    fun seekBy(seconds: Float) { MpvGateway.command(arrayOf("seek", seconds.toString(), "relative")) }
+    /** Kirim tombol kustom ke skrip/input mpv. */
+    fun pressKey(keycode: Int) { MpvGateway.command(arrayOf("keypress", "0x%x".format(keycode))) }
     fun cycleAudio() { MpvGateway.command(arrayOf("cycle", "audio")) }
     fun cycleSub() { MpvGateway.command(arrayOf("cycle", "sub")) }
     fun cycleHwdec() { MpvGateway.command(arrayOf("cycle-values", "hwdec", HWDECS, "no")) }

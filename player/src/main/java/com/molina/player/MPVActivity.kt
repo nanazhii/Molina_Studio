@@ -62,6 +62,7 @@ import com.molina.player.audio.MPVActivityAudioPresence
 import com.molina.player.audio.MPVActivityAudioFocus
 import com.molina.player.menu.MPVActivityMenu
 import com.molina.player.playback.MPVActivityPosition
+import com.molina.player.playback.MPVActivityDialogPause
 import com.molina.player.menu.MPVActivityMenu.MenuItem
 import com.molina.core.common.stream.UrlNormalizer
 import kotlinx.coroutines.CoroutineScope
@@ -115,6 +116,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     private val menu by lazy { MPVActivityMenu(this) { player } }
     private val position = MPVActivityPosition()
     private val audioPresence = MPVActivityAudioPresence()
+    private val dialogPause = MPVActivityDialogPause({ player }, audioPresence)
     private val audioFocus = MPVActivityAudioFocus(this, { audioManager }, { player }, { isFinishing })
     private val loopModes by lazy { MPVActivityRepeat { player } }
     private val stats = MPVActivityStats()
@@ -189,7 +191,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     /* Settings */
 
     private var backgroundPlayMode = ""
-    private var noUIPauseMode = ""
 
     private var autoRotationMode = ""
 
@@ -551,7 +552,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         val statsMode = prefs.getString("stats_mode", "") ?: ""
         stats.syncSettings(statsMode)
         this.backgroundPlayMode = getString("background_play", R.string.pref_background_play_default)
-        this.noUIPauseMode = getString("no_ui_pause", R.string.pref_no_ui_pause_default)
+        dialogPause.mode = getString("no_ui_pause", R.string.pref_no_ui_pause_default)
         position.enabled = prefs.getBoolean("save_position", false)
         if (this.autoRotationMode != "manual") // don't reset
             this.autoRotationMode = getString("auto_rotation", R.string.pref_auto_rotation_default)
@@ -637,29 +638,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
 
     private var lockedUI = false
 
-    private fun pauseForDialog(): StateRestoreCallback {
-        val useKeepOpen = when (noUIPauseMode) {
-            "always" -> true
-            "audio-only" -> audioPresence.isAudioOnly()
-            else -> false // "never"
-        }
-        if (useKeepOpen) {
-            // don't pause but set keep-open so mpv doesn't exit while the user is doing stuff
-            val oldValue = MPVLib.getPropertyString("keep-open")
-            MPVLib.setPropertyBoolean("keep-open", true)
-            return {
-                oldValue?.also { MPVLib.setPropertyString("keep-open", it) }
-            }
-        }
-
-        // Pause playback during UI dialogs
-        val wasPlayerPaused = player.paused ?: true
-        player.paused = true
-        return {
-            if (!wasPlayerPaused)
-                player.paused = false
-        }
-    }
+    private fun pauseForDialog(): StateRestoreCallback = dialogPause.pause()
 
     private fun updateStats() {
         if (!stats.fpsEnabled)
@@ -1801,7 +1780,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
                     player.timePos = newPosExact.toDouble() // (exact seek)
                 } else {
                     // seek faster than assigning to timePos but less precise
-                    MPVLib.command(arrayOf("seek", "$newPosExact", "absolute+keyframes"))
+                    player.seekToKeyframe(newPosExact)
                 }
                 // Note: don't call updatePlaybackPos() here because mpv will seek a timestamp
                 // actually present in the file, and not the exact one we specified.
@@ -1836,7 +1815,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
             PropertyChange.SeekFixed -> {
                 val seekTime = diff * 10f
                 val newPos = psc.positionSec + seekTime.toInt() // only for display
-                MPVLib.command(arrayOf("seek", seekTime.toString(), "relative"))
+                player.seekBy(seekTime)
 
                 val diffText = Utils.prettyTime(seekTime.toInt(), true)
                 gestureTextView.text = getString(R.string.ui_seek_distance, Utils.prettyTime(newPos), diffText)
@@ -1845,7 +1824,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
             PropertyChange.PlayPause -> player.cyclePause()
             PropertyChange.Custom -> {
                 val keycode = 0x10002 + diff.toInt()
-                MPVLib.command(arrayOf("keypress", "0x%x".format(keycode)))
+                player.pressKey(keycode)
             }
         }
     }
