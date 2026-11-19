@@ -41,6 +41,10 @@ Aturan:
 | `player.audio-focus-change` | BEHAV | player/src/main/java/com/molina/player/audio/MPVActivityAudioFocus.kt |
 | `player.audio-focus-denied` | BEHAV | player/src/main/java/com/molina/player/audio/MPVActivityAudioFocus.kt |
 | `player.audio-focus-release` | BEHAV | player/src/main/java/com/molina/player/audio/MPVActivityAudioFocus.kt |
+| `picker.cancelled` | BEHAV | picker/src/main/java/com/molina/picker/PickerDialog.kt |
+| `picker.picked` | BEHAV | picker/src/main/java/com/molina/picker/PickerDialog.kt |
+| `picker.show-failed` | BUG | picker/src/main/java/com/molina/picker/MolinaLocalPicker.kt |
+| `picker.shown` | BEHAV | picker/src/main/java/com/molina/picker/PickerDialog.kt |
 | `player.bg-service-start` | BEHAV | player/src/main/java/com/molina/player/BackgroundPlaybackService.kt |
 | `player.bg-service-stop` | BEHAV | player/src/main/java/com/molina/player/BackgroundPlaybackService.kt |
 | `player.channels-failed` | BUG | player/src/main/java/com/molina/player/home/ChannelsRepository.kt |
@@ -56,8 +60,9 @@ Aturan:
 | `player.home-refresh` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
 | `player.home-return` | BEHAV | player/src/main/java/com/molina/player/MainScreenFragment.kt |
 | `player.menu-empty` | BEHAV | player/src/main/java/com/molina/player/menu/MPVActivityMenu.kt |
-| `player.open-local` | BEHAV | player/src/main/java/com/molina/player/MainScreenFragment.kt |
-| `player.open-local-folder` | BEHAV | player/src/main/java/com/molina/player/MainScreenFragment.kt |
+| `player.open-local` | BEHAV | player/src/main/java/com/molina/player/open/DeviceOpener.kt |
+| `player.open-local-folder` | BEHAV | player/src/main/java/com/molina/player/open/DeviceOpener.kt |
+| `player.open-picker-missing` | BUG | player/src/main/java/com/molina/player/open/DeviceOpener.kt |
 | `player.position-skip-eof` | BEHAV | player/src/main/java/com/molina/player/playback/MPVActivityPosition.kt |
 | `player.recent-cleared` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
 | `player.recent-failed` | BUG | player/src/main/java/com/molina/player/home/HomeController.kt |

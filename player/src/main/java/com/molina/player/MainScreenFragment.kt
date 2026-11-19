@@ -1,10 +1,7 @@
 package com.molina.player
 
-import com.molina.player.filepicker.DocumentPickerFragment
 import com.molina.player.preferences.PreferenceActivity
 import com.molina.player.databinding.FragmentMainScreenBinding
-import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
@@ -26,6 +23,8 @@ import com.molina.core.common.diag.Diag
 import com.molina.core.common.stream.UrlNormalizer
 import com.molina.player.home.HomeController
 import com.molina.player.home.HomeHost
+import com.molina.player.open.DeviceOpener
+import com.molina.player.open.OpenHost
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,12 +39,11 @@ import java.io.File
  * (subfolder ikut) atau pemilih sistem.
  * Pencarian dan pemutaran tetap ditangani MPVActivity lewat [StreamLoader.searchRequest].
  */
-class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
+class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost, OpenHost {
     private lateinit var binding: FragmentMainScreenBinding
     private lateinit var home: HomeController
 
-    private lateinit var documentTreeOpener: ActivityResultLauncher<Uri?>
-    private lateinit var filePickerLauncher: ActivityResultLauncher<Intent>
+    private val opener by lazy { DeviceOpener(this) }
     private lateinit var playerLauncher: ActivityResultLauncher<Intent>
     private lateinit var channelFileOpener: ActivityResultLauncher<Array<String>>
     private var onChannelFile: ((Uri) -> Unit)? = null
@@ -57,7 +55,6 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
 
     private var prev = ""
     private var prevData: String? = null
-    private var lastPath = ""
 
     private sealed interface Parsed {
         data class Url(val value: String) : Parsed
@@ -70,40 +67,6 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
         super.onCreate(savedInstanceState)
         firstRun = savedInstanceState == null
 
-        documentTreeOpener = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
-            it?.let { root ->
-                requireContext().contentResolver.takePersistableUriPermission(
-                    root, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                saveChoice("doc", root.toString())
-
-                val i = Intent(context, FilePickerActivity::class.java)
-                i.putExtra("skip", FilePickerActivity.DOC_PICKER)
-                i.putExtra("root", root.toString())
-                i.putExtra("allow_dir", true)
-                filePickerLauncher.launch(i)
-            }
-        }
-        filePickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            if (it.resultCode != Activity.RESULT_OK) {
-                return@registerForActivityResult
-            }
-            it.data?.getStringExtra("last_path")?.let { path ->
-                lastPath = path
-            }
-            it.data?.getStringExtra("path")?.let { path ->
-                onPathPicked(path)
-                return@registerForActivityResult
-            }
-            it.data?.getStringArrayExtra("paths")?.let { paths ->
-                // pemilih dokumen (SAF): isi folder langsung, perlu dijadikan playlist
-                if (paths.size == 1) {
-                    playFile(paths[0])
-                } else {
-                    val memoryUri = Utils.makeMemoryPlaylist(paths.asIterable())
-                    playFile(memoryUri)
-                }
-            }
-        }
         // */*: banyak pemilih Android 8 memberi .m3u tipe octet-stream; isi divalidasi oleh M3uParser, bukan tipe
         channelFileOpener = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             val cb = onChannelFile
@@ -222,60 +185,16 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
         }
     }
 
-    // --- Buka dari perangkat ---
+    // --- Buka dari perangkat: pilihan dan pemilih ada di paket open (DeviceOpener) ---
 
-    private fun showOpenChooser() {
-        OpenChooserSheet.show(requireContext()) { choice ->
-            when (choice) {
-                OpenChooserSheet.Choice.LOCAL -> launchPicker()
-                OpenChooserSheet.Choice.SYSTEM -> launchDocTree()
-            }
-        }
+    override fun onPickerOpened() = saveChoice(KEY_OPEN)
+
+    override fun playPath(path: String) {
+        playFile(path)
+        if (::home.isInitialized) home.recordPlayed(path)
     }
 
-    /** Satu pemilih untuk berkas dan folder: berkas diputar langsung, folder (tekan lama) jadi playlist beserta subfolder. */
-    private fun launchPicker() {
-        saveChoice(KEY_OPEN)
-        Diag.behavior("player", "open-local", "pemilih berkas dibuka")
-        showPickHintOnce()
-        val i = Intent(context, FilePickerActivity::class.java)
-        i.putExtra("skip", FilePickerActivity.FILE_PICKER)
-        i.putExtra("allow_dir", true)
-        if (lastPath != "")
-            i.putExtra("default_path", lastPath)
-        filePickerLauncher.launch(i)
-    }
-
-    /** Petunjuk tekan-lama folder tampil sekali saja, bukan setiap kali pemilih dibuka. */
-    private fun showPickHintOnce() {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        if (prefs.getBoolean(KEY_PICK_HINT_SEEN, false)) return
-        prefs.edit().putBoolean(KEY_PICK_HINT_SEEN, true).apply()
-        Toast.makeText(requireContext(), R.string.hint_pick_folder_longpress, Toast.LENGTH_LONG).show()
-    }
-
-    private fun launchDocTree() {
-        try {
-            documentTreeOpener.launch(null)
-        } catch (e: ActivityNotFoundException) {
-            // Android TV doesn't come with a document picker and certain versions just throw
-            // instead of handling this gracefully
-            Toast.makeText(requireContext(), R.string.notice_saf_unavailable, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun onPathPicked(path: String) {
-        val f = File(path)
-        if (f.isDirectory) {
-            Diag.behavior("player", "open-local-folder", "folder dipilih (subfolder ikut)")
-            playFolder(f, deep = true)
-        } else {
-            playFile(path)
-            if (::home.isInitialized) home.recordPlayed(path)
-        }
-    }
-
-    private fun playFolder(dir: File, deep: Boolean) {
+    override fun playFolder(dir: File, deep: Boolean) {
         val ctx = requireContext().applicationContext
         Toast.makeText(ctx, R.string.notice_scanning, Toast.LENGTH_SHORT).show()
         scope.launch {
@@ -322,8 +241,6 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
     }
 
     private fun saveChoice(type: String, data: String? = null) {
-        if (prev != type)
-            lastPath = ""
         prev = type
         prevData = data
 
@@ -351,24 +268,8 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
 
     private fun restoreChoice(type: String, data: String?) {
         when (type) {
-            "doc" -> {
-                val uri = Uri.parse(data)
-                // check that we can still access the folder
-                if (!DocumentPickerFragment.isTreeUsable(requireContext(), uri))
-                    return
-
-                saveChoice(type, data)
-
-                val i = Intent(context, FilePickerActivity::class.java)
-                i.putExtra("skip", FilePickerActivity.DOC_PICKER)
-                i.putExtra("root", uri.toString())
-                i.putExtra("allow_dir", true)
-                if (lastPath != "")
-                    i.putExtra("default_path", lastPath)
-                filePickerLauncher.launch(i)
-            }
             "url" -> focusUrlInput()
-            KEY_OPEN, "file", "folder", "deep" -> launchPicker() // tiga nilai terakhir: simpanan lama sebelum digabung
+            KEY_OPEN, "file", "folder", "deep", "doc" -> opener.pickFile() // nilai setelah KEY_OPEN: simpanan lama (SAF dihapus)
         }
     }
 
@@ -389,7 +290,7 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
 
     override fun hostContext(): Context = requireContext()
 
-    override fun openFromDevice() = showOpenChooser()
+    override fun openFromDevice() = opener.start()
 
     override fun openSettings() {
         saveChoice("") // will reset
@@ -405,7 +306,6 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
 
     companion object {
         private const val KEY_OPEN = "open"
-        private const val KEY_PICK_HINT_SEEN = "molina_pick_hint_seen"
         private const val MAX_CONTENT_DP = 560
         private const val CONTENT_MARGIN_DP = 32
 

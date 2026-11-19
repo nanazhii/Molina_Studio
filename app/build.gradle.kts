@@ -52,6 +52,7 @@ android {
 }
 dependencies {
     implementation(project(":player"))
+    implementation(project(":picker")) // molina-picker: pemilih berkas lewat LocalPickerRegistry
     implementation(project(":core-ui"))
     implementation(project(":core-log"))
     implementation(project(":core-security"))

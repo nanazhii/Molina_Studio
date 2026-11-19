@@ -86,6 +86,7 @@ class FileDrawerView(
     private val embedded: Boolean = false, // molina-27b
     private val actions: FileManagerActions = FileManagerActions.None, // molina-27d
     private val onSelectionChanged: (Boolean) -> Unit = {}, // molina-27e
+    private val pick: FilePick? = null, // molina-picker
 ) : FrameLayout(context) {
 
     interface Host {
@@ -1212,6 +1213,9 @@ class FileDrawerView(
 
     // ---------- keadaan dan muat ulang ----------
 
+    /** [molina-picker] Folder aktif untuk mode pilih: item terfokus bila folder, jika berkas maka induknya. */
+    fun activeDirectory(): File = File(FocusNav.activeDir(currentRoot().path, focusPath) { File(it).isDirectory })
+
     private fun currentRoot(): File {
         state.root?.let { return it }
         val start = File(DrawerFs.DEFAULT_ROOT).takeIf { it.isDirectory } ?: File(DrawerFs.INTERNAL_ROOT)
@@ -1368,7 +1372,9 @@ class FileDrawerView(
     private fun onRowTap(row: DrawerRow) {
         val f = row.entry.file
         if (embedded && searchEntries != null) { // molina-27g3: pada hasil Cari, ketuk = buka lokasi (atau ganti pilih)
-            if (selection.active) toggleSelected(f.path) else openFromSearch(row.entry)
+            if (selection.active) toggleSelected(f.path)
+            else if (pick != null && !row.entry.isDir) pick.onFile(f) // molina-picker
+            else openFromSearch(row.entry)
             return
         }
         if (embedded && !(selection.active && !row.entry.isDir)) focusPath = f.path // molina-27n: header mengikuti ketukan
@@ -1396,6 +1402,8 @@ class FileDrawerView(
             close()
         } else if (embedded && selection.active) { // molina-27e: berkas = ganti status pilih; folder tetap buka/tutup
             toggleSelected(f.path)
+        } else if (embedded && pick != null) {
+            pick.onFile(f) // molina-picker: berkas diketuk = dipilih
         } else if (embedded) {
             rebuild() // molina-27n: berkas diketuk, perbarui path header
         }

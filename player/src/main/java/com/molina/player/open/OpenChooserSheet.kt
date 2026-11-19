@@ -1,4 +1,4 @@
-package com.molina.player
+package com.molina.player.open
 
 import android.content.Context
 import android.graphics.Color
@@ -8,15 +8,13 @@ import android.view.ViewGroup
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
+import com.molina.player.R
 import com.molina.player.databinding.DialogOpenChooserBinding
 import com.molina.player.databinding.ItemOpenOptionBinding
 
-/**
- * Dialog kartu Berkas di Home: satu pemilih untuk berkas dan folder (subfolder ikut),
- * dan pemilih sistem (SAF) untuk penyimpanan tanpa izin berkas. Gaya kartu sama dengan [SearchResultsSheet].
- */
+/** Dialog kartu "Buka dari perangkat": Berkas, Folder, Folder beserta subfolder. Gaya sama dengan SearchResultsSheet. */
 internal object OpenChooserSheet {
-    enum class Choice { LOCAL, SYSTEM }
+    enum class Choice { FILE, FOLDER, FOLDER_DEEP }
 
     private const val MAX_WIDTH_DP = 420
 
@@ -28,8 +26,9 @@ internal object OpenChooserSheet {
     )
 
     private val OPTIONS = listOf(
-        Option(Choice.LOCAL, R.drawable.ic_file_open_48dp, R.string.chooser_file, R.string.chooser_file_sub),
-        Option(Choice.SYSTEM, R.drawable.ic_sd_card_white_24dp, R.string.chooser_system, R.string.chooser_system_sub),
+        Option(Choice.FILE, R.drawable.ic_file_open_48dp, R.string.chooser_file, R.string.chooser_file_sub),
+        Option(Choice.FOLDER, R.drawable.ic_folder_white_48dp, R.string.chooser_folder, R.string.chooser_folder_sub),
+        Option(Choice.FOLDER_DEEP, R.drawable.ic_folders_48dp, R.string.chooser_folder_deep, R.string.chooser_folder_deep_sub),
     )
 
     /** [onPick] dipanggil setelah dialog tertutup; ditutup tanpa memilih tidak memanggil apa pun. */

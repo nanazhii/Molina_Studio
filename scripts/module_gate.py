@@ -10,12 +10,13 @@ Lapisan: app > feature > (api, engine) > core. Aturan:
 """
 import re, sys, pathlib
 
-FEATURE = {"files", "terminal", "settings", "code"}
+FEATURE = {"files", "terminal", "settings", "code", "picker"}
 API = {"terminal-api"}
 ENGINE = {"engine-newpipe", "terminal-core", "terminal-emulator", "terminal-view", "terminal-pty", "terminal-proot", "filemanager"}
 OWN_API = {"terminal": {"terminal-api"},
            "terminal-core": {"terminal-api"}}
 OWN_ENGINE = {"files": {"filemanager"},
+              "picker": {"filemanager"},
               "terminal": {"terminal-core", "terminal-view", "terminal-proot", "filemanager"},
               "terminal-core": {"terminal-emulator", "terminal-pty"},
               "terminal-view": {"terminal-emulator"}}

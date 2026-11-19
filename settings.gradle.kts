@@ -19,6 +19,7 @@ include(":terminal-view")
 include(":terminal-pty")
 include(":terminal-proot")
 include(":filemanager")
+include(":picker")
 include(":core-security")
 include(":code")
 

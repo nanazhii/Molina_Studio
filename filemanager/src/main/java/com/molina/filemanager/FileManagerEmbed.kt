@@ -15,7 +15,11 @@ object FileManagerEmbed {
         private val onArchiveClip: () -> Unit, // molina-27f
         private val onOpenDir: (java.io.File) -> Unit, // molina-27g0
         private val onNavigateUp: () -> Boolean, // molina-27u
+        private val onActiveDir: () -> java.io.File, // molina-picker
     ) {
+        /** [molina-picker] Folder aktif (terfokus bila folder, jika berkas maka induknya). */
+        fun activeDirectory(): java.io.File = onActiveDir()
+
         /** [molina-27u] Back sistem: tutup mode pilih/pencarian, jika tidak ada naik satu folder; true bila ditangani. */
         fun navigateUp(): Boolean = onNavigateUp()
 
@@ -38,13 +42,14 @@ object FileManagerEmbed {
         context: Context,
         scope: CoroutineScope,
         actions: FileManagerActions = FileManagerActions.None,
+        pick: FilePick? = null, // molina-picker: sebelum lambda terakhir agar pemanggil bergaya trailing lambda tetap valid
         onSelectionChanged: (Boolean) -> Unit = {}, // molina-27e: true saat mode pilih aktif (untuk mengaktifkan Back)
     ): Handle {
         val v = FileDrawerView(
             context, FileDrawerState(), scope, NoopHost,
-            embedded = true, actions = actions, onSelectionChanged = onSelectionChanged,
+            embedded = true, actions = actions, onSelectionChanged = onSelectionChanged, pick = pick,
         )
-        return Handle(v, { v.refresh() }, { v.onTransferFinished(it) }, { v.cancelSelection() }, { v.onArchiveClipChanged() }, { v.openDirectory(it) }, { v.navigateUp() })
+        return Handle(v, { v.refresh() }, { v.onTransferFinished(it) }, { v.cancelSelection() }, { v.onArchiveClipChanged() }, { v.openDirectory(it) }, { v.navigateUp() }, { v.activeDirectory() })
     }
 
     private object NoopHost : FileDrawerView.Host {

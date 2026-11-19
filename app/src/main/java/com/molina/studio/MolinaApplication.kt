@@ -9,6 +9,8 @@ import android.util.Log
 import com.molina.core.common.CrashContext
 import com.molina.core.common.diag.Diag
 import com.molina.core.common.StreamResolverRegistry
+import com.molina.core.common.picker.LocalPickerRegistry
+import com.molina.picker.MolinaLocalPicker
 import com.molina.core.common.stream.CachingStreamResolver
 import com.molina.core.common.stream.ChainStreamResolver
 import com.molina.core.common.stream.DirectResolver
@@ -40,6 +42,7 @@ class MolinaApplication : Application() {
         )
         ShieldBootstrap.start(this)
         SevenZipBackend.writer = DebianSevenZip(this) // molina-27q: 7z bersandi lewat Debian
+        LocalPickerRegistry.install(MolinaLocalPicker()) // molina-picker: pemutar memilih berkas lewat file manager Molina
         // molina-wave2: rantai resolver ringan -> berat, dibuat malas saat resolusi pertama.
         StreamResolverRegistry.install {
             val policy = { url: String -> UrlPolicy.check(url) is UrlPolicy.Verdict.Allowed }
