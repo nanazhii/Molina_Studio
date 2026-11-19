@@ -26,8 +26,18 @@ internal class MPVActivityPlaylist(
 ) {
     private val player get() = playerProvider()
 
+    /**
+     * Seperti pemutar pada umumnya: bila berkas sudah berjalan lebih dari [RESTART_AFTER_S] detik, atau ini item
+     * pertama, mulai ulang berkas ini; selain itu pindah ke item sebelumnya.
+     */
     fun previous() {
-        MpvGateway.command(arrayOf("playlist-prev"))
+        val elapsed = MpvProperties.getDouble("time-pos") ?: 0.0
+        val atFirst = (MpvProperties.getInt("playlist-pos") ?: 0) <= 0
+        if (elapsed > RESTART_AFTER_S || atFirst) {
+            MpvGateway.command(arrayOf("seek", "0", "absolute"))
+        } else {
+            MpvGateway.command(arrayOf("playlist-prev"))
+        }
     }
 
     fun next() {
@@ -91,5 +101,9 @@ internal class MPVActivityPlaylist(
             create()
         }
         dialog.show()
+    }
+
+    private companion object {
+        const val RESTART_AFTER_S = 3.0
     }
 }

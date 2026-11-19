@@ -15,7 +15,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.drawable.Icon
 import android.util.Log
@@ -224,8 +223,14 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     @SuppressLint("ClickableViewAccessibility")
     private fun initListeners() {
         with (binding) {
-            prevBtn.setOnClickListener { playlistPrev() }
-            nextBtn.setOnClickListener { playlistNext() }
+            prevBtn.setOnClickListener {
+                it.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+                playlistPrev()
+            }
+            nextBtn.setOnClickListener {
+                it.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+                playlistNext()
+            }
             cycleAudioBtn.setOnClickListener { cycleAudio() }
             cycleSubsBtn.setOnClickListener { cycleSub() }
             playBtn.setOnClickListener { player.cyclePause() }
@@ -1445,10 +1450,11 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     }
 
     private fun updateAudioUI() {
-        val audioButtons = arrayOf(R.id.prevBtn, R.id.cycleAudioBtn, R.id.playBtn,
-                R.id.cycleSpeedBtn, R.id.nextBtn)
-        val videoButtons = arrayOf(R.id.cycleAudioBtn, R.id.cycleSubsBtn, R.id.playBtn,
-                R.id.cycleDecoderBtn, R.id.cycleSpeedBtn)
+        // prev/next selalu di grup tombol, mengapit tombol putar
+        val audioButtons = arrayOf(R.id.cycleAudioBtn, R.id.prevBtn, R.id.playBtn,
+                R.id.nextBtn, R.id.cycleSpeedBtn)
+        val videoButtons = arrayOf(R.id.cycleAudioBtn, R.id.cycleSubsBtn, R.id.prevBtn, R.id.playBtn,
+                R.id.nextBtn, R.id.cycleDecoderBtn, R.id.cycleSpeedBtn)
 
         val shouldUseAudioUI = audioPresence.isAudioOnly()
         if (shouldUseAudioUI == useAudioUI)
@@ -1456,14 +1462,9 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         useAudioUI = shouldUseAudioUI
         Log.v(TAG, "Audio UI: $useAudioUI")
 
-        val seekbarGroup = binding.controlsSeekbarGroup
         val buttonGroup = binding.controlsButtonGroup
 
         if (useAudioUI) {
-            // Move prev/next file from seekbar group to buttons group
-            Utils.viewGroupMove(seekbarGroup, R.id.prevBtn, buttonGroup, 0)
-            Utils.viewGroupMove(seekbarGroup, R.id.nextBtn, buttonGroup, -1)
-
             // Change button layout of buttons group
             Utils.viewGroupReorder(buttonGroup, audioButtons)
 
@@ -1474,9 +1475,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
 
             showControls()
         } else {
-            Utils.viewGroupMove(buttonGroup, R.id.prevBtn, seekbarGroup, 0)
-            Utils.viewGroupMove(buttonGroup, R.id.nextBtn, seekbarGroup, -1)
-
             Utils.viewGroupReorder(buttonGroup, videoButtons)
 
             // Show title only depending on settings
@@ -1569,15 +1567,18 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
             // use View.GONE so the buttons won't take up any space
             binding.prevBtn.visibility = View.GONE
             binding.nextBtn.visibility = View.GONE
+            binding.playlistCounterTxt.visibility = View.GONE
             return
         }
         binding.prevBtn.visibility = View.VISIBLE
         binding.nextBtn.visibility = View.VISIBLE
 
-        val g = ContextCompat.getColor(this, R.color.tint_disabled)
-        val w = ContextCompat.getColor(this, R.color.tint_normal)
-        binding.prevBtn.imageTintList = ColorStateList.valueOf(if (plPos == 0) g else w)
-        binding.nextBtn.imageTintList = ColorStateList.valueOf(if (plPos == plCount-1) g else w)
+        // prev selalu aktif: di item pertama atau setelah beberapa detik ia memulai ulang berkas (MPVActivityPlaylist.previous)
+        binding.prevBtn.isEnabled = true
+        // next nonaktif di item terakhir, kecuali ulang daftar putar menyala (next kembali ke awal)
+        binding.nextBtn.isEnabled = plPos < plCount - 1 || player.getRepeat() == 1
+        binding.playlistCounterTxt.visibility = if (plCount > 1) View.VISIBLE else View.GONE
+        binding.playlistCounterTxt.text = "${plPos + 1}/$plCount"
     }
 
     private fun updateOrientation(initial: Boolean = false) {
@@ -1757,6 +1758,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         if (metaUpdated)
             updateMediaSession()
         if (property == "loop-file" || property == "loop-playlist") {
+            if (activityIsForeground) eventUiHandler.post { updatePlaylistButtons() }
             mediaSession?.setRepeatMode(loopModes.sessionRepeatMode())
         } else if (property == "current-tracks/audio/selected") {
             audioPresence.update()

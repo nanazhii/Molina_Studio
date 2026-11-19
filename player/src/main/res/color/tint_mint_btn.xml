@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-nextprev: ikon Mint; nonaktif = Mint redup -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false" android:alpha="0.4" android:color="@color/molina_mint_text2" />
+    <item android:color="@color/molina_mint_accent" />
+</selector>

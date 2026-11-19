@@ -22,4 +22,6 @@
     <string name="channels_save">Simpan</string>
     <string name="channels_remove_url">Hapus tautan</string>
     <string name="channels_close">Tutup</string>
+    <string name="player_prev">Sebelumnya</string>
+    <string name="player_next">Berikutnya</string>
 </resources>
