@@ -17,6 +17,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.text.InputType
 import android.util.Log
+import com.molina.player.mpv.MpvProperties
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -275,7 +276,7 @@ internal object Utils {
             private set
 
         fun readAll() {
-            mediaTitle = MPVLib.getPropertyString("media-title")
+            mediaTitle = MpvProperties.getString("media-title")
             update("metadata") // read artist & album
         }
 
@@ -285,8 +286,8 @@ internal object Utils {
             if (property == "metadata") {
                 // If we observe individual keys libmpv won't notify us once they become
                 // unavailable, so we observe "metadata" and read both keys on trigger.
-                mediaArtist = MPVLib.getPropertyString("metadata/by-key/Artist")
-                mediaAlbum = MPVLib.getPropertyString("metadata/by-key/Album")
+                mediaArtist = MpvProperties.getString("metadata/by-key/Artist")
+                mediaAlbum = MpvProperties.getString("metadata/by-key/Album")
                 return true
             }
             return false

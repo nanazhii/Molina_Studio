@@ -4,6 +4,7 @@ import com.molina.player.databinding.DialogPlaylistBinding
 import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.util.Log
+import com.molina.player.mpv.MpvProperties
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -50,7 +51,7 @@ internal class PlaylistDialog(private val player: MPVView) {
     }
 
     fun refresh() {
-        selectedIndex = MPVLib.getPropertyInt("playlist-pos") ?: -1
+        selectedIndex = MpvProperties.getInt("playlist-pos") ?: -1
         playlist = player.loadPlaylist()
         Log.v(TAG, "PlaylistDialog: loaded ${playlist.size} items")
         binding.list.adapter!!.notifyDataSetChanged()

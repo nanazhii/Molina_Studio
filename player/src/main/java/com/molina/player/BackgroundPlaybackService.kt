@@ -10,7 +10,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.support.v4.media.session.MediaSessionCompat
-import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationChannelCompat
@@ -20,6 +19,8 @@ import androidx.core.app.PendingIntentCompat
 import androidx.core.app.ServiceCompat
 import androidx.media.app.NotificationCompat.MediaStyle
 import com.molina.player.MPVLib.MpvEvent
+import com.molina.player.mpv.MpvProperties
+import com.molina.core.common.diag.Diag
 
 /*
     All this service does is
@@ -122,11 +123,11 @@ class BackgroundPlaybackService : Service(), MPVLib.EventObserver {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Log.v(TAG, "BackgroundPlaybackService: starting")
+        Diag.behavior("player", "bg-service-start", "layanan pemutaran latar mulai")
 
         cachedMetadata.readAll()
-        paused = MPVLib.getPropertyBoolean("pause") == true
-        shouldShowPrevNext = (MPVLib.getPropertyInt("playlist-count") ?: 0) > 1
+        paused = MpvProperties.getBoolean("pause") == true
+        shouldShowPrevNext = (MpvProperties.getInt("playlist-count") ?: 0) > 1
         thumbnailHandler.postDelayed(thumbnailRunnable, THUMB_DELAY)
 
         // create notification and turn this into a "foreground service"
@@ -150,7 +151,7 @@ class BackgroundPlaybackService : Service(), MPVLib.EventObserver {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(NOTIFICATION_ID)
 
-        Log.v(TAG, "BackgroundPlaybackService: destroyed")
+        Diag.behavior("player", "bg-service-stop", "layanan pemutaran latar berhenti")
     }
 
     override fun onBind(intent: Intent): IBinder? { return null }
@@ -216,7 +217,7 @@ class BackgroundPlaybackService : Service(), MPVLib.EventObserver {
         }
 
         private fun grabThumbnail() {
-            val fmt = MPVLib.getPropertyString("video-format")
+            val fmt = MpvProperties.getString("video-format")
             thumbnail = if (fmt.isNullOrEmpty())
                 null
             else

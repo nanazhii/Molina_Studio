@@ -37,6 +37,8 @@ Aturan:
 | `net.shield.stop` | BEHAV | core-security/src/main/java/com/molina/core/security/LocalShieldProxy.kt |
 | `net.shield.trackers-loaded` | BEHAV | app/src/main/java/com/molina/studio/ShieldBootstrap.kt |
 | `net.shield.trackers-skip` | BEHAV | app/src/main/java/com/molina/studio/ShieldBootstrap.kt |
+| `player.bg-service-start` | BEHAV | player/src/main/java/com/molina/player/BackgroundPlaybackService.kt |
+| `player.bg-service-stop` | BEHAV | player/src/main/java/com/molina/player/BackgroundPlaybackService.kt |
 | `proot.cd-request-failed` | BUG | terminal-proot/src/main/kotlin/com/molina/terminal/proot/ShellPrompt.kt |
 | `proot.downloaded` | BEHAV | terminal/src/main/java/com/molina/terminal/DebianSetupViewModel.kt |
 | `proot.install-failed` | BUG | terminal/src/main/java/com/molina/terminal/DebianSetupViewModel.kt |
