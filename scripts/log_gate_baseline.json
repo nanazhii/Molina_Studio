@@ -9,7 +9,6 @@
     "player/src/main/java/com/molina/player/MPVActivity.kt": 20,
     "player/src/main/java/com/molina/player/MPVView.kt": 3,
     "player/src/main/java/com/molina/player/MainScreenFragment.kt": 1,
-    "player/src/main/java/com/molina/player/MpvThread.kt": 2,
     "player/src/main/java/com/molina/player/NotificationButtonReceiver.kt": 1,
     "player/src/main/java/com/molina/player/PlaybackLog.kt": 5,
     "player/src/main/java/com/molina/player/PlaylistDialog.kt": 1,
@@ -22,9 +21,7 @@
     "player/src/main/java/com/molina/player/BaseMPVView.kt": 13,
     "player/src/main/java/com/molina/player/MPVActivity.kt": 42,
     "player/src/main/java/com/molina/player/MPVView.kt": 75,
-    "player/src/main/java/com/molina/player/NotificationButtonReceiver.kt": 3,
     "player/src/main/java/com/molina/player/PlaylistDialog.kt": 1,
-    "player/src/main/java/com/molina/player/Utils.kt": 3,
-    "player/src/main/java/com/molina/player/stream/StreamPlaybackCoordinator.kt": 2
+    "player/src/main/java/com/molina/player/Utils.kt": 3
   }
 }

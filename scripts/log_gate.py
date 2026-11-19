@@ -18,7 +18,7 @@ BASELINE = ROOT / "scripts" / "log_gate_baseline.json"
 REGISTRY = ROOT / "docs" / "LOG_CODES.md"
 RAW_LOG = re.compile(r'(?:(?<![\w.])|(?<=android\.util\.))Log\.(?:v|d|i|w|e|wtf)\(')
 MPV_DIRECT = re.compile(r'\bMPVLib\.(?:command|setOption\w*|setProperty\w*|getProperty\w*|observeProperty)\b')
-EVENT = re.compile(r'MolinaEvents\.(?:bug|behavior)\(\s*"([^"]+)"\s*,\s*"([^"]+)"')
+EVENT = re.compile(r'\b(?:MolinaEvents|Diag)\.(?:bug|behavior)\(\s*"([^"]+)"\s*,\s*"([^"]+)"')
 ALLOW = "gate:allow"
 SKIP_DIRS = {"third_party", "build", ".git", ".gradle"}
 
@@ -105,7 +105,7 @@ def init_registry():
     kinds = {}
     for p in sources():
         text = p.read_text(encoding="utf-8", errors="replace")
-        for m in re.finditer(r'MolinaEvents\.(bug|behavior)\(\s*"([^"]+)"\s*,\s*"([^"]+)"', text):
+        for m in re.finditer(r'\b(?:MolinaEvents|Diag)\.(bug|behavior)\(\s*"([^"]+)"\s*,\s*"([^"]+)"', text):
             kinds.setdefault(qualify(m.group(2), m.group(3)), (m.group(1), p.as_posix()))
     rows = "".join(f"| `{c}` | {'BUG' if k == 'bug' else 'BEHAV'} | {f} |\n" for c, (k, f) in sorted(kinds.items()))
     REGISTRY.parent.mkdir(parents=True, exist_ok=True)
@@ -132,7 +132,7 @@ def main():
         return
     base = load_baseline()
     errors, notes = [], []
-    ratchet("raw-log", "Pakai MolinaEvents (core-log), atau beri `// gate:allow alasan`.",
+    ratchet("raw-log", "Pakai Diag (core-common) atau MolinaEvents (core-log), atau beri `// gate:allow alasan`.",
             raw, base.get("raw_log", {}), errors, notes)
     ratchet("mpv-direct", "Panggil mpv lewat paket mpv/ (gerbang perintah), bukan MPVLib langsung.",
             mpv, base.get("mpv_direct", {}), errors, notes)

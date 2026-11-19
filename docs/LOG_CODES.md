@@ -21,6 +21,11 @@ Aturan:
 | `app.trim` | BEHAV | app/src/main/java/com/molina/studio/MolinaApplication.kt |
 | `debug.crash-trigger` | BEHAV | settings/src/main/java/com/molina/settings/DebugCrash.kt |
 | `debug.test-bug` | BUG | settings/src/main/java/com/molina/settings/DebugCrash.kt |
+| `mpv.call-failed` | BUG | player/src/main/java/com/molina/player/mpv/MpvThread.kt |
+| `mpv.command` | BEHAV | player/src/main/java/com/molina/player/mpv/MpvGateway.kt |
+| `mpv.command-empty` | BUG | player/src/main/java/com/molina/player/mpv/MpvGateway.kt |
+| `mpv.command-failed` | BUG | player/src/main/java/com/molina/player/mpv/MpvGateway.kt |
+| `mpv.slow-call` | BUG | player/src/main/java/com/molina/player/mpv/MpvGateway.kt |
 | `net.shield.start` | BEHAV | core-security/src/main/java/com/molina/core/security/LocalShieldProxy.kt |
 | `net.shield.start-failed` | BUG | core-security/src/main/java/com/molina/core/security/LocalShieldProxy.kt |
 | `net.shield.stop` | BEHAV | core-security/src/main/java/com/molina/core/security/LocalShieldProxy.kt |

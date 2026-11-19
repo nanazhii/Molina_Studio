@@ -1,7 +1,7 @@
-package com.molina.player
+package com.molina.player.mpv
 
 import android.os.SystemClock
-import android.util.Log
+import com.molina.core.common.diag.Diag
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit
  * thread khusus, bukan di main thread. Core mpv bisa sibuk (reinit decoder, buka stream HLS,
  * audio-add via jaringan) dan JNI sinkron memblokir pemanggilnya; bila itu main thread, kontrol
  * macet dan Android menampilkan dialog ANR. Satu thread juga menjaga urutan antar-panggilan.
+ * Tanggung jawab tunggal: penjadwalan. Pencatatan perintah ada di [MpvGateway].
  */
 internal class MpvThread {
     private val executor: ExecutorService =
@@ -22,17 +23,20 @@ internal class MpvThread {
 
     val dispatcher: CoroutineDispatcher = executor.asCoroutineDispatcher()
 
-    /** Jalankan [block] di thread mpv. Galat ditelan dan dicatat; panggilan lambat (>=300 ms) dilaporkan. */
+    /** Jalankan [block] di thread mpv. Galat dicatat (mpv.call-failed); panggilan lambat (>=300 ms) dicatat (mpv.slow-call). */
     fun post(scope: CoroutineScope, label: String = "", block: () -> Unit) {
         scope.launch(dispatcher) {
             val t0 = SystemClock.elapsedRealtime()
+            val name = label.ifEmpty { "-" }
             try {
                 block()
             } catch (e: Exception) {
-                Log.w(TAG, "panggilan gagal (${label.ifEmpty { "-" }}): ${e.message}")
+                Diag.bug("mpv", "call-failed", name, e)
             }
             val dt = SystemClock.elapsedRealtime() - t0
-            if (dt >= SLOW_MS) Log.w(TAG, "[mpv-call] ${label.ifEmpty { "panggilan" }} lambat $dt ms (UI tetap responsif)")
+            if (dt >= SLOW_MS) {
+                Diag.bug("mpv", "slow-call", name, null, mapOf("ms" to dt.toString(), "via" to "thread"))
+            }
         }
     }
 
@@ -47,7 +51,6 @@ internal class MpvThread {
     }
 
     private companion object {
-        const val TAG = "Molina/mpv"
         const val SLOW_MS = 300L
     }
 }

@@ -3,8 +3,8 @@ package com.molina.player.stream
 import androidx.appcompat.app.AlertDialog
 import com.molina.core.common.StreamSearchItem
 import com.molina.core.common.stream.EngineLabel
-import com.molina.player.MPVLib
-import com.molina.player.MpvThread
+import com.molina.player.mpv.MpvGateway
+import com.molina.player.mpv.MpvThread
 import com.molina.player.PlaybackLog
 import com.molina.player.R
 import com.molina.player.StreamLoader
@@ -80,7 +80,7 @@ internal class StreamPlaybackCoordinator(private val host: StreamPlaybackHost) {
         val audio = pendingAudioUrl ?: return
         pendingAudioUrl = null
         mpvThread.post(scope, "audio-add") {
-            MPVLib.command(arrayOf("audio-add", audio, "select", "molina-audio"))
+            MpvGateway.command(arrayOf("audio-add", audio, "select", "molina-audio"))
         }
     }
 
@@ -92,7 +92,7 @@ internal class StreamPlaybackCoordinator(private val host: StreamPlaybackHost) {
 
     private fun queueLoad(args: Array<String>, initial: Boolean, onQueued: (() -> Unit)?) {
         mpvThread.post(scope, "loadfile") {
-            if (initial) host.loadInitial(args) else MPVLib.command(args)
+            if (initial) host.loadInitial(args) else MpvGateway.command(args)
         }
         onQueued?.invoke()
     }

@@ -54,3 +54,7 @@ dihosting `CodeFragment` lewat `ComposeView`. Compose hanya dipakai di modul ini
 - Fitur lama yang sengaja tidak dibawa: palet perintah, folder proyek dan riwayat proyek, aksi file (entri menu), kirim ke
   Script Execution, simpan ke Vault, sisipkan/jalankan ke Terminal, snippet Terminal, impor inbox nano.
 - Notifikasi perubahan dipertahankan; model datanya kini `guard/ChangeEntry.kt` (dulu `ProjectLog`).
+
+## Aturan fitur
+
+Lihat `docs/aturan-fitur.md` (satu tanggung jawab per fitur, kontrak lintas modul, wajib tercatat di logcat).

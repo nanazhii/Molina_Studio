@@ -7,15 +7,16 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.app.PendingIntentCompat
+import com.molina.player.mpv.MpvGateway
 
 class NotificationButtonReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         Log.v(TAG, "NotificationButtonReceiver: ${intent!!.action}")
         // remember to update AndroidManifest.xml too when adding here
         when (intent.action) {
-            "$PREFIX.PLAY_PAUSE" -> MPVLib.command(arrayOf("cycle", "pause"))
-            "$PREFIX.ACTION_PREV" -> MPVLib.command(arrayOf("playlist-prev"))
-            "$PREFIX.ACTION_NEXT" -> MPVLib.command(arrayOf("playlist-next"))
+            "$PREFIX.PLAY_PAUSE" -> MpvGateway.command(arrayOf("cycle", "pause"))
+            "$PREFIX.ACTION_PREV" -> MpvGateway.command(arrayOf("playlist-prev"))
+            "$PREFIX.ACTION_NEXT" -> MpvGateway.command(arrayOf("playlist-next"))
         }
     }
 

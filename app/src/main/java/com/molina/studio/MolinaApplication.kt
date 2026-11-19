@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Debug
 import android.util.Log
 import com.molina.core.common.CrashContext
+import com.molina.core.common.diag.Diag
 import com.molina.core.common.StreamResolverRegistry
 import com.molina.core.common.stream.CachingStreamResolver
 import com.molina.core.common.stream.ChainStreamResolver
@@ -29,6 +30,7 @@ class MolinaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         MolinaLogSetup.init(this)
+        Diag.install(MolinaDiagSink) // molina-diag: kontrak pencatat fitur -> MolinaEvents
         CrashReporter.install(context = { CrashContext.describe() })
         BuildInfo.log(this)
         // Alias ikon alternatif sudah dihapus: kembalikan alias peluncur ke status bawaan manifest.
