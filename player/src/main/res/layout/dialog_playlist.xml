@@ -28,7 +28,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
-            android:textColor="@color/player_dialog_text_secondary"
+            android:textColor="@color/molina_tv_text2"
             android:textSize="13sp"
             tools:text="003/012" />
 
@@ -39,7 +39,7 @@
             android:layout_marginStart="12dp"
             android:format24Hour="HH:mm"
             android:format12Hour="HH:mm"
-            android:textColor="@color/player_dialog_text"
+            android:textColor="@color/molina_tv_text"
             android:textSize="15sp"
             android:textStyle="bold" />
 
@@ -167,7 +167,7 @@
             android:layout_weight="1"
             android:drawableStart="@drawable/ic_menu_link"
             android:drawablePadding="8dp"
-            android:drawableTint="@color/player_playlist_active"
+            android:drawableTint="@color/molina_tv_active"
             android:text="@string/action_open_url" />
 
     </TableRow>
