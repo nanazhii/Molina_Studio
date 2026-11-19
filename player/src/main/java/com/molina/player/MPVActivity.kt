@@ -60,6 +60,8 @@ import com.molina.player.stream.LoadingCard
 import com.molina.player.stream.MpvLoadFlag
 import com.molina.player.stream.StreamPlaybackCoordinator
 import com.molina.player.stream.StreamPlaybackHost
+import com.molina.player.playlist.MPVActivityPlaylist
+import com.molina.player.playlist.MPVActivityPlaylistHost
 import com.molina.player.menu.MPVActivityMenu
 import com.molina.player.menu.MPVActivityMenu.MenuItem
 import com.molina.core.common.stream.UrlNormalizer
@@ -105,6 +107,14 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
 
     // convenience alias
     private val player get() = binding.player
+    private val playlist by lazy {
+        MPVActivityPlaylist(this, { player }, object : MPVActivityPlaylistHost {
+            override fun pickPlaylistFile(skip: Int, callback: ActivityResultCallback) =
+                openFilePickerFor(RCODE_LOAD_FILE, "", skip, callback)
+            override fun loadStream(path: String, onQueued: () -> Unit) =
+                streamPlayback.load(path, MpvLoadFlag.APPEND, onQueued)
+        })
+    }
     private val menu by lazy { MPVActivityMenu(this) { player } }
 
     private val seekBarChangeListener = object : SeekBar.OnSeekBarChangeListener {
@@ -229,8 +239,8 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
             cycleAudioBtn.setOnLongClickListener { pickAudio(); true }
             cycleSpeedBtn.setOnLongClickListener { pickSpeed(); true }
             cycleSubsBtn.setOnLongClickListener { pickSub(); true }
-            prevBtn.setOnLongClickListener { openPlaylistMenu(pauseForDialog()); true }
-            nextBtn.setOnLongClickListener { openPlaylistMenu(pauseForDialog()); true }
+            prevBtn.setOnLongClickListener { playlist.openPlaylistMenu(pauseForDialog()); true }
+            nextBtn.setOnLongClickListener { playlist.openPlaylistMenu(pauseForDialog()); true }
             cycleDecoderBtn.setOnLongClickListener { menu.pickDecoder(pauseForDialog()); true }
 
             playbackSeekbar.setOnSeekBarChangeListener(seekBarChangeListener)
@@ -1114,8 +1124,8 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         }
     }
 
-    private fun playlistPrev() = MPVLib.command(arrayOf("playlist-prev"))
-    private fun playlistNext() = MPVLib.command(arrayOf("playlist-next"))
+    private fun playlistPrev() { playlist.previous() }
+    private fun playlistNext() { playlist.next() }
 
     private fun showToast(msg: String, cancel: Boolean = false) {
         if (cancel)
@@ -1325,57 +1335,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         dialog.show()
     }
 
-    private fun openPlaylistMenu(restore: StateRestoreCallback) {
-        val impl = PlaylistDialog(player)
-        lateinit var dialog: AlertDialog
-
-        impl.listeners = object : PlaylistDialog.Listeners {
-            private fun openFilePicker(skip: Int) {
-                openFilePickerFor(RCODE_LOAD_FILE, "", skip) { result, data ->
-                    if (result == RESULT_OK) {
-                        val path = data!!.getStringExtra("path")!!
-                        if (StreamLoader.isSearch(path)) { // molina-wave3
-                            streamPlayback.load(path, MpvLoadFlag.APPEND) { impl.refresh() }
-                        } else {
-                            MPVLib.command(arrayOf("loadfile", path, "append"))
-                            impl.refresh()
-                        }
-                    }
-                }
-            }
-            override fun pickFile() = openFilePicker(FilePickerActivity.FILE_PICKER)
-
-            override fun openUrl() {
-                val helper = Utils.OpenUrlDialog(this@MPVActivity)
-                with (helper) {
-                    builder.setPositiveButton(R.string.dialog_ok) { _, _ ->
-                        if (StreamLoader.isSearch(helper.text)) { // molina-wave3
-                            streamPlayback.load(helper.text, MpvLoadFlag.APPEND) { impl.refresh() }
-                        } else {
-                            MPVLib.command(arrayOf("loadfile", helper.text, "append"))
-                            impl.refresh()
-                        }
-                    }
-                    builder.setNegativeButton(R.string.dialog_cancel) { dialog, _ -> dialog.cancel() }
-                    create().show()
-                }
-            }
-
-            override fun onItemPicked(item: MPVView.PlaylistItem) {
-                MPVLib.setPropertyInt("playlist-pos", item.index)
-                dialog.dismiss()
-            }
-        }
-
-        dialog = with (AlertDialog.Builder(this)) {
-            val inflater = LayoutInflater.from(context)
-            setView(impl.buildView(inflater))
-            setOnDismissListener { restore() }
-            create()
-        }
-        dialog.show()
-    }
-
     private fun cycleSpeed() {
         player.cycleSpeed()
     }
@@ -1420,7 +1379,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
                 translateContentUri(Uri.parse(path))
             else
                 path
-            MPVLib.command(arrayOf(cmd, path2, "cached"))
+            playlist.addExternalTrack(cmd, path2)
         }
 
         /******/
@@ -1439,7 +1398,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
                     }; false
                 },
                 MenuItem(R.id.playlistBtn) {
-                    openPlaylistMenu(restoreState); false
+                    playlist.openPlaylistMenu(restoreState); false
                 },
                 MenuItem(R.id.backgroundBtn) {
                     // restoring state may (un)pause so do that first
@@ -1487,7 +1446,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         intent.putExtra("allow_document", true)
         skip?.let { intent.putExtra("skip", it) }
         // start file picker at directory of current file
-        val path = MPVLib.getPropertyString("path") ?: ""
+        val path = playlist.playingPath()
         if (path.startsWith('/'))
             intent.putExtra("default_path", File(path).parent)
 

@@ -40,3 +40,5 @@
 - 2026-11-19: perbaikan gerbang telemetri Home (menunggu CI): URL contoh di tes M3uParserTest/RecentPlaysTest diberi gate:allow, hint tautan M3U tidak lagi memuat URL literal. Semua gerbang (telemetry, module, log, secret) dijalankan sebelum commit.
 
 - 2026-11-19: MPVActivity langkah 1 menu (menunggu CI): menu atas, menu lanjutan, bab, picker angka, dekoder pindah ke player/menu/MPVActivityMenu (genericMenu, MenuItem, genericPickerDialog ikut pindah); pemanggilan mpv lewat MpvGateway/MpvProperties; kode log baru player.menu-empty. Target: R2 MPVActivity 42 -> 25, R1 20 -> 19. Berikutnya: langkah 2 daftar putar dan trek eksternal.
+
+- 2026-11-19: MPVActivity langkah 2 daftar putar (menunggu CI): daftar putar (prev/next, dialog, tambah berkas/URL/stream), tambah trek eksternal, dan jalur awal pemilih berkas pindah ke player/playlist/MPVActivityPlaylist (kontrak MPVActivityPlaylistHost: pemilih berkas dan antrean stream tetap milik layar). Semua pemanggilan mpv lewat MpvGateway/MpvProperties. Target: R2 MPVActivity -7. Berikutnya: langkah 3 mode ulang dan statistik.
