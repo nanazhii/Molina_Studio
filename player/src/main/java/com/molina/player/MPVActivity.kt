@@ -24,7 +24,6 @@ import android.net.Uri
 import android.os.*
 import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import android.util.DisplayMetrics
 import android.util.Rational
 import androidx.core.content.ContextCompat
@@ -62,6 +61,9 @@ import com.molina.player.stream.StreamPlaybackCoordinator
 import com.molina.player.stream.StreamPlaybackHost
 import com.molina.player.playlist.MPVActivityPlaylist
 import com.molina.player.playlist.MPVActivityPlaylistHost
+import com.molina.player.playback.MPVActivityOnLoad
+import com.molina.player.playback.MPVActivityRepeat
+import com.molina.player.playback.MPVActivityStats
 import com.molina.player.menu.MPVActivityMenu
 import com.molina.player.menu.MPVActivityMenu.MenuItem
 import com.molina.core.common.stream.UrlNormalizer
@@ -116,6 +118,9 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         })
     }
     private val menu by lazy { MPVActivityMenu(this) { player } }
+    private val loopModes by lazy { MPVActivityRepeat { player } }
+    private val stats = MPVActivityStats()
+    private val onload = MPVActivityOnLoad()
 
     private val seekBarChangeListener = object : SeekBar.OnSeekBarChangeListener {
         override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
@@ -192,8 +197,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     }
 
     /* Settings */
-    private var statsFPS = false
-    private var statsLuaMode = 0 // ==0 disabled, >0 page number
 
     private var backgroundPlayMode = ""
     private var noUIPauseMode = ""
@@ -274,8 +277,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         }
     }
 
-    private var playbackHasStarted = false
-
     // molina-fase-a: tangkap log error mpv agar kegagalan putar bisa dijelaskan ke pengguna
     private val errorLines = ArrayList<String>()
     private var errorShown = false
@@ -291,7 +292,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
             }
         }
     }
-    private var onloadCommands = mutableListOf<Array<String>>()
 
     // molina-resolver: jembatan ke StreamPlaybackCoordinator (paket stream). Koordinator hanya meminta lewat
     // StreamPlaybackHost; semua panggilan mpv sinkron dari jalur itu berjalan di thread khusus, bukan main thread.
@@ -581,11 +581,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         gestures.syncSettings(prefs, resources)
 
         val statsMode = prefs.getString("stats_mode", "") ?: ""
-        this.statsFPS = statsMode == "native_fps"
-        this.statsLuaMode = if (statsMode.startsWith("lua"))
-            statsMode.removePrefix("lua").toInt()
-        else
-            0
+        stats.syncSettings(statsMode)
         this.backgroundPlayMode = getString("background_play", R.string.pref_background_play_default)
         this.noUIPauseMode = getString("no_ui_pause", R.string.pref_no_ui_pause_default)
         this.shouldSavePosition = prefs.getBoolean("save_position", false)
@@ -786,7 +782,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     }
 
     private fun updateStats() {
-        if (!statsFPS)
+        if (!stats.fpsEnabled)
             return
         binding.statsTextView.text = getString(R.string.ui_fps, player.estimatedVfFps)
     }
@@ -817,7 +813,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
             binding.controls.visibility = View.VISIBLE
             binding.topControls.visibility = View.VISIBLE
 
-            if (this.statsFPS) {
+            if (stats.fpsEnabled) {
                 updateStats()
                 binding.statsTextView.visibility = View.VISIBLE
             }
@@ -1227,12 +1223,12 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     }
 
     private fun parseIntentExtras(extras: Bundle?) {
-        onloadCommands.clear()
+        onload.clear()
         if (extras == null)
             return
 
         fun pushOption(key: String, value: String) {
-            onloadCommands.add(arrayOf("set", "file-local-options/${key}", value))
+            onload.add(arrayOf("set", "file-local-options/${key}", value))
         }
 
         // Refer to (dokumentasi intent Molina Player)
@@ -1250,7 +1246,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
                 val flag = if (subsToEnable.any { it == suburi }) "select" else "auto"
 
                 Log.v(TAG, "Adding subtitles from intent extras: $subfile")
-                onloadCommands.add(arrayOf("sub-add", subfile, flag))
+                onload.add(arrayOf("sub-add", subfile, flag))
             }
         }
         extras.getInt("position", 0).let {
@@ -1703,13 +1699,10 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         override fun onSkipToNext() = playlistNext()
         override fun onSkipToPrevious() = playlistPrev()
         override fun onSetRepeatMode(repeatMode: Int) {
-            MPVLib.setPropertyString("loop-playlist",
-                if (repeatMode == PlaybackStateCompat.REPEAT_MODE_ALL) "inf" else "no")
-            MPVLib.setPropertyString("loop-file",
-                if (repeatMode == PlaybackStateCompat.REPEAT_MODE_ONE) "inf" else "no")
+            loopModes.applyRepeat(repeatMode)
         }
         override fun onSetShuffleMode(shuffleMode: Int) {
-            player.changeShuffle(false, shuffleMode == PlaybackStateCompat.SHUFFLE_MODE_ALL)
+            loopModes.applyShuffle(shuffleMode)
         }
     }
 
@@ -1792,11 +1785,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         if (metaUpdated)
             updateMediaSession()
         if (property == "loop-file" || property == "loop-playlist") {
-            mediaSession?.setRepeatMode(when (player.getRepeat()) {
-                2 -> PlaybackStateCompat.REPEAT_MODE_ONE
-                1 -> PlaybackStateCompat.REPEAT_MODE_ALL
-                else -> PlaybackStateCompat.REPEAT_MODE_NONE
-            })
+            mediaSession?.setRepeatMode(loopModes.sessionRepeatMode())
         } else if (property == "current-tracks/audio/selected") {
             updateAudioPresence()
         }
@@ -1813,10 +1802,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         if (metaUpdated)
             updateMediaSession()
         if (property == "shuffle") {
-            mediaSession?.setShuffleMode(if (value)
-                PlaybackStateCompat.SHUFFLE_MODE_ALL
-            else
-                PlaybackStateCompat.SHUFFLE_MODE_NONE)
+            mediaSession?.setShuffleMode(loopModes.sessionShuffleMode(value))
         } else if (property == "mute") {
             updateAudioPresence()
         }
@@ -1872,15 +1858,8 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         }
 
         if (eventId == MpvEvent.MPV_EVENT_START_FILE) {
-            val cmds = onloadCommands.toTypedArray()
-            onloadCommands.clear()
-            for (c in cmds)
-                MPVLib.command(c)
-            if (this.statsLuaMode > 0 && !playbackHasStarted) {
-                MPVLib.command(arrayOf("script-binding", "stats/display-page-${this.statsLuaMode}-toggle"))
-            }
-
-            playbackHasStarted = true
+            onload.flush()
+            stats.onStartFile()
         }
 
         if (!activityIsForeground) return
