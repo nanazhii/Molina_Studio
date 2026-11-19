@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-home-menu: palet Mint untuk Home (menu drop, Saluran, Terakhir diputar) -->
+<resources>
+    <color name="molina_mint_accent">#7FE5C8</color>
+    <color name="molina_mint_surface">#16211E</color>
+    <color name="molina_mint_surface_hi">#1C2B27</color>
+    <color name="molina_mint_line">#2A3D37</color>
+    <color name="molina_mint_text">#E6F2EE</color>
+    <color name="molina_mint_text2">#9DB5AD</color>
+    <color name="molina_mint_ripple">#337FE5C8</color>
+</resources>

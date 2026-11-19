@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="MolinaHomeMenuAnim">
+        <item name="android:windowEnterAnimation">@anim/home_menu_in</item>
+        <item name="android:windowExitAnimation">@anim/home_menu_out</item>
+    </style>
+</resources>

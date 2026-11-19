@@ -58,3 +58,13 @@ dihosting `CodeFragment` lewat `ComposeView`. Compose hanya dipakai di modul ini
 ## Aturan fitur
 
 Lihat `docs/aturan-fitur.md` (satu tanggung jawab per fitur, kontrak lintas modul, wajib tercatat di logcat).
+
+<!-- molina-home-menu -->
+## Home Player (`player/home/`)
+
+Fitur Home terkumpul di satu paket. Layar (MainScreenFragment) hanya mengenal `HomeHost` dan membuat satu
+`HomeController`; menu drop (`HomeMenu`), Saluran (`ChannelsRepository`, `ChannelsSheet`) dan Terakhir diputar
+ditangani di dalam paket. Logika murni (parser M3U, penyaring, riwayat, judul) ada di `core-common/home` dan
+diuji JVM. Pemutaran selalu lewat `HomeHost.play`, jadi Home tidak menyentuh mpv. Menambah item menu = satu
+nilai `HomeAction`, satu baris di `HomeMenu.ITEMS`, satu cabang di `HomeController.onAction`.
+Berkas daftar saluran: `/storage/emulated/0/Molina/channels/*.m3u|*.m3u8`, ditambah satu tautan M3U opsional.

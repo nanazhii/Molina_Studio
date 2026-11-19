@@ -11,7 +11,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
@@ -23,7 +22,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import com.molina.core.common.diag.Diag
 import com.molina.core.common.stream.UrlNormalizer
+import com.molina.player.home.HomeController
+import com.molina.player.home.HomeHost
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,8 +39,9 @@ import java.io.File
  * satu tombol "Buka dari perangkat" (berkas, folder, folder dalam folder, pemilih sistem), dan Setelan.
  * Pencarian dan pemutaran tetap ditangani MPVActivity lewat [StreamLoader.searchRequest].
  */
-class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
+class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
     private lateinit var binding: FragmentMainScreenBinding
+    private lateinit var home: HomeController
 
     private lateinit var documentTreeOpener: ActivityResultLauncher<Uri?>
     private lateinit var filePickerLauncher: ActivityResultLauncher<Intent>
@@ -113,7 +116,7 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
         playerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             // we don't care about the result but remember that we've been here
             returningFromPlayer = true
-            Log.v(TAG, "returned from player ($it)")
+            Diag.behavior("player", "home-return", "kembali dari pemutar", mapOf("result" to it.resultCode.toString()))
         }
     }
 
@@ -135,14 +138,11 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
         }
         binding.pasteBtn.setOnClickListener { pasteFromClipboard() }
         binding.playBtn.setOnClickListener { submit() }
-        binding.openBtn.setOnClickListener { showOpenChooser() }
-        binding.settingsBtn.setOnClickListener {
-            saveChoice("") // will reset
-            startActivity(Intent(context, PreferenceActivity::class.java))
-        }
+        home = HomeController(this, scope)
+        home.attach(binding)
 
         if (BuildConfig.DEBUG) {
-            binding.settingsBtn.setOnLongClickListener { showDebugMenu(); true }
+            binding.homeMenuBtn.setOnLongClickListener { showDebugMenu(); true }
         }
 
         refreshInputState()
@@ -151,6 +151,11 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString(STATE_PICK_MODE, pickMode.key)
+    }
+
+    override fun onDestroyView() {
+        if (::home.isInitialized) home.detach()
+        super.onDestroyView()
     }
 
     override fun onDestroy() {
@@ -183,6 +188,7 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
             is Parsed.Url -> {
                 saveChoice("url")
                 playFile(p.value)
+                home.recordPlayed(p.value)
             }
             is Parsed.Query -> {
                 saveChoice("url")
@@ -268,6 +274,7 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
             playFolder(f, deep = pickMode == PickMode.DEEP)
         } else {
             playFile(path)
+            if (::home.isInitialized) home.recordPlayed(path)
         }
     }
 
@@ -381,8 +388,20 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen) {
         playerLauncher.launch(i)
     }
 
+    // --- HomeHost: kontrak ke paket home (menu, Saluran, Terakhir diputar) ---
+
+    override fun hostContext(): Context = requireContext()
+
+    override fun openFromDevice() = showOpenChooser()
+
+    override fun openSettings() {
+        saveChoice("") // will reset
+        startActivity(Intent(context, PreferenceActivity::class.java))
+    }
+
+    override fun play(target: String) = playFile(target)
+
     companion object {
-        private const val TAG = "mpv"
         private const val STATE_PICK_MODE = "pick_mode"
         private const val MAX_CONTENT_DP = 560
         private const val CONTENT_MARGIN_DP = 32
