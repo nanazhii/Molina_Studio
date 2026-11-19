@@ -58,7 +58,7 @@ class YtDlpResolver(
                 url = p.url,
                 audioUrl = p.audioUrl,
                 headers = p.headers,
-                title = p.title,
+                title = TitleCleaner.clean(p.title),
                 durationSec = p.durationSec,
                 expiresAtMs = p.expiresAtMs,
             ),
