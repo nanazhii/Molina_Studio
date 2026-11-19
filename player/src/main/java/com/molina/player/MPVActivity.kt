@@ -1,5 +1,10 @@
 package com.molina.player
 
+import com.molina.player.nowplaying.MPVActivityNowPlayingHost
+import com.molina.player.nowplaying.MPVActivityNowPlaying
+import androidx.core.view.doOnNextLayout
+import android.widget.ImageView
+import android.graphics.Bitmap
 import com.molina.player.databinding.PlayerBinding
 import com.molina.player.MPVLib.MpvEvent
 import android.animation.Animator
@@ -305,6 +310,20 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver {
     }
     private val streamPlayback = StreamPlaybackCoordinator(streamHost)
 
+    // molina-nowplaying: layar sampul mode audio
+    private val nowPlayingHost = object : MPVActivityNowPlayingHost {
+        override val artRoot: View get() = binding.nowPlayingArt
+        override val coverView: ImageView get() = binding.nowPlayingCover
+        override val backdropView: ImageView get() = binding.nowPlayingBackdrop
+        override val controlsView: View get() = binding.controls
+        override val audioUiActive: Boolean get() = useAudioUI
+        override fun onCoverThumbnail(thumb: Bitmap) {
+            BackgroundPlaybackService.thumbnail = thumb
+            updateMediaSession()
+        }
+    }
+    private val nowPlaying = MPVActivityNowPlaying(nowPlayingHost)
+
     // Activity lifetime
 
     override fun onCreate(icicle: Bundle?) {
@@ -316,6 +335,13 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver {
 
         binding = PlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // molina-nowplaying: ruang sampul mengikuti tinggi kontrol dan ukuran layar
+        val artRelayout = View.OnLayoutChangeListener { _, l, t, r, b, ol, ot, orr, ob ->
+            if (b - t != ob - ot || r - l != orr - ol) binding.root.post { nowPlaying.relayout() }
+        }
+        binding.controls.addOnLayoutChangeListener(artRelayout)
+        binding.nowPlayingArt.addOnLayoutChangeListener(artRelayout)
 
         // Init controls to be hidden and view fullscreen
         hideControls()
@@ -433,6 +459,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver {
         MPVLib.removeLogObserver(errorLogObserver)
 
         audioFocus.release()
+        nowPlaying.shutdown() // molina-nowplaying-shutdown
 
         with (BackgroundPlaybackService) {
             mediaToken = null
@@ -666,6 +693,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver {
         if (binding.controls.visibility != View.VISIBLE) {
             binding.controls.visibility = View.VISIBLE
             binding.topControls.visibility = View.VISIBLE
+            binding.controls.doOnNextLayout { nowPlaying.syncLayout() } // molina-nowplaying-show
 
             if (stats.fpsEnabled) {
                 updateStats()
@@ -690,6 +718,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver {
         binding.controls.visibility = View.GONE
         binding.topControls.visibility = View.GONE
         binding.statsTextView.visibility = View.GONE
+        nowPlaying.syncLayout() // molina-nowplaying-hide
 
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
         insetsController.hide(WindowInsetsCompat.Type.systemBars())
@@ -1318,6 +1347,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver {
         updatePlaybackPos(psc.positionSec)
         updatePlaybackDuration(psc.durationSec)
         updateAudioUI()
+        nowPlaying.update() // molina-nowplaying-refresh
         updateOrientation()
         updateMetadataDisplay()
         updateDecoderButton()
@@ -1368,6 +1398,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver {
 
         // Visibility might have changed, so update
         updatePlaylistButtons()
+        nowPlaying.update() // molina-nowplaying-mode
     }
 
     private fun updateMetadataDisplay() {
@@ -1619,7 +1650,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver {
 
     private fun eventUi(eventId: Int) {
         if (!activityIsForeground) return
-        // empty
+        if (eventId == MpvEvent.MPV_EVENT_FILE_LOADED) nowPlaying.update() // molina-nowplaying
     }
 
     override fun eventProperty(property: String) {

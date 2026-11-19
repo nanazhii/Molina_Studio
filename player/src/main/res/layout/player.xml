@@ -10,6 +10,36 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- molina-nowplaying: layar "Now Playing" mode audio, latar buram + kartu sampul. Tidak clickable agar gestur tetap sampai ke player. -->
+    <FrameLayout
+        android:id="@+id/nowPlayingArt"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/molina_nowplaying_bg"
+        android:visibility="gone"
+        tools:visibility="gone">
+
+        <ImageView
+            android:id="@+id/nowPlayingBackdrop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.6"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/molina_nowplaying_scrim" />
+
+        <ImageView
+            android:id="@+id/nowPlayingCover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter" />
+    </FrameLayout>
+
     <!-- so that insets can be applied as margins -->
     <RelativeLayout
         android:id="@+id/outside"

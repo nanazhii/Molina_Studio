@@ -85,3 +85,7 @@ Aturan:
 | `term.session.start` | BEHAV | app/src/main/java/com/molina/studio/TerminalWiring.kt |
 | `term.shield-env` | BEHAV | terminal-proot/src/main/kotlin/com/molina/terminal/proot/ShieldGuestEnv.kt |
 | `term.tab` | BEHAV | terminal/src/main/java/com/molina/terminal/TerminalSessionHolder.kt |
+| `player.cover-found` | BEHAV | player/src/main/java/com/molina/player/nowplaying/CoverArt.kt |
+| `player.cover-none` | BEHAV | player/src/main/java/com/molina/player/nowplaying/CoverArt.kt |
+| `player.cover-oom` | BUG | player/src/main/java/com/molina/player/nowplaying/CoverArt.kt |
+| `player.cover-failed` | BUG | player/src/main/java/com/molina/player/nowplaying/CoverArt.kt |

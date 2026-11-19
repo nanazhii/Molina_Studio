@@ -1,5 +1,6 @@
 package com.molina.player
 
+import com.molina.player.nowplaying.CoverArt
 import android.annotation.SuppressLint
 import android.app.*
 import android.content.Context
@@ -217,6 +218,10 @@ class BackgroundPlaybackService : Service(), MPVLib.EventObserver {
         }
 
         private fun grabThumbnail() {
+            // molina-nowplaying: sampul trek ini (bila sudah dimuat) lebih baik daripada bingkai yang di-grab mpv
+            MpvProperties.getString("path")?.let { p ->
+                CoverArt.latestThumbFor(p)?.let { thumbnail = it; return }
+            }
             val fmt = MpvProperties.getString("video-format")
             thumbnail = if (fmt.isNullOrEmpty())
                 null

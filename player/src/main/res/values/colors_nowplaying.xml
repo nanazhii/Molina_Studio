@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-nowplaying: layar Now Playing mode audio (sama dengan repo lama) -->
+<resources>
+    <color name="molina_nowplaying_bg">#FF0A0A0A</color>
+    <color name="molina_nowplaying_scrim">#99000000</color>
+</resources>
