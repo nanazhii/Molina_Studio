@@ -1,0 +1,46 @@
+# Daftar kode log Molina
+
+Satu-satunya tempat kode peristiwa log didaftarkan. `scripts/log_gate.py` menggagalkan CI bila
+`MolinaEvents.bug/behavior("area", "kode")` memakai kode yang belum ada di tabel ini.
+
+Aturan:
+- Kode berbentuk `area.kode` (huruf kecil, angka, titik, hubung). Satu kode = satu makna, jangan dipakai ulang.
+- BUG = kegagalan yang dikenali; BEHAV = alur penting yang berhasil.
+- Fitur baru yang menyentuh mpv: daftarkan kodenya di sini pada commit yang sama.
+- Cari di logcat: `adb logcat | grep "\[BUG:"` atau `grep "\[BEHAV:player"`.
+
+| Kode | Jenis | Sumber pertama |
+|---|---|---|
+| `app.exit-failed` | BUG | app/src/main/java/com/molina/studio/AppExit.kt |
+| `app.exit-hook-timeout` | BUG | app/src/main/java/com/molina/studio/AppExit.kt |
+| `app.exit-leftover` | BUG | app/src/main/java/com/molina/studio/AppExit.kt |
+| `app.exit.requested` | BEHAV | app/src/main/java/com/molina/studio/AppExit.kt |
+| `app.exit.swept` | BEHAV | app/src/main/java/com/molina/studio/AppExit.kt |
+| `app.nav` | BEHAV | app/src/main/java/com/molina/studio/MainActivity.kt |
+| `app.session-service-failed` | BUG | app/src/main/java/com/molina/studio/MolinaSessionService.kt |
+| `app.trim` | BEHAV | app/src/main/java/com/molina/studio/MolinaApplication.kt |
+| `debug.crash-trigger` | BEHAV | settings/src/main/java/com/molina/settings/DebugCrash.kt |
+| `debug.test-bug` | BUG | settings/src/main/java/com/molina/settings/DebugCrash.kt |
+| `net.shield.start` | BEHAV | core-security/src/main/java/com/molina/core/security/LocalShieldProxy.kt |
+| `net.shield.start-failed` | BUG | core-security/src/main/java/com/molina/core/security/LocalShieldProxy.kt |
+| `net.shield.stop` | BEHAV | core-security/src/main/java/com/molina/core/security/LocalShieldProxy.kt |
+| `net.shield.trackers-loaded` | BEHAV | app/src/main/java/com/molina/studio/ShieldBootstrap.kt |
+| `net.shield.trackers-skip` | BEHAV | app/src/main/java/com/molina/studio/ShieldBootstrap.kt |
+| `proot.cd-request-failed` | BUG | terminal-proot/src/main/kotlin/com/molina/terminal/proot/ShellPrompt.kt |
+| `proot.downloaded` | BEHAV | terminal/src/main/java/com/molina/terminal/DebianSetupViewModel.kt |
+| `proot.install-failed` | BUG | terminal/src/main/java/com/molina/terminal/DebianSetupViewModel.kt |
+| `proot.install.cancelled` | BEHAV | terminal/src/main/java/com/molina/terminal/DebianSetupViewModel.kt |
+| `proot.install.done` | BEHAV | terminal/src/main/java/com/molina/terminal/DebianSetupViewModel.kt |
+| `proot.install.start` | BEHAV | terminal/src/main/java/com/molina/terminal/DebianSetupViewModel.kt |
+| `proot.nano-install` | BEHAV | terminal-proot/src/main/kotlin/com/molina/terminal/proot/NanoSupport.kt |
+| `proot.nano-install-failed` | BUG | terminal-proot/src/main/kotlin/com/molina/terminal/proot/NanoSupport.kt |
+| `proot.prepare-failed` | BUG | app/src/main/java/com/molina/studio/TerminalWiring.kt |
+| `proot.prompt-failed` | BUG | terminal-proot/src/main/kotlin/com/molina/terminal/proot/ShellPrompt.kt |
+| `proot.shield-env-failed` | BUG | terminal-proot/src/main/kotlin/com/molina/terminal/proot/ShieldGuestEnv.kt |
+| `term.drawer.auto-run-timeout` | BUG | terminal/src/main/java/com/molina/terminal/TerminalFragment.kt |
+| `term.drawer.op` | BEHAV | filemanager/src/main/java/com/molina/filemanager/FileDrawerView.kt |
+| `term.drawer.op-failed` | BUG | filemanager/src/main/java/com/molina/filemanager/FileDrawerView.kt |
+| `term.drawer.open` | BEHAV | filemanager/src/main/java/com/molina/filemanager/FileDrawerView.kt |
+| `term.session.start` | BEHAV | app/src/main/java/com/molina/studio/TerminalWiring.kt |
+| `term.shield-env` | BEHAV | terminal-proot/src/main/kotlin/com/molina/terminal/proot/ShieldGuestEnv.kt |
+| `term.tab` | BEHAV | terminal/src/main/java/com/molina/terminal/TerminalSessionHolder.kt |
