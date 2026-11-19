@@ -36,9 +36,19 @@
     </style>
 
     <!-- theme for preferences -->
-    <style name="MolinaPlayerTheme.Preference" parent="Theme.Material3.DayNight">
+    <style name="MolinaPlayerTheme.Preference" parent="Theme.Material3.Dark">
         <item name="toolbarStyle">@style/MolinaPlayerTheme.Toolbar.Style</item>
         <item name="alertDialogTheme">@style/MolinaPlayerTheme.Preference.AlertDialog</item>
+        <item name="android:windowBackground">@color/molina_pure_black</item>
+        <item name="android:colorBackground">@color/molina_pure_black</item>
+        <item name="colorSurface">@color/molina_pure_black</item>
+        <item name="colorSurfaceContainerLowest">@color/molina_pure_black</item>
+        <item name="colorSurfaceContainerLow">@color/molina_pure_black</item>
+        <item name="colorSurfaceContainer">@color/molina_pure_black</item>
+        <item name="colorSurfaceContainerHigh">@color/molina_black_raised</item>
+        <item name="colorSurfaceContainerHighest">@color/molina_black_raised</item>
+        <item name="colorPrimary">@color/molina_mint_accent</item>
+        <item name="colorOnPrimary">@color/molina_black_on_mint</item>
     </style>
 
     <style name="MolinaPlayerTheme.Toolbar.Style" parent="Widget.Material3.Toolbar">
@@ -48,7 +58,8 @@
     <style name="MolinaPlayerTheme.Preference.AlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="dialogCornerRadius">28dp</item>
         <item name="cornerFamily">rounded</item>
-        <item name="android:colorBackground">?attr/colorSurface</item>
+        <item name="android:colorBackground">@color/molina_black_raised</item>
+        <item name="colorSurfaceContainerHigh">@color/molina_black_raised</item>
     </style>
 
 

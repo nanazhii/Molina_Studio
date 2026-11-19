@@ -37,6 +37,7 @@ Aturan:
 | `net.shield.stop` | BEHAV | core-security/src/main/java/com/molina/core/security/LocalShieldProxy.kt |
 | `net.shield.trackers-loaded` | BEHAV | app/src/main/java/com/molina/studio/ShieldBootstrap.kt |
 | `net.shield.trackers-skip` | BEHAV | app/src/main/java/com/molina/studio/ShieldBootstrap.kt |
+| `player.about-mpv-failed` | BUG | player/src/main/java/com/molina/player/preferences/AboutActivity.kt |
 | `player.audio-focus-change` | BEHAV | player/src/main/java/com/molina/player/audio/MPVActivityAudioFocus.kt |
 | `player.audio-focus-denied` | BEHAV | player/src/main/java/com/molina/player/audio/MPVActivityAudioFocus.kt |
 | `player.audio-focus-release` | BEHAV | player/src/main/java/com/molina/player/audio/MPVActivityAudioFocus.kt |

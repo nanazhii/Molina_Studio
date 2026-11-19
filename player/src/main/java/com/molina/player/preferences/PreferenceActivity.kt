@@ -1,5 +1,6 @@
 package com.molina.player.preferences
 
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
@@ -110,6 +111,11 @@ class PreferenceActivity : AppCompatActivity(),
     class SettingsFragment : PreferenceFragmentCompat() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.preferences_root, rootKey)
+            // Intent lewat kode: memakai paket aplikasi yang sedang berjalan, bukan nama paket yang ditulis di XML
+            findPreference<Preference>("about_mpv")?.setOnPreferenceClickListener {
+                startActivity(Intent(requireContext(), AboutActivity::class.java))
+                true
+            }
         }
     }
 

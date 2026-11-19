@@ -34,11 +34,8 @@
 
     <Preference
         app:icon="@drawable/round_info_24"
+        app:key="about_mpv"
         app:summary="@string/pref_header_about_mpv_summary"
-        app:title="@string/pref_header_about_mpv">
-        <intent
-            android:targetClass="com.molina.player.preferences.AboutActivity"
-            android:targetPackage="com.molina.player" />
-    </Preference>
+        app:title="@string/pref_header_about_mpv" />
 
 </PreferenceScreen>

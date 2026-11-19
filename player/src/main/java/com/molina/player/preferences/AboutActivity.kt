@@ -7,6 +7,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.preference.PreferenceManager
 import com.google.android.material.color.DynamicColors
+import com.molina.core.common.diag.Diag
 import com.molina.player.BuildConfig
 import com.molina.player.MPVLib
 import com.molina.player.MPVLib.MpvLogLevel
@@ -37,10 +38,27 @@ class AboutActivity : AppCompatActivity(), MPVLib.LogObserver {
         logs = "Molina Player ${BuildConfig.VERSION_NAME} / ${BuildConfig.VERSION_CODE} (${BuildConfig.BUILD_TYPE})\n"
 
         // create mpv context to capture version info from log
-        MPVLib.create(this)
-        mpvDestroyed = false
-        MPVLib.addLogObserver(this)
-        MPVLib.init()
+        try {
+            MPVLib.create(this)
+            mpvDestroyed = false
+            MPVLib.addLogObserver(this)
+            MPVLib.init()
+        } catch (e: Exception) {
+            failedToStartMpv(e)
+        } catch (e: LinkageError) {
+            failedToStartMpv(e)
+        }
+    }
+
+    /** Halaman About tetap terbuka walau libmpv gagal dibuat; versi aplikasi tetap tampil, galat dicatat. */
+    private fun failedToStartMpv(e: Throwable) {
+        Diag.bug("player", "about-mpv-failed", "mpv gagal dibuat untuk halaman About", e)
+        if (!mpvDestroyed) {
+            mpvDestroyed = true
+            try { MPVLib.destroy() } catch (_: Exception) { }
+        }
+        logs += "libmpv tidak tersedia: ${e.javaClass.simpleName}\n"
+        updateLog()
     }
 
     private fun updateLog() {

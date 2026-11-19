@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-player-black: Setelan & About memakai hitam pekat (OLED), aksen Mint seperti Home -->
+<resources>
+    <color name="molina_pure_black">#000000</color>
+    <color name="molina_black_raised">#121212</color>
+    <color name="molina_black_on_mint">#00382E</color>
+</resources>
