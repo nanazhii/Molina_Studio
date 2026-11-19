@@ -28,3 +28,9 @@
 - 2026-11-19: getter/setter/command MPVView (menunggu CI): seluruh MPVLib.getProperty*/setProperty*/command di MPVView dialihkan ke MpvProperties dan MpvGateway (MPVView kini 0 pelanggaran R2); cycle* tetap bertipe Unit. MpvGateway: perintah keypress/keydown/keyup senyap (hanya dicatat bila gagal/lambat), perintah berbasis property (cycle, add, set, multiply) mencatat nama property. Baseline sekarang R1 57, R2 49. Sisa R2: MPVActivity, BackgroundPlaybackService, PlaylistDialog, Utils.
 
 - 2026-11-19: pemanggil kecil MPVLib (menunggu CI): 7 getter di BackgroundPlaybackService, Utils, PlaylistDialog dialihkan ke MpvProperties; BackgroundPlaybackService mencatat siklus hidup lewat Diag (player.bg-service-start/stop, menggantikan Log.v). Baseline sekarang R1 55, R2 42; sisa R2 hanya MPVActivity.
+
+## Handoff 2026-11-19 [HANDOFF-HOME-MINT-AUDIT]
+- **Sedang berjalan:** redesain Home mpv (Molina Cinema) bergaya Mint. Empat tombol (Berkas, Saluran, Setelan, Segarkan) dipindah ke ikon menu dengan panel drop, ukuran ikon tetap sama.
+- **Catatan:** Saluran (M3U), Segarkan, dan Terakhir diputar belum ada di repo. Keputusan fungsi atau tampilan saja masih menunggu.
+- **Berikutnya, jangan lupa:** setelah desain home selesai, lanjut **audit MPVActivity** (2.248 baris, R2 42, R1 20). Kelompokkan pemanggilan mpv per fitur, tentukan pecahan paket, mulai dari yang paling banyak dan berisiko kecil.
+- **Saran:** tambahkan `add` dan `set` ke daftar perintah senyap `MpvGateway` sebelum migrasi gestur.
