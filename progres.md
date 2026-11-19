@@ -50,3 +50,5 @@
 - 2026-11-19: MPVActivity langkah 4a AudioPresence (menunggu CI): status audio keluar dan audio-saja pindah ke player/audio/MPVActivityAudioPresence (lewat MpvProperties; isPlaying kini Volatile karena ditulis thread event dan dibaca UI). Target: R2 MPVActivity -3. Berikutnya: 4b Position + MPVView.stop, lalu 4c AudioFocus.
 
 - 2026-11-19: MPVActivity langkah 4b Position (menunggu CI): simpan posisi putar pindah ke player/playback/MPVActivityPosition (lewat MpvProperties/MpvGateway); MPVView.stop() menggantikan perintah stop langsung di onPauseImpl; kode log baru player.position-skip-eof (terdaftar di docs/LOG_CODES.md). Target: R2 MPVActivity -3, R1 -1. Berikutnya: 4c AudioFocus dengan flag released.
+
+- Rancangan next/prev (2026-11-19) (menunggu persetujuan): prev memulai ulang berkas bila time-pos > 3 dtk; tombol Mint dengan keadaan nonaktif nyata di ujung daftar; indikator n/total; contentDescription. Berkas: player.xml, drawable riak baru, strings_home.xml, updatePlaylistButtons, MPVActivityPlaylist.previous. Tertunda: Molina Music (layar audio, memakai AudioPresence.isAudioOnly), gaya FPS Mint.
