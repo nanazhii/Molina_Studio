@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- molina-channels: tombol memakai wrap_content + minHeight agar teks tidak terpotong pada font/skala besar -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_home_sheet"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -32,7 +35,7 @@
     <EditText
         android:id="@+id/filterInput"
         android:layout_width="match_parent"
-        android:layout_height="44dp"
+        android:layout_height="48dp"
         android:layout_marginTop="12dp"
         android:background="@drawable/bg_mint_field"
         android:drawablePadding="8dp"
@@ -88,27 +91,51 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/addUrlBtn"
+            android:id="@+id/importBtn"
             android:layout_width="0dp"
-            android:layout_height="44dp"
+            android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
+            android:autoSizeMaxTextSize="14sp"
+            android:autoSizeMinTextSize="10sp"
+            android:autoSizeTextType="uniform"
             android:background="@drawable/bg_mint_button"
+            android:maxLines="1"
+            android:minHeight="48dp"
+            android:paddingHorizontal="10dp"
             android:stateListAnimator="@null"
-            android:text="@string/channels_add_url"
+            android:text="@string/channels_import"
             android:textAllCaps="false"
             android:textColor="@color/molina_mint_text" />
 
         <Button
-            android:id="@+id/closeBtn"
+            android:id="@+id/addUrlBtn"
             android:layout_width="0dp"
-            android:layout_height="44dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/bg_mint_button_primary"
+            android:autoSizeMaxTextSize="14sp"
+            android:autoSizeMinTextSize="10sp"
+            android:autoSizeTextType="uniform"
+            android:background="@drawable/bg_mint_button"
+            android:maxLines="1"
+            android:minHeight="48dp"
+            android:paddingHorizontal="10dp"
             android:stateListAnimator="@null"
-            android:text="@string/channels_close"
+            android:text="@string/channels_add_url"
             android:textAllCaps="false"
-            android:textColor="@color/molina_on_brand_accent"
-            android:textStyle="bold" />
+            android:textColor="@color/molina_mint_text" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/closeBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_mint_button_primary"
+        android:minHeight="48dp"
+        android:stateListAnimator="@null"
+        android:text="@string/channels_close"
+        android:textAllCaps="false"
+        android:textColor="@color/molina_on_brand_accent"
+        android:textStyle="bold" />
 </LinearLayout>

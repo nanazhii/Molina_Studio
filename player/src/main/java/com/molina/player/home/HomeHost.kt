@@ -1,6 +1,7 @@
 package com.molina.player.home
 
 import android.content.Context
+import android.net.Uri
 
 /**
  * Kontrak Home ke layar: satu-satunya hal yang diketahui paket `home` tentang layar yang
@@ -18,6 +19,9 @@ interface HomeHost {
 
     /** Putar tautan atau jalur berkas lewat alur pemutaran yang sudah ada. */
     fun play(target: String)
+
+    /** Buka pemilih dokumen sistem untuk berkas daftar .m3u/.m3u8; [onPicked] dipanggil bila pengguna memilih. */
+    fun pickChannelFile(onPicked: (Uri) -> Unit)
 }
 
 /** Isi menu Home. Menambah menu = satu nilai di sini, satu baris di [HomeMenu], satu cabang di [HomeController]. */

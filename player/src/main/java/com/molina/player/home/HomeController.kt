@@ -62,7 +62,7 @@ internal class HomeController(private val host: HomeHost, private val scope: Cor
     }
 
     private fun showChannels() {
-        ChannelsSheet(host.hostContext(), channels, scope) { playChannel(it) }.show()
+        ChannelsSheet(host.hostContext(), channels, scope, { onPicked -> host.pickChannelFile(onPicked) }) { playChannel(it) }.show()
     }
 
     private fun playChannel(channel: Channel) {

@@ -43,6 +43,7 @@ Aturan:
 | `player.bg-service-start` | BEHAV | player/src/main/java/com/molina/player/BackgroundPlaybackService.kt |
 | `player.bg-service-stop` | BEHAV | player/src/main/java/com/molina/player/BackgroundPlaybackService.kt |
 | `player.channels-failed` | BUG | player/src/main/java/com/molina/player/home/ChannelsRepository.kt |
+| `player.channels-imported` | BEHAV | player/src/main/java/com/molina/player/home/ChannelsImporter.kt |
 | `player.channels-loaded` | BEHAV | player/src/main/java/com/molina/player/home/ChannelsRepository.kt |
 | `player.channels-open` | BEHAV | player/src/main/java/com/molina/player/home/ChannelsSheet.kt |
 | `player.channels-play` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |

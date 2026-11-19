@@ -12,11 +12,11 @@
     <string name="channels_title">Saluran TV</string>
     <string name="channels_filter_hint">Cari saluran atau grup</string>
     <string name="channels_count">%1$d saluran</string>
-    <string name="channels_empty">Belum ada daftar saluran.\nLetakkan berkas .m3u atau .m3u8 di:\n%1$s\natau tambahkan tautan M3U.</string>
+    <string name="channels_empty">Belum ada saluran.\nKetuk Impor berkas untuk memilih .m3u atau .m3u8 dari penyimpanan, atau letakkan berkasnya di:\n%1$s</string>
     <string name="channels_loading">Memuat saluran…</string>
     <string name="channels_load_failed">Tautan daftar gagal dimuat. Saluran dari berkas tetap tampil.</string>
-    <string name="channels_add_url">Tambah tautan M3U</string>
-    <string name="channels_change_url">Ganti tautan M3U</string>
+    <string name="channels_add_url">Tautan M3U</string>
+    <string name="channels_change_url">Ganti tautan</string>
     <string name="channels_url_hint">Tempel tautan M3U</string>
     <string name="channels_url_invalid">Tautan harus diawali http:// atau https:// dan alamatnya publik.</string>
     <string name="channels_save">Simpan</string>
@@ -31,4 +31,11 @@
     <string name="home_mode_auto">AUTO</string>
     <string name="home_input_hint">Cari di YouTube atau tempel tautan</string>
     <string name="home_help">Tempel tautan atau ketik judul di kolom atas, lalu tekan Putar. Ketuk Saluran untuk daftar TV (M3U).</string>
+    <!-- molina-channels-import -->
+    <string name="channels_import">Impor berkas</string>
+    <string name="channels_import_ok">Diimpor: %1$s (%2$d saluran)</string>
+    <string name="channels_import_private">Folder Molina/channels tidak bisa ditulis; disimpan di penyimpanan aplikasi.</string>
+    <string name="channels_import_empty">Tidak ada saluran http(s) yang valid di berkas itu.</string>
+    <string name="channels_import_failed">Berkas tidak bisa dibaca atau disimpan.</string>
+    <string name="channels_folder_blocked">Folder Molina/channels tidak bisa dibaca (izin penyimpanan?). Pakai Impor berkas.</string>
 </resources>

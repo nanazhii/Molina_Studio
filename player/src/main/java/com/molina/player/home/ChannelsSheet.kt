@@ -4,10 +4,12 @@ import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
+import android.view.WindowManager
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -26,13 +28,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
- * Jendela daftar Saluran TV: kolom cari, daftar, dan tombol tambah/ganti tautan M3U. Hanya tampilan dan
- * input; sumber data ada di [ChannelsRepository], penyaringan di core-common ([ChannelFilter]).
+ * Jendela daftar Saluran TV: kolom cari, daftar, tombol impor berkas, tambah/ganti tautan M3U. Hanya tampilan
+ * dan input; sumber data ada di [ChannelsRepository], penyaringan di core-common ([ChannelFilter]), pemilih
+ * berkas dimiliki layar lewat [pickFile] (kontrak [HomeHost.pickChannelFile]).
  */
 internal class ChannelsSheet(
     private val context: Context,
     private val repo: ChannelsRepository,
     private val scope: CoroutineScope,
+    private val pickFile: (onPicked: (Uri) -> Unit) -> Unit,
     private val onPlay: (Channel) -> Unit,
 ) {
     private val binding = DialogChannelsBinding.inflate(LayoutInflater.from(context))
@@ -49,9 +53,11 @@ internal class ChannelsSheet(
         binding.channelList.layoutManager = LinearLayoutManager(context)
         binding.channelList.adapter = adapter
         binding.filterInput.addTextChangedListener { render() }
+        binding.importBtn.setOnClickListener { pickFile { uri -> import(uri) } }
         binding.addUrlBtn.setOnClickListener { askUrl() }
         binding.closeBtn.setOnClickListener { dialog.dismiss() }
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT)) // lembar bulat milik layout
+        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         dialog.show()
         val metrics = context.resources.displayMetrics
         dialog.window?.setLayout(
@@ -72,11 +78,39 @@ internal class ChannelsSheet(
         }
     }
 
+    private fun import(uri: Uri) {
+        if (!dialog.isShowing) return
+        binding.channelStatus.setText(R.string.channels_loading)
+        binding.channelStatus.visibility = View.VISIBLE
+        scope.launch {
+            when (val r = repo.import(uri)) {
+                is ImportResult.Ok -> {
+                    val msg = context.getString(R.string.channels_import_ok, r.fileName, r.count) +
+                        if (r.publicFolder) "" else "\n" + context.getString(R.string.channels_import_private)
+                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                    if (dialog.isShowing) reload(force = false)
+                }
+                ImportResult.Empty -> done(R.string.channels_import_empty)
+                ImportResult.Failed -> done(R.string.channels_import_failed)
+            }
+        }
+    }
+
+    private fun done(messageRes: Int) {
+        Toast.makeText(context, messageRes, Toast.LENGTH_LONG).show()
+        if (dialog.isShowing) binding.channelStatus.visibility = View.GONE
+    }
+
     private fun apply(load: ChannelsLoad) {
         all = load.channels
         binding.addUrlBtn.setText(if (repo.sourceUrl == null) R.string.channels_add_url else R.string.channels_change_url)
-        binding.channelStatus.visibility = if (load.remoteFailed) View.VISIBLE else View.GONE
-        if (load.remoteFailed) binding.channelStatus.setText(R.string.channels_load_failed)
+        val status = when {
+            load.remoteFailed -> R.string.channels_load_failed
+            load.folderBlocked && all.isEmpty() -> R.string.channels_folder_blocked
+            else -> 0
+        }
+        binding.channelStatus.visibility = if (status != 0) View.VISIBLE else View.GONE
+        if (status != 0) binding.channelStatus.setText(status)
         render()
     }
 

@@ -47,6 +47,8 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
     private lateinit var documentTreeOpener: ActivityResultLauncher<Uri?>
     private lateinit var filePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var playerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var channelFileOpener: ActivityResultLauncher<Array<String>>
+    private var onChannelFile: ((Uri) -> Unit)? = null
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -101,6 +103,12 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
                     playFile(memoryUri)
                 }
             }
+        }
+        // */*: banyak pemilih Android 8 memberi .m3u tipe octet-stream; isi divalidasi oleh M3uParser, bukan tipe
+        channelFileOpener = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            val cb = onChannelFile
+            onChannelFile = null
+            if (uri != null) cb?.invoke(uri)
         }
         playerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             // we don't care about the result but remember that we've been here
@@ -389,6 +397,11 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
     }
 
     override fun play(target: String) = playFile(target)
+
+    override fun pickChannelFile(onPicked: (Uri) -> Unit) {
+        onChannelFile = onPicked
+        channelFileOpener.launch(arrayOf("*/*"))
+    }
 
     companion object {
         private const val KEY_OPEN = "open"
