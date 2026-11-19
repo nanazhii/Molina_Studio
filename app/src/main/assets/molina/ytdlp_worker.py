@@ -148,7 +148,8 @@ def make_ydl(yt_dlp):
         "quiet": True, "no_warnings": True, "noprogress": True, "no_color": True,
         "logger": Quiet(), "noplaylist": True, "skip_download": True,
         "format": FORMAT, "socket_timeout": 20, "retries": 1, "extractor_retries": 1,
-        "cachedir": False,
+        "cachedir": False, "ignoreconfig": True,
+        "allowed_extractors": ["facebook.*", "tiktok.*"],
     }
     if os.path.isfile(COOKIE_FILE):
         opts["cookiefile"] = COOKIE_FILE
