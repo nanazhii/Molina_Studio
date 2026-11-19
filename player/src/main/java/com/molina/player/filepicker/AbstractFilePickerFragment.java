@@ -517,6 +517,7 @@ public abstract class AbstractFilePickerFragment<T> extends Fragment
         public final View icon;
         public final TreeIconView iconView; // molina-picker
         public final TextView text;
+        public final View openBtn; // molina-picker-open
         public T file;
 
         public DirViewHolder(View v) {
@@ -528,6 +529,12 @@ public abstract class AbstractFilePickerFragment<T> extends Fragment
             int px = (int) (30 * v.getResources().getDisplayMetrics().density + 0.5f);
             ((ViewGroup) icon).addView(iconView, new FrameLayout.LayoutParams(px, px, Gravity.CENTER));
             text = (TextView) v.findViewById(android.R.id.text1);
+            // molina-picker-open: ikon putar = aksi yang sama dengan tekan lama pada folder
+            openBtn = v.findViewById(R.id.item_open);
+            if (openBtn != null) {
+                openBtn.setVisibility(View.VISIBLE);
+                openBtn.setOnClickListener(b -> onLongClickCheckable(b, this));
+            }
         }
 
         /**

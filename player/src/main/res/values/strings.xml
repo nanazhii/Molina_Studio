@@ -240,11 +240,11 @@
     <string name="home_open">Buka dari perangkat</string>
     <string name="chooser_title">Buka dari perangkat</string>
     <string name="chooser_file">Berkas dan folder</string>
-    <string name="chooser_file_sub">Ketuk berkas untuk memutar; tekan lama folder untuk memutar isinya, subfolder ikut</string>
+    <string name="chooser_file_sub">Ketuk berkas untuk memutar; ketuk ikon putar (atau tekan lama) pada folder untuk memutar isinya, subfolder ikut</string>
     <string name="chooser_system">Pemilih sistem (SAF)</string>
     <string name="chooser_system_sub">Untuk kartu SD atau penyimpanan tanpa izin berkas</string>
     <string name="chooser_cancel">Batal</string>
-    <string name="hint_pick_folder_longpress">Ketuk berkas untuk memutar, atau tekan lama sebuah folder untuk memutar seluruh isinya (subfolder ikut)</string>
+    <string name="hint_pick_folder_longpress">Ketuk berkas untuk memutar, atau ketuk ikon putar (atau tekan lama) pada folder untuk memutar seluruh isinya (subfolder ikut)</string>
     <string name="notice_scanning">Memindai folder…</string>
     <string name="notice_folder_empty">Tidak ada media di folder ini</string>
     <string name="notice_folder_playlist">Playlist: %d berkas</string>

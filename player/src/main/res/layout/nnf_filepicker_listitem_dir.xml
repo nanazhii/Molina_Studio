@@ -35,4 +35,16 @@
         android:padding="8dp"
         android:text="@string/nnf_name" />
 
+
+    <!-- molina-picker-open: ikon putar isi folder (aksi sama dengan tekan lama); hanya tampil di baris folder -->
+    <ImageButton
+        android:id="@+id/item_open"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_vertical"
+        android:background="?selectableItemBackgroundBorderless"
+        android:contentDescription="@string/picker_open_folder"
+        android:src="@drawable/ic_play_arrow_black_24dp"
+        android:tint="@color/molina_cinema_green"
+        android:visibility="gone" />
 </LinearLayout>
