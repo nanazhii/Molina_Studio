@@ -4,7 +4,7 @@
     "app/src/main/java/com/molina/studio/MolinaApplication.kt": 1,
     "code/src/main/kotlin/com/molina/code/ui/LiveTemplates.kt": 1,
     "player/src/main/java/com/molina/player/FilePickerActivity.kt": 10,
-    "player/src/main/java/com/molina/player/MPVActivity.kt": 20,
+    "player/src/main/java/com/molina/player/MPVActivity.kt": 19,
     "player/src/main/java/com/molina/player/MPVView.kt": 3,
     "player/src/main/java/com/molina/player/NotificationButtonReceiver.kt": 1,
     "player/src/main/java/com/molina/player/PlaybackLog.kt": 5,
@@ -14,6 +14,6 @@
     "player/src/main/java/com/molina/player/Utils.kt": 4
   },
   "mpv_direct": {
-    "player/src/main/java/com/molina/player/MPVActivity.kt": 42
+    "player/src/main/java/com/molina/player/MPVActivity.kt": 25
   }
 }
