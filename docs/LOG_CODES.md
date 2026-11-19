@@ -25,7 +25,13 @@ Aturan:
 | `mpv.command` | BEHAV | player/src/main/java/com/molina/player/mpv/MpvGateway.kt |
 | `mpv.command-empty` | BUG | player/src/main/java/com/molina/player/mpv/MpvGateway.kt |
 | `mpv.command-failed` | BUG | player/src/main/java/com/molina/player/mpv/MpvGateway.kt |
+| `mpv.initialized` | BEHAV | player/src/main/java/com/molina/player/BaseMPVView.kt |
+| `mpv.option-rejected` | BUG | player/src/main/java/com/molina/player/mpv/MpvProperties.kt |
+| `mpv.property-failed` | BUG | player/src/main/java/com/molina/player/mpv/MpvProperties.kt |
+| `mpv.property-set` | BEHAV | player/src/main/java/com/molina/player/mpv/MpvProperties.kt |
 | `mpv.slow-call` | BUG | player/src/main/java/com/molina/player/mpv/MpvGateway.kt |
+| `mpv.surface-attached` | BEHAV | player/src/main/java/com/molina/player/BaseMPVView.kt |
+| `mpv.surface-detached` | BEHAV | player/src/main/java/com/molina/player/BaseMPVView.kt |
 | `net.shield.start` | BEHAV | core-security/src/main/java/com/molina/core/security/LocalShieldProxy.kt |
 | `net.shield.start-failed` | BUG | core-security/src/main/java/com/molina/core/security/LocalShieldProxy.kt |
 | `net.shield.stop` | BEHAV | core-security/src/main/java/com/molina/core/security/LocalShieldProxy.kt |

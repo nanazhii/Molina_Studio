@@ -9,7 +9,7 @@ dan `scripts/log_gate.py`.
 2. **Lintas modul lewat kontrak.** Bila fitur dipakai modul lain (mis. terminal memakai pencatat atau resolver),
    kontraknya (interface, data murni, registry) ada di `core-common`; implementasi disuntik oleh `app`.
    Tidak ada feature -> feature dan tidak ada engine yang dikenal langsung oleh feature lain.
-3. **Perintah mpv hanya lewat `player/mpv/`** (`MpvGateway.command`). `MPVLib.command/setProperty*/getProperty*/...`
+3. **Perintah mpv hanya lewat `player/mpv/`** (`MpvGateway.command`; property dan opsi lewat `MpvProperties`). `MPVLib.command/setProperty*/getProperty*/...`
    di luar paket itu ditolak gerbang R2 (baseline hanya boleh turun).
 4. **Setiap fitur tercatat di logcat.** Pakai `Diag.behavior(area, kode, ...)` untuk alur yang berhasil dan
    `Diag.bug(area, kode, ...)` untuk kegagalan yang dikenali (kontrak di `core-common`; `app` meneruskan ke

@@ -2,7 +2,10 @@ package com.molina.player
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
+import android.os.SystemClock
+import com.molina.core.common.diag.Diag
+import com.molina.player.mpv.MpvGateway
+import com.molina.player.mpv.MpvProperties
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 
@@ -15,13 +18,14 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
      * Call this once before the view is shown.
      */
     fun initialize(configDir: String, cacheDir: String) {
+        val t0 = SystemClock.elapsedRealtime()
         MPVLib.create(context.applicationContext)
 
         /* set normal options (user-supplied config can override) */
-        MPVLib.setOptionString("config", "yes")
-        MPVLib.setOptionString("config-dir", configDir)
+        MpvProperties.setOption("config", "yes")
+        MpvProperties.setOption("config-dir", configDir)
         for (opt in arrayOf("gpu-shader-cache-dir", "icc-cache-dir"))
-            MPVLib.setOptionString(opt, cacheDir)
+            MpvProperties.setOption(opt, cacheDir)
         initOptions()
 
         MPVLib.init()
@@ -29,12 +33,13 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
         /* set hardcoded options */
         postInitOptions()
         // could mess up VO init before surfaceCreated() is called
-        MPVLib.setOptionString("force-window", "no")
+        MpvProperties.setOption("force-window", "no")
         // need to idle at least once for playFile() logic to work
-        MPVLib.setOptionString("idle", "once")
+        MpvProperties.setOption("idle", "once")
 
         holder.addCallback(this)
         observeProperties()
+        Diag.behavior("mpv", "initialized", "libmpv siap", mapOf("ms" to (SystemClock.elapsedRealtime() - t0).toString()))
     }
 
     /**
@@ -79,7 +84,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
                 false
             }
         }
-        if (now) MPVLib.command(args)
+        if (now) MpvGateway.command(args)
     }
 
     private var voInUse: String = "gpu"
@@ -90,38 +95,38 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
      */
     fun setVo(vo: String) {
         voInUse = vo
-        MPVLib.setOptionString("vo", vo)
+        MpvProperties.setOption("vo", vo)
     }
 
     // Surface callbacks
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        MPVLib.setPropertyString("android-surface-size", "${width}x$height")
+        MpvProperties.setString("android-surface-size", "${width}x$height")
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        Log.w(TAG, "attaching surface")
+        Diag.behavior("mpv", "surface-attached", "attach surface")
         MPVLib.attachSurface(holder.surface)
         // This forces mpv to render subs/osd/whatever into our surface even if it would ordinarily not
-        MPVLib.setOptionString("force-window", "yes")
+        MpvProperties.setOption("force-window", "yes")
 
         val pending = synchronized(loadLock) {
             surfaceAttached = true
             pendingLoad.also { pendingLoad = null }
         }
         if (pending != null) {
-            MPVLib.command(pending)
+            MpvGateway.command(pending)
         } else {
             // We disable video output when the context disappears, enable it back
-            MPVLib.setPropertyString("vo", voInUse)
+            MpvProperties.setString("vo", voInUse)
         }
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
-        Log.w(TAG, "detaching surface")
+        Diag.behavior("mpv", "surface-detached", "detach surface")
         synchronized(loadLock) { surfaceAttached = false }
-        MPVLib.setPropertyString("vo", "null")
-        MPVLib.setPropertyString("force-window", "no")
+        MpvProperties.setString("vo", "null")
+        MpvProperties.setString("force-window", "no")
         // Note that before calling detachSurface() we need to be sure that libmpv
         // is done using the surface.
         // FIXME: There could be a race condition here, because I don't think
@@ -129,7 +134,4 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
         MPVLib.detachSurface()
     }
 
-    companion object {
-        private const val TAG = "mpv"
-    }
 }

@@ -12,6 +12,7 @@ import com.molina.player.MPVLib.MpvFormat.MPV_FORMAT_FLAG
 import com.molina.player.MPVLib.MpvFormat.MPV_FORMAT_INT64
 import com.molina.player.MPVLib.MpvFormat.MPV_FORMAT_NONE
 import com.molina.player.MPVLib.MpvFormat.MPV_FORMAT_STRING
+import com.molina.player.mpv.MpvProperties
 import kotlin.reflect.KProperty
 
 internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attrs) {
@@ -19,8 +20,8 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
         // apply phone-optimized defaults
-        MPVLib.setOptionString("profile", "fast")
-        MPVLib.setOptionString("ytdl", "no") // molina: bundle yt-dlp dihapus; resolver URL (UrlResolver) menyusul
+        MpvProperties.setOption("profile", "fast")
+        MpvProperties.setOption("ytdl", "no") // molina: bundle yt-dlp dihapus; resolver URL (UrlResolver) menyusul
 
         // vo
         setVo(if (sharedPreferences.getBoolean("gpu_next", false))
@@ -39,7 +40,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
         val refreshRate = disp.mode.refreshRate
 
         Log.v(TAG, "Display ${disp.displayId} reports FPS of $refreshRate")
-        MPVLib.setOptionString("display-fps-override", refreshRate.toString())
+        MpvProperties.setOption("display-fps-override", refreshRate.toString())
 
         // set non-complex options
         data class Property(val preferenceName: String, val mpvOption: String)
@@ -64,58 +65,58 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
         for ((preferenceName, mpvOption) in opts) {
             val preference = sharedPreferences.getString(preferenceName, "")
             if (!preference.isNullOrBlank())
-                MPVLib.setOptionString(mpvOption, preference)
+                MpvProperties.setOption(mpvOption, preference)
         }
 
         val debandMode = sharedPreferences.getString("video_debanding", "")
         if (debandMode == "gradfun") {
             // lower the default radius (16) to improve performance
-            MPVLib.setOptionString("vf", "gradfun=radius=12")
+            MpvProperties.setOption("vf", "gradfun=radius=12")
         } else if (debandMode == "gpu") {
-            MPVLib.setOptionString("deband", "yes")
+            MpvProperties.setOption("deband", "yes")
         }
 
         val vidsync = sharedPreferences.getString("video_sync", resources.getString(R.string.pref_video_interpolation_sync_default))
-        MPVLib.setOptionString("video-sync", vidsync!!)
+        MpvProperties.setOption("video-sync", vidsync!!)
 
         if (sharedPreferences.getBoolean("video_interpolation", false))
-            MPVLib.setOptionString("interpolation", "yes")
+            MpvProperties.setOption("interpolation", "yes")
 
         if (sharedPreferences.getBoolean("gpudebug", false))
-            MPVLib.setOptionString("gpu-debug", "yes")
+            MpvProperties.setOption("gpu-debug", "yes")
 
         if (sharedPreferences.getBoolean("video_fastdecode", false)) {
-            MPVLib.setOptionString("vd-lavc-fast", "yes")
-            MPVLib.setOptionString("vd-lavc-skiploopfilter", "nonkey")
+            MpvProperties.setOption("vd-lavc-fast", "yes")
+            MpvProperties.setOption("vd-lavc-skiploopfilter", "nonkey")
         }
 
-        MPVLib.setOptionString("gpu-context", "android")
-        MPVLib.setOptionString("opengl-es", "yes")
-        MPVLib.setOptionString("hwdec", hwdec)
-        MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
-        MPVLib.setOptionString("ao", "audiotrack,opensles")
-        MPVLib.setOptionString("audio-set-media-role", "yes")
-        MPVLib.setOptionString("tls-verify", "yes")
-        MPVLib.setOptionString("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
-        MPVLib.setOptionString("input-default-bindings", "yes")
-        MPVLib.setOptionString("flatten-editions", "yes")
+        MpvProperties.setOption("gpu-context", "android")
+        MpvProperties.setOption("opengl-es", "yes")
+        MpvProperties.setOption("hwdec", hwdec)
+        MpvProperties.setOption("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
+        MpvProperties.setOption("ao", "audiotrack,opensles")
+        MpvProperties.setOption("audio-set-media-role", "yes")
+        MpvProperties.setOption("tls-verify", "yes")
+        MpvProperties.setOption("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
+        MpvProperties.setOption("input-default-bindings", "yes")
+        MpvProperties.setOption("flatten-editions", "yes")
         // molina: cache asimetris. Buffer maju cukup untuk 1-2 menit stream 720p; buffer mundur kecil
         // karena hanya dipakai seek ke belakang. Menghemat RAM native di perangkat 2-3 GB.
         val forwardMegs = 32
         val backMegs = 8
-        MPVLib.setOptionString("demuxer-max-bytes", "${forwardMegs * 1024 * 1024}")
-        MPVLib.setOptionString("demuxer-max-back-bytes", "${backMegs * 1024 * 1024}")
-        MPVLib.setOptionString("cache-secs", "90")
-        MPVLib.setOptionString("network-timeout", "20")
+        MpvProperties.setOption("demuxer-max-bytes", "${forwardMegs * 1024 * 1024}")
+        MpvProperties.setOption("demuxer-max-back-bytes", "${backMegs * 1024 * 1024}")
+        MpvProperties.setOption("cache-secs", "90")
+        MpvProperties.setOption("network-timeout", "20")
         //
         val screenshotDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         screenshotDir.mkdirs()
-        MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
+        MpvProperties.setOption("screenshot-directory", screenshotDir.path)
     }
 
     override fun postInitOptions() {
         // we need to call write-watch-later manually
-        MPVLib.setOptionString("save-position-on-quit", "no")
+        MpvProperties.setOption("save-position-on-quit", "no")
     }
 
     fun onPointerEvent(event: MotionEvent): Boolean {
@@ -199,7 +200,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
         )
 
         for ((name, format) in p)
-            MPVLib.observeProperty(name, format)
+            MpvProperties.observe(name, format)
     }
 
     fun addObserver(o: MPVLib.EventObserver) {
