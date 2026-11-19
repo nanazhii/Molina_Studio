@@ -45,7 +45,6 @@ import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import java.io.File
 import java.lang.IllegalArgumentException
-import kotlin.math.roundToInt
 import com.molina.core.common.FailureAction
 import com.molina.core.common.StreamError
 import com.molina.core.common.StreamSearchItem
@@ -61,6 +60,8 @@ import com.molina.player.playback.MPVActivityStats
 import com.molina.player.audio.MPVActivityAudioPresence
 import com.molina.player.audio.MPVActivityAudioFocus
 import com.molina.player.display.MPVActivityBrightness
+import com.molina.player.gestures.MPVActivityGestures
+import com.molina.player.gestures.MPVActivityGesturesHost
 import com.molina.player.menu.MPVActivityMenu
 import com.molina.player.playback.MPVActivityPosition
 import com.molina.player.playback.MPVActivityDialogPause
@@ -77,10 +78,10 @@ import kotlinx.coroutines.withContext
 typealias ActivityResultCallback = (Int, Intent?) -> Unit
 typealias StateRestoreCallback = () -> Unit
 
-class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObserver {
+class MPVActivity : AppCompatActivity(), MPVLib.EventObserver {
     // for calls to eventUi() and eventPropertyUi()
     private val eventUiHandler = Handler(Looper.getMainLooper())
-    // for use with fadeRunnable1..3
+    // for use with fadeRunnable1..2
     private val fadeHandler = Handler(Looper.getMainLooper())
     // for use with stopServiceRunnable
     private val stopServiceHandler = Handler(Looper.getMainLooper())
@@ -123,6 +124,16 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     private val stats = MPVActivityStats()
     private val onload = MPVActivityOnLoad()
     private val brightness = MPVActivityBrightness(this)
+
+    private val gesturesHost = object : MPVActivityGesturesHost {
+        override val context: Context get() = this@MPVActivity
+        override val player: MPVView get() = this@MPVActivity.player
+        override val playbackState: Utils.PlaybackStateCache get() = psc
+        override val gestureTextView: android.widget.TextView get() = binding.gestureTextView
+        override val audioManager: AudioManager? get() = this@MPVActivity.audioManager
+        override fun onGestureStart() { mightWantToToggleControls = false }
+    }
+    private val gestureHandler = MPVActivityGestures(gesturesHost, brightness, audioPresence)
 
     private val seekBarChangeListener = object : SeekBar.OnSeekBarChangeListener {
         override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
@@ -177,14 +188,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         }
     }
 
-    // Fade out gesture text
-    private val fadeRunnable3 = object : Runnable {
-        // okay this doesn't actually fade...
-        override fun run() {
-            binding.gestureTextView.visibility = View.GONE
-        }
-    }
-
     private val stopServiceRunnable = Runnable {
         val intent = Intent(this, BackgroundPlaybackService::class.java)
         applicationContext.stopService(intent)
@@ -203,7 +206,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     private var playlistExitWarning = true
     private var newIntentReplace = false
 
-    private var smoothSeekGesture = false
     /* * */
 
     @SuppressLint("ClickableViewAccessibility")
@@ -320,7 +322,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         // Initialize listeners for the player view
         initListeners()
 
-        gestures = TouchGestures(this)
+        gestures = TouchGestures(gestureHandler)
 
         // set up initial UI state
         readSettings()
@@ -378,7 +380,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         else
             Log.w(TAG, "AudioManager.generateAudioSessionId() returned error")
 
-        volumeControlStream = STREAM_TYPE
+        volumeControlStream = MPVActivityGestures.STREAM_TYPE
     }
 
     // molina-resolver: alur pemuatan stream ada di paket stream (StreamPlaybackCoordinator).
@@ -562,7 +564,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         audioFocus.ignore = prefs.getBoolean("ignore_audio_focus", false)
         this.playlistExitWarning = prefs.getBoolean("playlist_exit_warning", true)
         this.newIntentReplace = prefs.getBoolean("new_intent_replace", false)
-        this.smoothSeekGesture = prefs.getBoolean("seek_gesture_smooth", false)
+        gestureHandler.smoothSeek = prefs.getBoolean("seek_gesture_smooth", false)
     }
 
     private fun writeSettings() {
@@ -1706,112 +1708,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         eventUiHandler.post { eventUi(eventId) }
     }
 
-    // Gesture handler
-
-    private var initialSeek = 0f
-    private var initialBright = 0f
-    private var initialVolume = 0
-    private var maxVolume = 0
-    /** 0 = initial, 1 = paused, 2 = was already paused */
-    private var pausedForSeek = 0
-
-    private fun fadeGestureText() {
-        fadeHandler.removeCallbacks(fadeRunnable3)
-        binding.gestureTextView.visibility = View.VISIBLE
-
-        fadeHandler.postDelayed(fadeRunnable3, 500L)
-    }
-
-    override fun onPropertyChange(p: PropertyChange, diff: Float) {
-        val gestureTextView = binding.gestureTextView
-        when (p) {
-            /* Drag gestures */
-            PropertyChange.Init -> {
-                mightWantToToggleControls = false
-
-                initialSeek = (psc.position / 1000f)
-                initialBright = brightness.current()
-                with (audioManager!!) {
-                    initialVolume = getStreamVolume(STREAM_TYPE)
-                    maxVolume = if (isVolumeFixed)
-                        0
-                    else
-                        getStreamMaxVolume(STREAM_TYPE)
-                }
-                if (!audioPresence.isPlaying)
-                    maxVolume = 0 // disallow volume gesture if no audio
-                pausedForSeek = 0
-
-                fadeHandler.removeCallbacks(fadeRunnable3)
-                gestureTextView.visibility = View.VISIBLE
-                gestureTextView.text = ""
-            }
-            PropertyChange.Seek -> {
-                // disable seeking when duration is unknown
-                val duration = (psc.duration / 1000f)
-                if (duration == 0f || initialSeek < 0)
-                    return
-                if (smoothSeekGesture && pausedForSeek == 0) {
-                    pausedForSeek = if (psc.pause) 2 else 1
-                    if (pausedForSeek == 1)
-                        player.paused = true
-                }
-
-                val newPosExact = (initialSeek + diff).coerceIn(0f, duration)
-                val newPos = newPosExact.roundToInt()
-                val newDiff = (newPosExact - initialSeek).roundToInt()
-                if (smoothSeekGesture) {
-                    player.timePos = newPosExact.toDouble() // (exact seek)
-                } else {
-                    // seek faster than assigning to timePos but less precise
-                    player.seekToKeyframe(newPosExact)
-                }
-                // Note: don't call updatePlaybackPos() here because mpv will seek a timestamp
-                // actually present in the file, and not the exact one we specified.
-
-                val posText = Utils.prettyTime(newPos)
-                val diffText = Utils.prettyTime(newDiff, true)
-                gestureTextView.text = getString(R.string.ui_seek_distance, posText, diffText)
-            }
-            PropertyChange.Volume -> {
-                if (maxVolume == 0)
-                    return
-                val newVolume = (initialVolume + (diff * maxVolume).toInt()).coerceIn(0, maxVolume)
-                val newVolumePercent = 100 * newVolume / maxVolume
-                audioManager!!.setStreamVolume(STREAM_TYPE, newVolume, 0)
-
-                gestureTextView.text = getString(R.string.ui_volume, newVolumePercent)
-            }
-            PropertyChange.Bright -> {
-                val newBrightPercent = ((initialBright + diff).coerceIn(0f, 1f) * 100).roundToInt()
-                brightness.set(newBrightPercent)
-
-                gestureTextView.text = getString(R.string.ui_brightness, newBrightPercent)
-            }
-            PropertyChange.Finalize -> {
-                if (pausedForSeek == 1)
-                    player.paused = false
-                gestureTextView.visibility = View.GONE
-            }
-
-            /* Tap gestures */
-            PropertyChange.SeekFixed -> {
-                val seekTime = diff * 10f
-                val newPos = psc.positionSec + seekTime.toInt() // only for display
-                player.seekBy(seekTime)
-
-                val diffText = Utils.prettyTime(seekTime.toInt(), true)
-                gestureTextView.text = getString(R.string.ui_seek_distance, Utils.prettyTime(newPos), diffText)
-                fadeGestureText()
-            }
-            PropertyChange.PlayPause -> player.cyclePause()
-            PropertyChange.Custom -> {
-                val keycode = 0x10002 + diff.toInt()
-                player.pressKey(keycode)
-            }
-        }
-    }
-
     companion object {
         private const val TAG = "mpv"
         // how long should controls be displayed on screen (ms)
@@ -1826,8 +1722,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         private const val RCODE_LOAD_FILE = 1002
         // action of result intent
         private const val RESULT_INTENT = "com.molina.player.MPVActivity.result"
-        // stream type used with AudioManager
-        private const val STREAM_TYPE = AudioManager.STREAM_MUSIC
         // precision used by seekbar (1/s)
         private const val SEEK_BAR_PRECISION = 2
     }

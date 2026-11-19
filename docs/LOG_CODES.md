@@ -49,6 +49,7 @@ Aturan:
 | `player.channels-source-cleared` | BEHAV | player/src/main/java/com/molina/player/home/ChannelsSheet.kt |
 | `player.channels-source-set` | BEHAV | player/src/main/java/com/molina/player/home/ChannelsSheet.kt |
 | `player.dialog-pause` | BEHAV | player/src/main/java/com/molina/player/playback/MPVActivityDialogPause.kt |
+| `player.gesture` | BEHAV | player/src/main/java/com/molina/player/gestures/MPVActivityGestures.kt |
 | `player.home-action` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
 | `player.home-menu-open` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
 | `player.home-refresh` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
