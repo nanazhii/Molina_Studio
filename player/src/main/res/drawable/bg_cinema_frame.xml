@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- bingkai luar bergradasi: lapis bawah gradasi, lapis atas hitam diinset 2dp -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:centerColor="@color/molina_cinema_frame_b"
+                android:endColor="@color/molina_cinema_frame_c"
+                android:startColor="@color/molina_cinema_frame_a" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/molina_cinema_bg" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+</layer-list>

@@ -24,4 +24,11 @@
     <string name="channels_close">Tutup</string>
     <string name="player_prev">Sebelumnya</string>
     <string name="player_next">Berikutnya</string>
+    <!-- molina-home-cinema -->
+    <string name="home_cinema_title">Molina Cinema – Home Theater</string>
+    <string name="home_brand">Molina</string>
+    <string name="home_brand_sub">CINEMA · HOME THEATER</string>
+    <string name="home_mode_auto">AUTO</string>
+    <string name="home_input_hint">Cari di YouTube atau tempel tautan</string>
+    <string name="home_help">Tempel tautan atau ketik judul di kolom atas, lalu tekan Putar. Ketuk Saluran untuk daftar TV (M3U).</string>
 </resources>

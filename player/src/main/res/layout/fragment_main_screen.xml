@@ -1,140 +1,298 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- molina-home-menu: tombol menu drop, riwayat Terakhir diputar -->
+<!-- molina-home-cinema: Home MPV gaya Home Theater (bingkai gradasi, 4 kartu menu cepat) -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/molina_cinema_bg"
     android:clipToPadding="false"
     android:fillViewport="true"
     android:overScrollMode="never">
 
     <LinearLayout
+        android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
+        android:layout_margin="14dp"
+        android:background="@drawable/bg_cinema_frame"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="2dp">
 
+        <!-- Baris judul kecil -->
         <LinearLayout
-            android:id="@+id/content"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="36dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp">
 
-            <!-- Panel bergaya jendela Linux Mint: bilah judul + isi -->
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/mpv_logo" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="9dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/home_cinema_title"
+                android:textColor="@color/molina_cinema_text"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="8dp"
+            android:background="@color/molina_cinema_green_dim" />
+
+        <!-- Kotak isi (garis tipis di sekeliling) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_margin="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_cinema_box"
+            android:orientation="vertical"
+            android:padding="13dp">
+
+            <!-- Identitas brand -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_mint_panel"
-                android:orientation="vertical">
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/homeLogo"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/mpv_logo" />
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_mint_header"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingVertical="4dp"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="8dp">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:importantForAccessibility="no"
-                        app:srcCompat="@drawable/mpv_logo" />
+                    android:layout_marginStart="19dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_weight="1"
-                        android:text="@string/mpv_activity"
-                        android:textColor="@android:color/white"
-                        android:textSize="15sp"
+                        android:includeFontPadding="false"
+                        android:text="@string/home_brand"
+                        android:textColor="@color/molina_cinema_green"
+                        android:textSize="26sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/home_subtitle"
-                        android:textColor="@color/molina_text_secondary"
-                        android:textSize="12sp" />
+                        android:layout_marginTop="6dp"
+                        android:letterSpacing="0.2"
+                        android:maxLines="1"
+                        android:text="@string/home_brand_sub"
+                        android:textColor="@color/molina_cinema_blue"
+                        android:textSize="11sp" />
+                </LinearLayout>
 
-                    <ImageButton
-                        android:id="@+id/homeMenuBtn"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_home_menu_button"
-                        android:contentDescription="@string/home_menu_desc"
-                        android:scaleType="center"
-                        android:src="@drawable/ic_home_menu_48dp" />
+                <TextView
+                    android:id="@+id/homeModeBadge"
+                    android:layout_width="49dp"
+                    android:layout_height="31dp"
+                    android:background="@drawable/bg_cinema_pill"
+                    android:gravity="center"
+                    android:letterSpacing="0.1"
+                    android:text="@string/home_mode_auto"
+                    android:textColor="@color/molina_cinema_green"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Kolom tautan / judul -->
+            <EditText
+                android:id="@+id/urlInput"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="21dp"
+                android:background="@drawable/bg_cinema_field"
+                android:hint="@string/home_input_hint"
+                android:imeOptions="actionGo"
+                android:importantForAutofill="no"
+                android:inputType="text|textNoSuggestions"
+                android:maxLines="1"
+                android:paddingHorizontal="16dp"
+                android:singleLine="true"
+                android:textColor="@color/molina_cinema_text"
+                android:textColorHint="@color/molina_cinema_text2"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="9dp"
+                android:orientation="horizontal">
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="401" />
+
+                <Button
+                    android:id="@+id/pasteBtn"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="9dp"
+                    android:layout_weight="227"
+                    android:background="@drawable/bg_cinema_btn"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:padding="0dp"
+                    android:stateListAnimator="@null"
+                    android:text="@string/home_paste"
+                    android:textAllCaps="false"
+                    android:textColor="@color/cinema_btn_text"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/playBtn"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="227"
+                    android:background="@drawable/bg_cinema_btn_primary"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:padding="0dp"
+                    android:stateListAnimator="@null"
+                    android:text="@string/home_play"
+                    android:textAllCaps="false"
+                    android:textColor="@color/cinema_btn_text"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- 4 kartu menu cepat -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="70dp"
+                android:layout_marginTop="14dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/cardFiles"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="9dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_cinema_card"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_cinema_file" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:maxLines="1"
+                        android:text="@string/home_menu_files"
+                        android:textColor="@color/molina_cinema_text"
+                        android:textSize="14sp" />
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:id="@+id/cardChannels"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="9dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_cinema_card"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_cinema_tv" />
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/home_search_label"
-                        android:textColor="@color/molina_text_secondary"
-                        android:textSize="12sp" />
-
-                    <EditText
-                        android:id="@+id/urlInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_mint_field"
-                        android:drawablePadding="8dp"
-                        android:drawableStart="@drawable/ic_search_24dp"
-                        android:drawableTint="@color/molina_text_secondary"
-                        android:hint="@string/hint_url_or_title"
-                        android:imeOptions="actionGo"
-                        android:importantForAutofill="no"
-                        android:inputType="text|textNoSuggestions"
+                        android:layout_marginTop="8dp"
                         android:maxLines="1"
-                        android:paddingHorizontal="12dp"
-                        android:singleLine="true"
-                        android:textColor="@android:color/white"
-                        android:textColorHint="@color/molina_text_secondary"
-                        android:textSize="15sp" />
+                        android:text="@string/home_menu_channels"
+                        android:textColor="@color/molina_cinema_text"
+                        android:textSize="14sp" />
+                </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                <LinearLayout
+                    android:id="@+id/cardSettings"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="9dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_cinema_card"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_settings_black_24dp"
+                        android:tint="@color/molina_cinema_purple" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="8dp"
+                        android:maxLines="1"
+                        android:text="@string/home_menu_settings"
+                        android:textColor="@color/molina_cinema_text"
+                        android:textSize="14sp" />
+                </LinearLayout>
 
-                        <Button
-                            android:id="@+id/pasteBtn"
-                            android:layout_width="0dp"
-                            android:layout_height="44dp"
-                            android:layout_marginEnd="8dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_mint_button"
-                            android:stateListAnimator="@null"
-                            android:text="@string/home_paste"
-                            android:textAllCaps="false"
-                            android:textColor="@android:color/white" />
+                <LinearLayout
+                    android:id="@+id/cardRefresh"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_cinema_card"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical">
 
-                        <Button
-                            android:id="@+id/playBtn"
-                            android:layout_width="0dp"
-                            android:layout_height="44dp"
-                            android:layout_weight="1.4"
-                            android:background="@drawable/bg_mint_button_primary"
-                            android:stateListAnimator="@null"
-                            android:text="@string/home_play"
-                            android:textAllCaps="false"
-                            android:textColor="@color/molina_on_brand_accent"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_cinema_refresh" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:maxLines="1"
+                        android:text="@string/home_menu_refresh"
+                        android:textColor="@color/molina_cinema_text"
+                        android:textSize="14sp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -142,7 +300,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="18dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -151,9 +309,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/home_recent_title"
-                    android:textColor="@color/molina_mint_accent"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textColor="@color/molina_cinema_blue"
+                    android:textSize="15sp" />
 
                 <TextView
                     android:id="@+id/recentClearBtn"
@@ -165,7 +322,7 @@
                     android:paddingHorizontal="10dp"
                     android:paddingVertical="6dp"
                     android:text="@string/home_recent_clear"
-                    android:textColor="@color/molina_mint_text2"
+                    android:textColor="@color/molina_cinema_text2"
                     android:textSize="13sp"
                     android:visibility="gone" />
             </LinearLayout>
@@ -173,34 +330,55 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginTop="4dp"
-                android:background="@color/molina_mint_line" />
+                android:layout_marginTop="8dp"
+                android:background="@color/molina_cinema_box_line" />
 
             <LinearLayout
-                android:id="@+id/recentList"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:orientation="vertical" />
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:minHeight="96dp"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/recentList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/recentEmpty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="14dp"
+                    android:text="@string/home_recent_empty"
+                    android:textColor="@color/molina_cinema_text2"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/molina_cinema_box_line" />
 
             <TextView
-                android:id="@+id/recentEmpty"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:text="@string/home_recent_empty"
-                android:textColor="@color/molina_mint_text2"
+                android:layout_marginTop="12dp"
+                android:lineSpacingExtra="5dp"
+                android:text="@string/home_help"
+                android:textColor="@color/molina_cinema_text2"
                 android:textSize="14sp" />
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switch1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:padding="8dp"
+                android:layout_marginTop="6dp"
                 android:text="@string/option_remember_choice"
-                android:textColor="@color/molina_text_secondary"
-                app:showText="false" />
+                android:textColor="@color/molina_cinema_text2"
+                android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

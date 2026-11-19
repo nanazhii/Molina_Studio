@@ -35,8 +35,9 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
- * Beranda Molina Player (gaya panel Linux Mint): satu kolom untuk tautan ATAU judul (dicari di YouTube),
- * satu tombol "Buka dari perangkat" (berkas, folder, folder dalam folder, pemilih sistem), dan Setelan.
+ * Beranda Molina Cinema (Home Theater): satu kolom untuk tautan ATAU judul (dicari di YouTube),
+ * empat kartu (Berkas, Saluran, Setelan, Segarkan); Berkas membuka satu pemilih untuk berkas dan folder
+ * (subfolder ikut) atau pemilih sistem.
  * Pencarian dan pemutaran tetap ditangani MPVActivity lewat [StreamLoader.searchRequest].
  */
 class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
@@ -56,17 +57,6 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
     private var prevData: String? = null
     private var lastPath = ""
 
-    /** Mode pemilih berkas yang sedang terbuka; menentukan arti folder yang dipilih. */
-    private var pickMode = PickMode.FILE
-
-    private enum class PickMode(val key: String) {
-        FILE("file"), FOLDER("folder"), DEEP("deep");
-
-        companion object {
-            fun of(key: String?): PickMode? = values().firstOrNull { it.key == key }
-        }
-    }
-
     private sealed interface Parsed {
         data class Url(val value: String) : Parsed
         data class Query(val text: String) : Parsed
@@ -77,7 +67,6 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         firstRun = savedInstanceState == null
-        pickMode = PickMode.of(savedInstanceState?.getString(STATE_PICK_MODE)) ?: PickMode.FILE
 
         documentTreeOpener = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
             it?.let { root ->
@@ -142,15 +131,10 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
         home.attach(binding)
 
         if (BuildConfig.DEBUG) {
-            binding.homeMenuBtn.setOnLongClickListener { showDebugMenu(); true }
+            binding.homeLogo.setOnLongClickListener { showDebugMenu(); true }
         }
 
         refreshInputState()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putString(STATE_PICK_MODE, pickMode.key)
     }
 
     override fun onDestroyView() {
@@ -235,27 +219,31 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
     private fun showOpenChooser() {
         OpenChooserSheet.show(requireContext()) { choice ->
             when (choice) {
-                OpenChooserSheet.Choice.FILE -> launchPicker(PickMode.FILE)
-                OpenChooserSheet.Choice.FOLDER -> launchPicker(PickMode.FOLDER)
-                OpenChooserSheet.Choice.FOLDER_DEEP -> launchPicker(PickMode.DEEP)
+                OpenChooserSheet.Choice.LOCAL -> launchPicker()
                 OpenChooserSheet.Choice.SYSTEM -> launchDocTree()
             }
         }
     }
 
-    private fun launchPicker(mode: PickMode) {
-        saveChoice(mode.key)
-        pickMode = mode
-        if (mode != PickMode.FILE) {
-            // pemilih lama memilih folder lewat tekan-lama; beri petunjuk agar tidak membingungkan
-            Toast.makeText(requireContext(), R.string.hint_pick_folder_longpress, Toast.LENGTH_LONG).show()
-        }
+    /** Satu pemilih untuk berkas dan folder: berkas diputar langsung, folder (tekan lama) jadi playlist beserta subfolder. */
+    private fun launchPicker() {
+        saveChoice(KEY_OPEN)
+        Diag.behavior("player", "open-local", "pemilih berkas dibuka")
+        showPickHintOnce()
         val i = Intent(context, FilePickerActivity::class.java)
         i.putExtra("skip", FilePickerActivity.FILE_PICKER)
-        i.putExtra("allow_dir", mode != PickMode.FILE)
+        i.putExtra("allow_dir", true)
         if (lastPath != "")
             i.putExtra("default_path", lastPath)
         filePickerLauncher.launch(i)
+    }
+
+    /** Petunjuk tekan-lama folder tampil sekali saja, bukan setiap kali pemilih dibuka. */
+    private fun showPickHintOnce() {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        if (prefs.getBoolean(KEY_PICK_HINT_SEEN, false)) return
+        prefs.edit().putBoolean(KEY_PICK_HINT_SEEN, true).apply()
+        Toast.makeText(requireContext(), R.string.hint_pick_folder_longpress, Toast.LENGTH_LONG).show()
     }
 
     private fun launchDocTree() {
@@ -270,8 +258,9 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
 
     private fun onPathPicked(path: String) {
         val f = File(path)
-        if (pickMode != PickMode.FILE && f.isDirectory) {
-            playFolder(f, deep = pickMode == PickMode.DEEP)
+        if (f.isDirectory) {
+            Diag.behavior("player", "open-local-folder", "folder dipilih (subfolder ikut)")
+            playFolder(f, deep = true)
         } else {
             playFile(path)
             if (::home.isInitialized) home.recordPlayed(path)
@@ -371,7 +360,7 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
                 filePickerLauncher.launch(i)
             }
             "url" -> focusUrlInput()
-            else -> PickMode.of(type)?.let { launchPicker(it) }
+            KEY_OPEN, "file", "folder", "deep" -> launchPicker() // tiga nilai terakhir: simpanan lama sebelum digabung
         }
     }
 
@@ -402,7 +391,8 @@ class MainScreenFragment : Fragment(R.layout.fragment_main_screen), HomeHost {
     override fun play(target: String) = playFile(target)
 
     companion object {
-        private const val STATE_PICK_MODE = "pick_mode"
+        private const val KEY_OPEN = "open"
+        private const val KEY_PICK_HINT_SEEN = "molina_pick_hint_seen"
         private const val MAX_CONTENT_DP = 560
         private const val CONTENT_MARGIN_DP = 32
 

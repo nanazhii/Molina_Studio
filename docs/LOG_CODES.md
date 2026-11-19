@@ -51,10 +51,11 @@ Aturan:
 | `player.dialog-pause` | BEHAV | player/src/main/java/com/molina/player/playback/MPVActivityDialogPause.kt |
 | `player.gesture` | BEHAV | player/src/main/java/com/molina/player/gestures/MPVActivityGestures.kt |
 | `player.home-action` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
-| `player.home-menu-open` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
 | `player.home-refresh` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
 | `player.home-return` | BEHAV | player/src/main/java/com/molina/player/MainScreenFragment.kt |
 | `player.menu-empty` | BEHAV | player/src/main/java/com/molina/player/menu/MPVActivityMenu.kt |
+| `player.open-local` | BEHAV | player/src/main/java/com/molina/player/MainScreenFragment.kt |
+| `player.open-local-folder` | BEHAV | player/src/main/java/com/molina/player/MainScreenFragment.kt |
 | `player.position-skip-eof` | BEHAV | player/src/main/java/com/molina/player/playback/MPVActivityPosition.kt |
 | `player.recent-cleared` | BEHAV | player/src/main/java/com/molina/player/home/HomeController.kt |
 | `player.recent-failed` | BUG | player/src/main/java/com/molina/player/home/HomeController.kt |

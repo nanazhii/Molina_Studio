@@ -12,11 +12,11 @@ import com.molina.player.databinding.DialogOpenChooserBinding
 import com.molina.player.databinding.ItemOpenOptionBinding
 
 /**
- * Dialog pilihan tombol "Buka dari perangkat" di Home: berkas, folder, folder dalam folder,
+ * Dialog kartu Berkas di Home: satu pemilih untuk berkas dan folder (subfolder ikut),
  * dan pemilih sistem (SAF) untuk penyimpanan tanpa izin berkas. Gaya kartu sama dengan [SearchResultsSheet].
  */
 internal object OpenChooserSheet {
-    enum class Choice { FILE, FOLDER, FOLDER_DEEP, SYSTEM }
+    enum class Choice { LOCAL, SYSTEM }
 
     private const val MAX_WIDTH_DP = 420
 
@@ -28,9 +28,7 @@ internal object OpenChooserSheet {
     )
 
     private val OPTIONS = listOf(
-        Option(Choice.FILE, R.drawable.ic_file_open_48dp, R.string.chooser_file, R.string.chooser_file_sub),
-        Option(Choice.FOLDER, R.drawable.ic_folder_white_48dp, R.string.chooser_folder, R.string.chooser_folder_sub),
-        Option(Choice.FOLDER_DEEP, R.drawable.ic_folders_48dp, R.string.chooser_folder_deep, R.string.chooser_folder_deep_sub),
+        Option(Choice.LOCAL, R.drawable.ic_file_open_48dp, R.string.chooser_file, R.string.chooser_file_sub),
         Option(Choice.SYSTEM, R.drawable.ic_sd_card_white_24dp, R.string.chooser_system, R.string.chooser_system_sub),
     )
 

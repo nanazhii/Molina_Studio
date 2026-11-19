@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/molina_cinema_card" />
+            <stroke android:width="1.5dp" android:color="#6622C55E" />
+            <corners android:radius="4dp" />
+        </shape>
+    </item>
+    <item>
+        <ripple android:color="@color/molina_cinema_ripple">
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/molina_cinema_green_fill" />
+                    <stroke android:width="1.5dp" android:color="@color/molina_cinema_green" />
+                    <corners android:radius="4dp" />
+                </shape>
+            </item>
+        </ripple>
+    </item>
+</selector>

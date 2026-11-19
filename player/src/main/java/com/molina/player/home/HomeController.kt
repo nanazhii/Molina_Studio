@@ -27,10 +27,10 @@ internal class HomeController(private val host: HomeHost, private val scope: Cor
 
     fun attach(b: FragmentMainScreenBinding) {
         binding = b
-        b.homeMenuBtn.setOnClickListener { anchor ->
-            Diag.behavior("player", "home-menu-open", "menu Home dibuka")
-            HomeMenu.show(anchor) { onAction(it) }
-        }
+        b.cardFiles.setOnClickListener { onAction(HomeAction.FILES) }
+        b.cardChannels.setOnClickListener { onAction(HomeAction.CHANNELS) }
+        b.cardSettings.setOnClickListener { onAction(HomeAction.SETTINGS) }
+        b.cardRefresh.setOnClickListener { onAction(HomeAction.REFRESH) }
         b.recentClearBtn.setOnClickListener { clearRecent() }
         renderRecent()
     }

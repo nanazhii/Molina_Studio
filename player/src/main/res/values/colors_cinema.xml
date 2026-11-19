@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-home-cinema: palet Home Theater (hitam pekat + hijau terang) -->
+<resources>
+    <color name="molina_cinema_bg">#070908</color>
+    <color name="molina_cinema_field">#121512</color>
+    <color name="molina_cinema_card">#141714</color>
+    <color name="molina_cinema_green">#22C55E</color>
+    <color name="molina_cinema_green_dim">#1FA84F</color>
+    <color name="molina_cinema_green_fill">#0E2214</color>
+    <color name="molina_cinema_line">#363A36</color>
+    <color name="molina_cinema_box_line">#262B27</color>
+    <color name="molina_cinema_text">#F2F4F2</color>
+    <color name="molina_cinema_text2">#B4BAB5</color>
+    <color name="molina_cinema_blue">#6FA8DC</color>
+    <color name="molina_cinema_purple">#A78BFA</color>
+    <color name="molina_cinema_frame_a">#22C55E</color>
+    <color name="molina_cinema_frame_b">#3B6FE0</color>
+    <color name="molina_cinema_frame_c">#22D3A0</color>
+    <color name="molina_cinema_ripple">#3322C55E</color>
+</resources>
