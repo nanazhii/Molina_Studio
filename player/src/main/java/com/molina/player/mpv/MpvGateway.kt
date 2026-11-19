@@ -10,14 +10,16 @@ import com.molina.player.PlaybackLog
  * Aturan (ditegakkan gerbang R2): kode di luar paket ini tidak memanggil MPVLib.command secara langsung.
  *
  * Yang tercatat per perintah: nama, jumlah argumen, durasi; untuk perintah bertarget (loadfile, audio-add, ...)
- * ditambah target yang disamarkan (URL: skema+host, berkas: nama saja). Nilai argumen lain TIDAK dicatat.
+ * ditambah target yang disamarkan (URL: skema+host, berkas: nama saja); perintah berbasis property (cycle, add, set, ...)
+ * mencatat NAMA property. Nilai argumen lain TIDAK dicatat.
  * Perintah berfrekuensi tinggi ([QUIET_COMMANDS]) hanya dicatat bila gagal atau lambat.
  * Gateway tidak mengubah thread: pemanggil di jalur UI memakai [MpvThread].
  */
 internal object MpvGateway {
     private const val SLOW_MS = 300L
     private val TARGET_COMMANDS = setOf("loadfile", "audio-add", "sub-add", "video-add")
-    private val QUIET_COMMANDS = setOf("seek", "frame-step", "frame-back-step", "show-text")
+    private val PROPERTY_COMMANDS = setOf("cycle", "cycle-values", "add", "set", "multiply")
+    private val QUIET_COMMANDS = setOf("seek", "frame-step", "frame-back-step", "show-text", "keypress", "keydown", "keyup")
 
     /** true bila mpv menerima perintah; false bila kosong atau JNI melempar (sudah tercatat). */
     fun command(args: Array<out String>): Boolean {
@@ -28,7 +30,11 @@ internal object MpvGateway {
         }
         val fields = LinkedHashMap<String, String>()
         fields["args"] = (args.size - 1).toString()
-        if (name in TARGET_COMMANDS && args.size > 1) fields["target"] = PlaybackLog.target(args[1])
+        if (name in TARGET_COMMANDS && args.size > 1) {
+            fields["target"] = PlaybackLog.target(args[1])
+        } else if (name in PROPERTY_COMMANDS && args.size > 1) {
+            fields["prop"] = args[1]
+        }
         val t0 = SystemClock.elapsedRealtime()
         try {
             MPVLib.command(args)

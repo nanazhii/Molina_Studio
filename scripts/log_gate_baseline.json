@@ -18,7 +18,6 @@
   "mpv_direct": {
     "player/src/main/java/com/molina/player/BackgroundPlaybackService.kt": 3,
     "player/src/main/java/com/molina/player/MPVActivity.kt": 42,
-    "player/src/main/java/com/molina/player/MPVView.kt": 47,
     "player/src/main/java/com/molina/player/PlaylistDialog.kt": 1,
     "player/src/main/java/com/molina/player/Utils.kt": 3
   }
