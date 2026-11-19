@@ -32,6 +32,12 @@ internal class PlaylistDialog(private val player: MPVView) {
         fun pickFile()
         fun openUrl()
         fun onItemPicked(item: MPVView.PlaylistItem)
+
+        /** Tombol Exit pada action bar. */
+        fun onExit() {}
+
+        /** Tombol Menu pada action bar (buka menu atas). */
+        fun onMenu() {}
     }
 
     var listeners: Listeners? = null
@@ -47,6 +53,8 @@ internal class PlaylistDialog(private val player: MPVView) {
         binding.urlBtn.setOnClickListener { listeners?.openUrl() }
         binding.searchBtn.setOnClickListener { toggleSearch() }
         binding.infoBtn.setOnClickListener { showInfo() }
+        binding.menuBtn.setOnClickListener { listeners?.onMenu() }
+        binding.exitBtn.setOnClickListener { listeners?.onExit() }
         binding.shuffleBtn.setOnClickListener {
             player.changeShuffle(true)
             refresh()
@@ -91,9 +99,9 @@ internal class PlaylistDialog(private val player: MPVView) {
         binding.list.post { binding.list.parent.requestLayout() }
 
         val ctx = binding.root.context
-        val accent = ContextCompat.getColor(ctx, R.color.molina_cinema_green)
-        val normal = ContextCompat.getColor(ctx, R.color.molina_cinema_text2)
-        val disabled = ContextCompat.getColor(ctx, R.color.molina_cinema_line)
+        val accent = ContextCompat.getColor(ctx, R.color.molina_tv_active)
+        val normal = ContextCompat.getColor(ctx, R.color.molina_tv_text)
+        val disabled = ContextCompat.getColor(ctx, R.color.alpha_disabled)
 
         binding.countText.text = ChannelRows.counter(playingNumber(), allRows.size)
 
@@ -179,10 +187,9 @@ internal class PlaylistDialog(private val player: MPVView) {
                 textView.text = row.title
                 itemView.setBackgroundResource(
                     if (selected) R.drawable.bg_channel_selected else R.drawable.bg_channel_row)
-                val color = ContextCompat.getColor(
-                    ctx, if (selected) R.color.molina_cinema_green else R.color.molina_cinema_text)
-                textView.setTextColor(color)
-                numberView.setTextColor(color)
+                textView.setTextColor(ContextCompat.getColor(ctx, R.color.molina_tv_text))
+                numberView.setTextColor(ContextCompat.getColor(
+                    ctx, if (selected) R.color.molina_tv_text else R.color.molina_tv_number))
             }
         }
 

@@ -92,9 +92,16 @@ internal class MPVActivityPlaylist(
                 MpvProperties.setInt("playlist-pos", item.index)
                 dialog.dismiss()
             }
+
+            override fun onExit() = dialog.dismiss()
+
+            override fun onMenu() {
+                dialog.dismiss()
+                host.openTopMenu()
+            }
         }
 
-        dialog = with (AlertDialog.Builder(activity)) {
+        dialog = with (AlertDialog.Builder(activity, R.style.MolinaPlayerTheme_PlayerDialog)) {
             val inflater = LayoutInflater.from(context)
             setView(impl.buildView(inflater))
             setOnDismissListener { restore() }

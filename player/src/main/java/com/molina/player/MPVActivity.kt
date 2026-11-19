@@ -113,6 +113,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver {
                 openFilePickerFor(RCODE_LOAD_FILE, "", skip, callback)
             override fun loadStream(path: String, onQueued: () -> Unit) =
                 streamPlayback.load(path, MpvLoadFlag.APPEND, onQueued)
+            override fun openTopMenu() = this@MPVActivity.openTopMenu()
         })
     }
     private val menu by lazy { MPVActivityMenu(this) { player } }

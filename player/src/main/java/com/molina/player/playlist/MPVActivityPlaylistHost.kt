@@ -12,4 +12,7 @@ internal interface MPVActivityPlaylistHost {
 
     /** Tambah ke daftar putar lewat jalur stream (pencarian judul, resolver); [onQueued] dipanggil setelah antre. */
     fun loadStream(path: String, onQueued: () -> Unit)
+
+    /** Tombol Menu pada daftar putar: buka menu atas pemutar. */
+    fun openTopMenu()
 }

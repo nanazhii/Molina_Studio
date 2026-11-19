@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Tombol aksi ala remote TV: ikon di atas, label kecil di bawah (sama dengan repo lama) -->
     <style name="Widget.Molina.TvKey" parent="Widget.AppCompat.Button.Borderless">
         <item name="android:background">@drawable/bg_tv_action_key</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/molina_tv_text</item>
+        <item name="android:drawableTint">@color/molina_tv_text</item>
+        <item name="android:drawablePadding">2dp</item>
         <item name="android:minWidth">0dp</item>
-        <item name="android:paddingVertical">6dp</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:textColor">@color/molina_cinema_text2</item>
-        <item name="android:textSize">11sp</item>
-        <item name="android:drawableTint">@color/molina_cinema_text2</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <!-- Dialog pemutar: latar hitam, teks putih (sama dengan AppTheme.PlayerDialog repo lama) -->
+    <style name="MolinaPlayerTheme.PlayerDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="colorBackgroundFloating">@color/molina_tv_bg</item>
+        <item name="android:colorBackgroundFloating">@color/molina_tv_bg</item>
+        <item name="android:textColorPrimary">@color/molina_tv_text</item>
+        <item name="android:textColorSecondary">@color/molina_tv_text2</item>
+        <item name="colorAccent">@color/molina_tv_text</item>
+        <item name="dialogCornerRadius">28dp</item>
     </style>
 </resources>

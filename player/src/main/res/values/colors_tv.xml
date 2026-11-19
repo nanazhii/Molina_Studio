@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-tv-playlist: palet daftar putar/dialog pemutar, disalin dari repo lama -->
+<resources>
+    <color name="molina_tv_bg">#0F0F0F</color>
+    <color name="molina_tv_text">#FFFFFF</color>
+    <color name="molina_tv_text2">#B3FFFFFF</color>
+    <color name="molina_tv_active">#2ECC71</color>
+    <color name="molina_tv_row_top">#1C2430</color>
+    <color name="molina_tv_row_bottom">#121821</color>
+    <color name="molina_tv_row_line">#26FFFFFF</color>
+    <color name="molina_tv_sel_fill">#0E2A1A</color>
+    <color name="molina_tv_number">#C8E600</color>
+    <color name="molina_tv_key_focus">#262ECC71</color>
+</resources>
