@@ -70,10 +70,29 @@ class DebianYtDlpWorker(
 
     private fun lexists(f: File): Boolean = f.exists() || Files.isSymbolicLink(f.toPath())
 
-    override fun isInstalled(): Boolean {
-        val venv = File(layout().rootfsDir, "root/molina-venv")
-        if (!lexists(File(venv, "bin/python"))) return false
-        return File(venv, "lib").listFiles()?.any { File(it, "site-packages/yt_dlp").isDirectory } == true
+    override fun isInstalled(): Boolean = findPython() != null
+
+    /**
+     * Jalur python di dalam guest yang bisa mengimpor yt_dlp, atau null. venv Molina diutamakan;
+     * cadangan: python sistem dengan yt_dlp dari apt, pip global, atau pip --user.
+     */
+    private fun findPython(): String? {
+        val root = layout().rootfsDir
+        val venv = File(root, "root/molina-venv")
+        if (lexists(File(venv, "bin/python")) &&
+            File(venv, "lib").listFiles()?.any { File(it, "site-packages/yt_dlp").isDirectory } == true
+        ) {
+            return PYTHON
+        }
+        if (!lexists(File(root, "usr/bin/python3"))) return null
+        for (base in SYSTEM_PY_LIBS) {
+            val hit = File(root, base).listFiles()?.any { d ->
+                d.name.startsWith("python3") &&
+                    (File(d, "dist-packages/yt_dlp").isDirectory || File(d, "site-packages/yt_dlp").isDirectory)
+            } == true
+            if (hit) return SYSTEM_PYTHON
+        }
+        return null
     }
 
     /** Tulis skrip worker dan skrip pasang ke rootfs (idempotent). Dipanggil di luar main thread. */
@@ -154,12 +173,12 @@ class DebianYtDlpWorker(
     }
 
     private fun startSession(): Session {
-        if (!isInstalled()) throw Unavailable("NOT_INSTALLED", "yt-dlp belum terpasang")
+        val py = findPython() ?: throw Unavailable("NOT_INSTALLED", "yt-dlp belum terpasang")
         val l = layout()
         if (!l.isProotReady()) throw Unavailable("NOT_INSTALLED", "proot belum siap")
         runCatching { ensureFiles() }
 
-        val args = SevenZipCommand.prootArgsScoped(l.rootfsDir.path, emptyList(), PYTHON, listOf(SCRIPT))
+        val args = SevenZipCommand.prootArgsScoped(l.rootfsDir.path, emptyList(), py, listOf(SCRIPT))
         val pb = ProcessBuilder(listOf(l.prootBin.path) + args)
             .directory(context.filesDir)
             // stderr dibuang (bisa memuat URL). Redirect.DISCARD tidak tersedia di semua API Android, jadi pakai /dev/null.
@@ -259,11 +278,13 @@ class DebianYtDlpWorker(
     private companion object {
         const val TAG = "Molina/ytdlp"
         const val PYTHON = "/root/molina-venv/bin/python"
+        const val SYSTEM_PYTHON = "/usr/bin/python3"
+        val SYSTEM_PY_LIBS = listOf("usr/local/lib", "usr/lib", "root/.local/lib")
         const val SCRIPT = "/root/.molina/ytdlp_worker.py"
         const val EOF = "\u0000EOF"
         const val READY_TIMEOUT_MS = 30_000L
         const val REQUEST_TIMEOUT_MS = 45_000L
-        const val IDLE_MS = 5 * 60_000L
+        const val IDLE_MS = 90_000L
         const val REAPER_TICK_MS = 30_000L
         const val KILL_GRACE_MS = 800L
     }
