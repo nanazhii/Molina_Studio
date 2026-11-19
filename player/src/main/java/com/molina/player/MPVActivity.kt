@@ -9,10 +9,8 @@ import android.app.ForegroundServiceStartNotAllowedException
 import androidx.appcompat.app.AlertDialog
 import android.app.PictureInPictureParams
 import android.app.RemoteAction
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -45,9 +43,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
-import androidx.media.AudioAttributesCompat
-import androidx.media.AudioFocusRequestCompat
-import androidx.media.AudioManagerCompat
 import java.io.File
 import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
@@ -64,6 +59,7 @@ import com.molina.player.playback.MPVActivityOnLoad
 import com.molina.player.playback.MPVActivityRepeat
 import com.molina.player.playback.MPVActivityStats
 import com.molina.player.audio.MPVActivityAudioPresence
+import com.molina.player.audio.MPVActivityAudioFocus
 import com.molina.player.menu.MPVActivityMenu
 import com.molina.player.playback.MPVActivityPosition
 import com.molina.player.menu.MPVActivityMenu.MenuItem
@@ -99,8 +95,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     private var toast: Toast? = null
 
     private var audioManager: AudioManager? = null
-    private var audioFocusRequest: AudioFocusRequestCompat? = null
-    private var audioFocusRestore: () -> Unit = {}
 
     private val psc = Utils.PlaybackStateCache()
     private var mediaSession: MediaSessionCompat? = null
@@ -121,6 +115,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     private val menu by lazy { MPVActivityMenu(this) { player } }
     private val position = MPVActivityPosition()
     private val audioPresence = MPVActivityAudioPresence()
+    private val audioFocus = MPVActivityAudioFocus(this, { audioManager }, { player }, { isFinishing })
     private val loopModes by lazy { MPVActivityRepeat { player } }
     private val stats = MPVActivityStats()
     private val onload = MPVActivityOnLoad()
@@ -143,15 +138,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         }
     }
 
-    private var becomingNoisyReceiverRegistered = false
-    private val becomingNoisyReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == AudioManager.ACTION_AUDIO_BECOMING_NOISY) {
-                onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS, "noisy")
-            }
-        }
-    }
-
+    // Fade out controls
     // Fade out controls
     private val fadeRunnable = object : Runnable {
         var hasStarted = false
@@ -213,7 +200,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     private var rememberBrightness = false
     private var lastScreenBrightness = -1
 
-    private var ignoreAudioFocus = false
     private var playlistExitWarning = true
     private var newIntentReplace = false
 
@@ -443,10 +429,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         activityIsForeground = false
         MPVLib.removeLogObserver(errorLogObserver)
 
-        if (becomingNoisyReceiverRegistered) {
-            unregisterReceiver(becomingNoisyReceiver)
-            becomingNoisyReceiverRegistered = false
-        }
+        audioFocus.release()
 
         with (BackgroundPlaybackService) {
             mediaToken = null
@@ -457,11 +440,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
             it.release()
         }
         mediaSession = null
-
-        audioFocusRequest?.let {
-            AudioManagerCompat.abandonAudioFocusRequest(audioManager!!, it)
-        }
-        audioFocusRequest = null
 
         // take the background service with us
         stopServiceRunnable.run()
@@ -585,7 +563,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
             prefs.getInt("last_screen_brightness", -1)
         else
             -1
-        this.ignoreAudioFocus = prefs.getBoolean("ignore_audio_focus", false)
+        audioFocus.ignore = prefs.getBoolean("ignore_audio_focus", false)
         this.playlistExitWarning = prefs.getBoolean("playlist_exit_warning", true)
         this.newIntentReplace = prefs.getBoolean("new_intent_replace", false)
         this.smoothSeekGesture = prefs.getBoolean("seek_gesture_smooth", false)
@@ -641,86 +619,11 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     }
 
     /**
-     * Requests or abandons audio focus and noisy receiver depending on the playback state.
+     * Selaraskan fokus audio dan penerima noisy dengan status putar (tidak jeda kecuali jeda cache, dan audio keluar).
      * @warning Call from event thread, not UI thread
      */
     private fun handleAudioFocus() {
-        if ((psc.pause && !psc.cachePause) || !audioPresence.isPlaying) {
-            if (becomingNoisyReceiverRegistered)
-                unregisterReceiver(becomingNoisyReceiver)
-            becomingNoisyReceiverRegistered = false
-            // TODO: could abandon audio focus after a timeout
-        } else {
-            if (!becomingNoisyReceiverRegistered)
-                registerReceiver(
-                    becomingNoisyReceiver,
-                    IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
-                )
-            becomingNoisyReceiverRegistered = true
-            // (re-)request audio focus
-            // Note that this will actually request focus every time the user unpauses, refer to discussion in #1066
-            if (requestAudioFocus()) {
-                onAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN, "request")
-            } else {
-                onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS, "request")
-            }
-        }
-    }
-
-    private fun requestAudioFocus(): Boolean {
-        val manager = audioManager ?: return false
-        val req = audioFocusRequest ?:
-            with(AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)) {
-            setAudioAttributes(with(AudioAttributesCompat.Builder()) {
-                // N.B.: libmpv may use different values in ao_audiotrack, but here we always pretend to be music.
-                setUsage(AudioAttributesCompat.USAGE_MEDIA)
-                setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
-                build()
-            })
-            setOnAudioFocusChangeListener {
-                onAudioFocusChange(it, "callback")
-            }
-            build()
-        }
-        val res = AudioManagerCompat.requestAudioFocus(manager, req)
-        if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            audioFocusRequest = req
-            return true
-        }
-        return false
-    }
-
-    // This handles both "real" audio focus changes by the callbacks, which aren't
-    // really used anymore after Android 12 (except for AUDIOFOCUS_LOSS),
-    // as well as actions equivalent to a focus change that we make up ourselves.
-    private fun onAudioFocusChange(type: Int, source: String) {
-        Log.v(TAG, "Audio focus changed: $type ($source)")
-        if (ignoreAudioFocus || isFinishing)
-            return
-        when (type) {
-            AudioManager.AUDIOFOCUS_LOSS,
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                // loss can occur in addition to ducking, so remember the old callback
-                val oldRestore = audioFocusRestore
-                val wasPlayerPaused = player.paused ?: false
-                player.paused = true
-                audioFocusRestore = {
-                    oldRestore()
-                    if (!wasPlayerPaused) player.paused = false
-                }
-            }
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                MPVLib.command(arrayOf("multiply", "volume", AUDIO_FOCUS_DUCKING.toString()))
-                audioFocusRestore = {
-                    val inv = 1f / AUDIO_FOCUS_DUCKING
-                    MPVLib.command(arrayOf("multiply", "volume", inv.toString()))
-                }
-            }
-            AudioManager.AUDIOFOCUS_GAIN -> {
-                audioFocusRestore()
-                audioFocusRestore = {}
-            }
-        }
+        audioFocus.sync(!(psc.pause && !psc.cachePause) && audioPresence.isPlaying)
     }
 
     // UI
@@ -1955,8 +1858,6 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         private const val CONTROLS_FADE_DURATION = 500L
         // smallest aspect ratio that is considered non-square
         private const val ASPECT_RATIO_MIN = 1.2f // covers 5:4 and up
-        // fraction to which audio volume is ducked on loss of audio focus
-        private const val AUDIO_FOCUS_DUCKING = 0.5f
         // request codes for invoking other activities
         private const val RCODE_EXTERNAL_AUDIO = 1000
         private const val RCODE_EXTERNAL_SUB = 1001
