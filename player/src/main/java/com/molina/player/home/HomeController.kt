@@ -62,12 +62,16 @@ internal class HomeController(private val host: HomeHost, private val scope: Cor
     }
 
     private fun showChannels() {
-        ChannelsSheet(host.hostContext(), channels, scope, { onPicked -> host.pickChannelFile(onPicked) }) { playChannel(it) }.show()
+        ChannelsSheet(host.hostContext(), channels, scope) { picked, all -> playChannel(picked, all) }.show()
     }
 
-    private fun playChannel(channel: Channel) {
-        Diag.behavior("player", "channels-play", "saluran dibuka", mapOf("target" to PlaybackLog.target(channel.url)))
-        host.play(channel.url)
+    /** Memutar saluran terpilih sebagai antrean seluruh daftar (prev/next = ganti saluran). */
+    private fun playChannel(channel: Channel, all: List<Channel>) {
+        val queue = ChannelPlayback.queue(channel, all)
+        Diag.behavior("player", "channels-play", "saluran dibuka", mapOf(
+            "target" to PlaybackLog.target(channel.url), "queue" to queue.size.toString(),
+        ))
+        host.play(ChannelPlayback.target(queue) ?: channel.url)
         recordPlayed(channel.url, channel.name)
     }
 
