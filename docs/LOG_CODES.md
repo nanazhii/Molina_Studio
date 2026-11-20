@@ -89,3 +89,6 @@ Aturan:
 | `player.cover-none` | BEHAV | player/src/main/java/com/molina/player/nowplaying/CoverArt.kt |
 | `player.cover-oom` | BUG | player/src/main/java/com/molina/player/nowplaying/CoverArt.kt |
 | `player.cover-failed` | BUG | player/src/main/java/com/molina/player/nowplaying/CoverArt.kt |
+| `ytdlp.install-done` | BEHAV | app/src/main/java/com/molina/studio/DebianYtDlpInstaller.kt |
+| `ytdlp.install-failed` | BUG | app/src/main/java/com/molina/studio/DebianYtDlpInstaller.kt |
+| `ytdlp.install-start` | BEHAV | app/src/main/java/com/molina/studio/DebianYtDlpInstaller.kt |

@@ -10,6 +10,7 @@
 #           ERR <id> <KODE> <pesan>
 # Hanya protokol ini yang boleh ke stdout. Log dibuang; URL dan cookie tidak pernah ditulis ke stderr.
 # Cookie opsional: ~/.config/molina/cookies.txt (format Netscape), dibaca bila ada.
+import gc
 import os
 import re
 import sys
@@ -19,6 +20,8 @@ PROTO = sys.stdout
 sys.stdout = sys.stderr  # print() nyasar dari pustaka tidak boleh merusak protokol
 
 COOKIE_FILE = os.path.expanduser("~/.config/molina/cookies.txt")
+# molina-ytdlp-install: zipapp yt-dlp (satu berkas, dipasang pasang_ytdlp.sh). Bila ada, diimpor langsung dari zip.
+ZIPAPP = os.path.expanduser("~/.molina/yt-dlp")
 # Satu berkas bila ada (sudah berisi audio); selain itu pasangan video + audio. Maksimal 1080p.
 FORMAT = "bv*[height<=?1080]+ba/b[height<=?1080]/b"
 # Hanya header ini yang diteruskan ke mpv. Accept-Encoding dan sejenisnya SENGAJA dibuang: mpv tidak
@@ -162,7 +165,25 @@ def close_quietly(ydl):
         pass
 
 
+_libc = None
+
+
+def trim_memory():
+    # Hemat RAM: kumpulkan sampah siklik lalu kembalikan heap glibc yang bebas ke sistem setelah tiap permintaan.
+    global _libc
+    gc.collect()
+    try:
+        if _libc is None:
+            import ctypes
+            _libc = ctypes.CDLL("libc.so.6")
+        _libc.malloc_trim(0)
+    except Exception:
+        pass
+
+
 def main():
+    if os.path.isfile(ZIPAPP):
+        sys.path.insert(0, ZIPAPP)
     try:
         import yt_dlp
     except Exception:
@@ -170,6 +191,8 @@ def main():
         return 3
     version = getattr(getattr(yt_dlp, "version", None), "__version__", "")
     send("READY", enc(version))
+    gc.collect()
+    gc.freeze()  # objek hasil import tidak lagi dipindai GC: kumpulkan-sampah per permintaan jadi murah
     ydl = None
     stamp = None
     for line in sys.stdin:
@@ -198,6 +221,8 @@ def main():
             break
         except Exception as exc:
             send("ERR", rid, classify(exc), enc(scrub(exc)))
+        info = None
+        trim_memory()
     if ydl is not None:
         close_quietly(ydl)
     return 0

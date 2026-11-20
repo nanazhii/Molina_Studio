@@ -2,17 +2,13 @@
 package com.molina.studio
 
 import android.content.Context
-import android.os.Build
 import android.os.SystemClock
 import android.util.Log
 import com.molina.core.common.ProcessReaper
-import com.molina.core.common.SevenZipCommand
 import com.molina.core.common.stream.YtDlpProtocol
 import com.molina.core.common.stream.YtDlpReply
 import com.molina.core.common.stream.YtDlpRunner
 import com.molina.terminal.proot.DebianLayout
-import com.molina.terminal.proot.ProotCompat
-import com.molina.terminal.proot.ProotExec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -37,8 +33,9 @@ import java.util.concurrent.atomic.AtomicLong
  *
  * - Permintaan diserialkan (satu per satu). Dibatalkan = balasan basi dilewati lewat id; timeout = proses dimatikan.
  * - Worker dimatikan saat diam [idleMs] atau saat sistem kekurangan memori ([shutdown]); start ulang otomatis.
- * - Pemasangan yt-dlp dilakukan pengguna lewat `~/.molina/pasang_ytdlp.sh` di Terminal. Berkas itu dan skrip worker
- *   ditulis ke rootfs oleh [ensureFiles].
+ * - Pemasangan yt-dlp: tombol "Pasang otomatis" di pemutar ([DebianYtDlpInstaller]) atau manual lewat
+ *   `~/.molina/pasang_ytdlp.sh` di Terminal. Skrip itu dan skrip worker ditulis ke rootfs oleh [ensureFiles]
+ *   (juga otomatis oleh [isInstalled] bila hilang, mis. setelah rootfs di-reset).
  * - Tanpa shell: argumen dan stdin tidak pernah ditafsirkan. stderr dibuang (bisa memuat URL), URL tidak masuk log.
  */
 class DebianYtDlpWorker(
@@ -70,7 +67,18 @@ class DebianYtDlpWorker(
 
     private fun lexists(f: File): Boolean = f.exists() || Files.isSymbolicLink(f.toPath())
 
-    override fun isInstalled(): Boolean = findPython() != null
+    override fun isInstalled(): Boolean {
+        syncFilesIfMissing()
+        return findPython() != null
+    }
+
+    /** Rootfs baru (atau di-reset) tidak punya ~/.molina; tulis ulang agar pasang_ytdlp.sh selalu tersedia. */
+    private fun syncFilesIfMissing() {
+        val dir = File(layout().rootfsDir, "root/.molina")
+        if (!File(dir, "pasang_ytdlp.sh").isFile || !File(dir, "ytdlp_worker.py").isFile) {
+            runCatching { ensureFiles() }
+        }
+    }
 
     /**
      * Jalur python di dalam guest yang bisa mengimpor yt_dlp, atau null. venv Molina diutamakan;
@@ -78,6 +86,8 @@ class DebianYtDlpWorker(
      */
     private fun findPython(): String? {
         val root = layout().rootfsDir
+        // molina-ytdlp-install: zipapp (satu berkas, tanpa venv/pip) diutamakan; python3 sistem cukup mengimpornya.
+        if (File(root, "root/.molina/yt-dlp").isFile && lexists(File(root, "usr/bin/python3"))) return SYSTEM_PYTHON
         val venv = File(root, "root/molina-venv")
         if (lexists(File(venv, "bin/python")) &&
             File(venv, "lib").listFiles()?.any { File(it, "site-packages/yt_dlp").isDirectory } == true
@@ -96,12 +106,13 @@ class DebianYtDlpWorker(
     }
 
     /** Tulis skrip worker dan skrip pasang ke rootfs (idempotent). Dipanggil di luar main thread. */
-    fun ensureFiles() {
+    fun ensureFiles(): Boolean {
         val l = layout()
-        if (!l.isRootfsInstalled()) return
+        if (!l.isRootfsInstalled()) return false
         val dir = File(l.rootfsDir, "root/.molina").apply { mkdirs() }
         writeAsset("molina/ytdlp_worker.py", File(dir, "ytdlp_worker.py"))
         writeAsset("molina/pasang_ytdlp.sh", File(dir, "pasang_ytdlp.sh"))
+        return true
     }
 
     private fun writeAsset(name: String, dst: File) {
@@ -178,20 +189,7 @@ class DebianYtDlpWorker(
         if (!l.isProotReady()) throw Unavailable("NOT_INSTALLED", "proot belum siap")
         runCatching { ensureFiles() }
 
-        val args = SevenZipCommand.prootArgsScoped(l.rootfsDir.path, emptyList(), py, listOf(SCRIPT))
-        val pb = ProcessBuilder(listOf(l.prootBin.path) + args)
-            .directory(context.filesDir)
-            // stderr dibuang (bisa memuat URL). Redirect.DISCARD tidak tersedia di semua API Android, jadi pakai /dev/null.
-            .redirectError(File("/dev/null"))
-        pb.environment().apply {
-            clear()
-            putAll(
-                ProotExec.env(
-                    l, context.filesDir.absolutePath,
-                    noSeccomp = Build.VERSION.SDK_INT <= Build.VERSION_CODES.O_MR1, compat = ProotCompat.enabled,
-                ),
-            )
-        }
+        val pb = DebianExec.builder(context, py, listOf(SCRIPT)) ?: throw Unavailable("NOT_INSTALLED", "proot belum siap")
         val proc = try {
             pb.start()
         } catch (e: IOException) {
@@ -284,8 +282,8 @@ class DebianYtDlpWorker(
         const val EOF = "\u0000EOF"
         const val READY_TIMEOUT_MS = 30_000L
         const val REQUEST_TIMEOUT_MS = 45_000L
-        const val IDLE_MS = 90_000L
-        const val REAPER_TICK_MS = 30_000L
+        const val IDLE_MS = 45_000L // molina-ytdlp-install: proses Python tidak ditahan lama; start ulang ±3,7 dtk
+        const val REAPER_TICK_MS = 15_000L
         const val KILL_GRACE_MS = 800L
     }
 }

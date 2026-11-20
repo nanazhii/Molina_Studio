@@ -230,6 +230,21 @@
     <string name="search_failed">Pencarian gagal. Periksa koneksi lalu coba lagi.</string>
     <string name="hint_url_or_title">Tautan atau judul video</string>
     <string name="error_resolve_install_ytdlp">Mesin ekstraksi (yt-dlp) belum terpasang. Di Molina Terminal jalankan: sh ~/.molina/pasang_ytdlp.sh</string>
+    <string name="ytdlp_install_prompt">Mesin ekstraksi (yt-dlp) belum terpasang. Pasang otomatis sekarang? Unduhan sekitar 3 MB dan perlu internet.</string>
+    <string name="ytdlp_install_action">Pasang otomatis</string>
+    <string name="ytdlp_install_cancel">Batal</string>
+    <string name="ytdlp_install_title">Memasang mesin ekstraksi</string>
+    <string name="ytdlp_stage_packages">Menyiapkan python3…</string>
+    <string name="ytdlp_stage_download">Mengunduh yt-dlp…</string>
+    <string name="ytdlp_stage_verify">Memeriksa keaslian berkas…</string>
+    <string name="ytdlp_stage_test">Menguji mesin…</string>
+    <string name="ytdlp_install_done">Mesin ekstraksi terpasang. Memutar ulang…</string>
+    <string name="ytdlp_fail_no_rootfs">Debian belum terpasang. Buka Molina Terminal sekali untuk menyiapkannya, lalu coba lagi.</string>
+    <string name="ytdlp_fail_network">Gagal mengunduh. Periksa koneksi internet lalu coba lagi.</string>
+    <string name="ytdlp_fail_packages">Gagal memasang python3 di Debian.</string>
+    <string name="ytdlp_fail_hash">Berkas unduhan tidak lolos pemeriksaan keaslian; pemasangan dibatalkan.</string>
+    <string name="ytdlp_fail_busy">Pemasangan sedang berjalan.</string>
+    <string name="ytdlp_fail_generic">Pemasangan gagal. Coba lagi, atau jalankan di Molina Terminal: sh ~/.molina/pasang_ytdlp.sh</string>
     <string name="error_resolve_need_cookies">Video ini butuh login. Letakkan cookies.txt di ~/.config/molina/ pada Debian, lalu coba lagi.</string>
     <!-- molina-home-mint -->
     <string name="home_subtitle">Home Theater</string>

@@ -16,6 +16,7 @@ import com.molina.core.common.stream.ChainStreamResolver
 import com.molina.core.common.stream.DirectResolver
 import com.molina.core.common.stream.GenericPageResolver
 import com.molina.core.common.stream.HttpPageFetcher
+import com.molina.core.common.stream.YtDlpInstallerRegistry
 import com.molina.core.common.stream.YtDlpResolver
 import com.molina.core.security.UrlPolicy
 import com.molina.engine.newpipe.NewPipeStreamResolver
@@ -27,7 +28,7 @@ import com.molina.log.MolinaLogSetup
 class MolinaApplication : Application() {
     /** Cache hasil resolve; dipangkas saat sistem kekurangan memori. */
     private var resolverCache: CachingStreamResolver? = null
-    private var ytDlpWorker: DebianYtDlpWorker? = null // molina-wave3
+    private val ytDlpWorkerLazy = lazy { DebianYtDlpWorker(this) } // molina-wave3: dibagi resolver dan pemasang
 
     override fun onCreate() {
         super.onCreate()
@@ -43,14 +44,12 @@ class MolinaApplication : Application() {
         ShieldBootstrap.start(this)
         SevenZipBackend.writer = DebianSevenZip(this) // molina-27q: 7z bersandi lewat Debian
         LocalPickerRegistry.install(MolinaLocalPicker()) // molina-picker: pemutar memilih berkas lewat file manager Molina
+        YtDlpInstallerRegistry.install(DebianYtDlpInstaller(this) { ytDlpWorkerLazy.value }) // molina-ytdlp-install: tombol "Pasang otomatis"
         // molina-wave2: rantai resolver ringan -> berat, dibuat malas saat resolusi pertama.
         StreamResolverRegistry.install {
             val policy = { url: String -> UrlPolicy.check(url) is UrlPolicy.Verdict.Allowed }
             // molina-wave3: yt-dlp (TikTok/Facebook) lewat worker Python persisten di Debian; berkas worker ditulis saat ini.
-            val ytDlp = DebianYtDlpWorker(this).also { w ->
-                ytDlpWorker = w
-                runCatching { w.ensureFiles() }
-            }
+            val ytDlp = ytDlpWorkerLazy.value.also { w -> runCatching { w.ensureFiles() } }
             CachingStreamResolver(
                 ChainStreamResolver(
                     listOf(
@@ -70,7 +69,7 @@ class MolinaApplication : Application() {
         super.onTrimMemory(level)
         if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
             resolverCache?.clear()
-            ytDlpWorker?.shutdown() // molina-wave3: proses Python di PRoot makan RAM; start ulang otomatis
+            if (ytDlpWorkerLazy.isInitialized()) ytDlpWorkerLazy.value.shutdown() // molina-wave3: proses Python di PRoot makan RAM; start ulang otomatis
         }
         val rt = Runtime.getRuntime()
         val javaMb = (rt.totalMemory() - rt.freeMemory()) shr 20

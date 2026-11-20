@@ -1,14 +1,20 @@
 package com.molina.player.stream
 
 import androidx.appcompat.app.AlertDialog
+import com.molina.core.common.FailureAction
 import com.molina.core.common.StreamSearchItem
 import com.molina.core.common.stream.EngineLabel
+import com.molina.core.common.stream.YtDlpInstallResult
+import com.molina.core.common.stream.YtDlpInstallStage
+import com.molina.core.common.stream.YtDlpInstaller
+import com.molina.core.common.stream.YtDlpInstallerRegistry
 import com.molina.player.mpv.MpvGateway
 import com.molina.player.mpv.MpvThread
 import com.molina.player.PlaybackLog
 import com.molina.player.R
 import com.molina.player.StreamLoader
 import com.molina.player.search.SearchResultsSheet
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -26,6 +32,7 @@ internal class StreamPlaybackCoordinator(private val host: StreamPlaybackHost) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val mpvThread = MpvThread()
     private var resolveJob: Job? = null
+    private var installJob: Job? = null
     @Volatile private var pendingAudioUrl: String? = null
 
     /**
@@ -63,7 +70,12 @@ internal class StreamPlaybackCoordinator(private val host: StreamPlaybackHost) {
                 }
                 is StreamLoader.Prepared.Failed -> {
                     PlaybackLog.failed(p.error, p.action)
-                    showFailure(ResolveMessages.of(host.activity, p.error, p.action), initial)
+                    val installer = YtDlpInstallerRegistry.get()
+                    if (p.action == FailureAction.INSTALL_YTDLP && installer != null) {
+                        showInstallPrompt(installer, raw, flag, onQueued, initial) // molina-ytdlp-install
+                    } else {
+                        showFailure(ResolveMessages.of(host.activity, p.error, p.action), initial)
+                    }
                 }
                 is StreamLoader.Prepared.Blocked -> {
                     PlaybackLog.blocked(p.reason)
@@ -137,6 +149,62 @@ internal class StreamPlaybackCoordinator(private val host: StreamPlaybackHost) {
             .setPositiveButton(R.string.dialog_ok) { _, _ -> host.finishCanceled() }
             .setOnCancelListener { host.finishCanceled() }
             .show()
+    }
+
+    /**
+     * molina-ytdlp-install: yt-dlp belum terpasang. Tawarkan pasang otomatis lewat kontrak [YtDlpInstaller]
+     * (pemutar tidak mengenal Debian/PRoot) alih-alih menyuruh pengguna menyalin perintah ke Terminal.
+     */
+    private fun showInstallPrompt(installer: YtDlpInstaller, raw: String, flag: String?, onQueued: (() -> Unit)?, initial: Boolean) {
+        host.hideLoading()
+        if (host.isGone) return
+        fun decline() {
+            if (initial) host.finishCanceled()
+        }
+        AlertDialog.Builder(host.activity)
+            .setTitle(R.string.error_play_title)
+            .setMessage(R.string.ytdlp_install_prompt)
+            .setPositiveButton(R.string.ytdlp_install_action) { _, _ -> startInstall(installer, raw, flag, onQueued, initial) }
+            .setNegativeButton(R.string.ytdlp_install_cancel) { _, _ -> decline() }
+            .setOnCancelListener { decline() }
+            .show()
+    }
+
+    private fun startInstall(installer: YtDlpInstaller, raw: String, flag: String?, onQueued: (() -> Unit)?, initial: Boolean) {
+        var userCanceled = false
+        val progress = AlertDialog.Builder(host.activity)
+            .setTitle(R.string.ytdlp_install_title)
+            .setMessage(ResolveMessages.installStage(host.activity, YtDlpInstallStage.PACKAGES))
+            .setCancelable(false)
+            .setNegativeButton(R.string.ytdlp_install_cancel) { _, _ ->
+                userCanceled = true
+                installJob?.cancel()
+            }
+            .show()
+        installJob = scope.launch {
+            val result = try {
+                // onStage datang dari thread latar; tampilan hanya disentuh di main thread.
+                installer.install { stage ->
+                    scope.launch {
+                        if (progress.isShowing) progress.setMessage(ResolveMessages.installStage(host.activity, stage))
+                    }
+                }
+            } catch (e: CancellationException) {
+                if (progress.isShowing) progress.dismiss()
+                if (userCanceled && initial) host.finishCanceled()
+                throw e
+            }
+            if (progress.isShowing) progress.dismiss()
+            if (host.isGone) return@launch
+            when (result) {
+                is YtDlpInstallResult.Done -> {
+                    host.showToast(text(R.string.ytdlp_install_done), true)
+                    load(raw, flag, onQueued)
+                }
+                is YtDlpInstallResult.Failed ->
+                    showFailure(ResolveMessages.installFailed(host.activity, result.code), initial)
+            }
+        }
     }
 
     private fun text(resId: Int): String = host.activity.getString(resId)
