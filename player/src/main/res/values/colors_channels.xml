@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- molina-tv-channels: palet daftar Saluran bergaya TV digital -->
+<resources>
+    <color name="molina_tv_sheet">#0F0F0F</color>
+    <color name="molina_tv_row_top">#1C1C1C</color>
+    <color name="molina_tv_row_bottom">#111111</color>
+    <color name="molina_tv_row_line">#26FFFFFF</color>
+    <color name="molina_tv_sel_top">#2A220F</color>
+    <color name="molina_tv_sel_bottom">#16120A</color>
+    <color name="molina_tv_muted">#9AA09B</color>
+    <color name="molina_tv_chip_line">#3C3C3C</color>
+</resources>

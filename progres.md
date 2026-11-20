@@ -72,3 +72,9 @@
 - 2026-11-19 [PLAYER-BLACK-ABOUT]: Setelan & About mpv (menunggu CI): tema MolinaPlayerTheme.Preference pindah dari Material3.DayNight (putih di mode siang) ke Material3.Dark hitam pekat (#000000; dialog #121212; aksen Mint). Crash About: intent XML memakai targetPackage com.molina.player padahal applicationId com.molina (ActivityNotFoundException); kini dibuka lewat kode dari SettingsFragment. AboutActivity menangkap kegagalan libmpv (Diag player.about-mpv-failed) sehingga tidak force close. Gradle, Manifest, JNI tidak berubah.
 
 - 2026-11-20 [YTDLP-ZIPAPP]: yt-dlp ringan + pasang otomatis (menunggu CI): skrip pasang_ytdlp.sh kini zipapp (python3 + ca-certificates tanpa paket rekomendasi, unduh streaming, SHA-256 dipin sama dengan native/pins.sha256), tanpa venv/pip/build-essential. Kontrak YtDlpInstaller (core-common) + DebianYtDlpInstaller (app) + dialog 'Pasang otomatis' di player. Worker: zipapp diutamakan, ensureFiles otomatis setelah rootfs reset, idle 45 dtk, gc.freeze + malloc_trim per permintaan. Kode log ytdlp.install-*.
+
+## 2026-11-20 — Molina Player: hapus fitur HD (pilihan resolusi)
+- [x] Hapus ikon HD + sheet di menu atas, badge resolusi di Home, daftar Kualitas di Pengaturan Player
+- [x] Pilihan resolusi tersimpan dibuang; kunci selalu AUTO
+- [ ] Verifikasi build GitHub Actions + uji manual
+- [ ] Tahap 2: buang kode mati applyQualityLock/switchVariantNoReload/snack di MPVActivity

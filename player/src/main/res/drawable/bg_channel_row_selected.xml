@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:endColor="@color/molina_tv_sel_bottom"
+        android:startColor="@color/molina_tv_sel_top" />
+    <stroke android:width="2dp" android:color="@color/molina_cinema_green" />
+    <corners android:radius="4dp" />
+</shape>

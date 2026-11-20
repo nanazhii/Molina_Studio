@@ -9,7 +9,7 @@
     <string name="home_recent_title">Terakhir diputar</string>
     <string name="home_recent_empty">Belum ada riwayat putar.</string>
     <string name="home_recent_clear">Hapus</string>
-    <string name="channels_title">Saluran TV</string>
+    <string name="channels_title">Saluran</string>
     <string name="channels_filter_hint">Cari saluran atau grup</string>
     <string name="channels_count">%1$d saluran</string>
     <string name="channels_empty">Belum ada saluran.\nKetuk Impor berkas untuk memilih .m3u atau .m3u8 dari penyimpanan, atau letakkan berkasnya di:\n%1$s</string>
@@ -38,4 +38,27 @@
     <string name="channels_import_empty">Tidak ada saluran http(s) yang valid di berkas itu.</string>
     <string name="channels_import_failed">Berkas tidak bisa dibaca atau disimpan.</string>
     <string name="channels_folder_blocked">Folder Molina/channels tidak bisa dibaca (izin penyimpanan?). Pakai Impor berkas.</string>
+    <!-- molina-tv-channels -->
+    <string name="channels_chip_add">+ Tambah</string>
+    <string name="channels_chip_files">Berkas</string>
+    <string name="channels_add_hint">Tempel tautan playlist .m3u</string>
+    <string name="channels_add_save">Simpan &amp; muat</string>
+    <string name="channels_search_hint">Cari nama, grup, atau ketik nomor</string>
+    <string name="channels_none">Belum ada saluran. Ketuk + Tambah untuk tautan playlist (https), atau Berkas untuk .m3u di folder IPTV Molina.</string>
+    <string name="channels_files_reading">Membaca folder…</string>
+    <string name="channels_files_unreadable">Folder IPTV tidak bisa dibaca. Beri izin penyimpanan, lalu ketuk Segarkan.</string>
+    <string name="channels_files_empty">Belum ada berkas .m3u / .m3u8 di folder ini. Salin playlist ke folder itu, lalu ketuk Segarkan.</string>
+    <string name="channels_folder_label">Folder: %1$s</string>
+    <string name="channels_folder_hint">Salin berkas .m3u atau .m3u8 ke:\n%1$s</string>
+    <string name="channels_folder_btn">Folder IPTV</string>
+    <string name="channels_files_refresh">Segarkan</string>
+    <string name="channels_code">Code</string>
+    <string name="channels_source_failed">Daftar saluran gagal dimuat.</string>
+    <string name="channels_source_empty">Tidak ada saluran http(s) di daftar ini.</string>
+    <string name="channels_key_prev">Prev</string>
+    <string name="channels_key_next">Next</string>
+    <string name="channels_key_search">Cari</string>
+    <string name="channels_key_reload">Muat</string>
+    <string name="channels_key_remove">Hapus</string>
+    <string name="channels_key_close">Tutup</string>
 </resources>

@@ -10,9 +10,8 @@ import com.molina.core.common.stream.YtDlpInstallResult
 import com.molina.core.common.stream.YtDlpInstallStage
 import com.molina.core.common.stream.YtDlpInstaller
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -65,10 +64,7 @@ class DebianYtDlpInstaller(
             return YtDlpInstallResult.Failed("FAILED")
         }
         val timedOut = AtomicBoolean(false)
-        // Dibatalkan -> matikan proses (non-blocking) supaya pembacaan di bawah berhenti.
-        val onCancel = currentCoroutineContext()[Job]?.invokeOnCompletion(onCancelling = true) { cause ->
-            if (cause != null) proc.destroy()
-        }
+        val finished = AtomicBoolean(false)
         try {
             return coroutineScope {
                 val watchdog = launch(Dispatchers.Default) {
@@ -76,14 +72,23 @@ class DebianYtDlpInstaller(
                     timedOut.set(true)
                     proc.destroy()
                 }
+                // Dibatalkan dari luar -> matikan proses (non-blocking) supaya pembacaan di bawah berhenti.
+                val cancelWatcher = launch(Dispatchers.Default) {
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        if (!finished.get()) proc.destroy()
+                    }
+                }
                 try {
                     readOutcome(proc, onStage, timedOut)
                 } finally {
+                    finished.set(true)
                     watchdog.cancel()
+                    cancelWatcher.cancel()
                 }
             }
         } finally {
-            onCancel?.dispose()
             ProcessReaper.terminate(proc, KILL_GRACE_MS)
         }
     }

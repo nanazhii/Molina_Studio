@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- jendela Saluran: garis tepi gradasi hijau (atas) ke abu (bawah), isi hitam -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:endColor="@color/molina_tv_chip_line"
+                android:startColor="#9922C55E" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="1dp"
+        android:left="1dp"
+        android:right="1dp"
+        android:top="1dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/molina_tv_sheet" />
+            <corners android:radius="19dp" />
+        </shape>
+    </item>
+</layer-list>
